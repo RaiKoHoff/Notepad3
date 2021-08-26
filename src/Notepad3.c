@@ -1222,16 +1222,17 @@ WININFO GetWinInfoByFlag(const int flagsPos)
 
 //=============================================================================
 //
-//  _StatusCalcPaneSizeh()
+//  _StatusCalcTextSize()
 //
-static SIZE _StatusCalcPaneSize(HWND hwnd, LPCWSTR lpsz) {
+static SIZE _StatusCalcTextSize(HWND hwnd, LPCWSTR lpsz)
+{
     HDC const hdc = GetDC(hwnd);
     HGDIOBJ const hfont = (HGDIOBJ)SendMessage(hwnd, WM_GETFONT, 0, 0);
     HGDIOBJ const hfold = SelectObject(hdc, hfont);
     int const mmode = SetMapMode(hdc, MM_TEXT);
 
     SIZE size = { 0L, 0L };
-    GetTextExtentPoint32(hdc, lpsz, (int)StringCchLenW(lpsz, 0), &size);
+    GetTextExtentPoint32(hdc, lpsz, (int)StringCchLen(lpsz, 0), &size);
 
     SetMapMode(hdc, mmode);
     SelectObject(hdc, hfold);
@@ -1435,50 +1436,54 @@ HWND InitInstance(const HINSTANCE hInstance, LPCWSTR pszCmdLine, int nCmdShow)
     WININFO srcninfo = g_IniWinInfo;
     WinInfoToScreenCoord(&srcninfo);
 
-    Globals.hwndMain = CreateWindowEx(
-                           0,
-                           s_wchWndClass,
-                           _W(SAPPNAME),
-                           WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
-                           srcninfo.x,
-                           srcninfo.y,
-                           srcninfo.cx,
-                           srcninfo.cy,
-                           NULL,
-                           NULL,
-                           hInstance,
-                           NULL);
+    Globals.hwndMain = NULL;
 
-    SnapToWinInfoPos(Globals.hwndMain, g_IniWinInfo, SCR_NORMAL);
+    HWND const hwndMain = CreateWindowEx(
+        0,
+        s_wchWndClass,
+        _W(SAPPNAME),
+        WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
+        srcninfo.x,
+        srcninfo.y,
+        srcninfo.cx,
+        srcninfo.cy,
+        NULL,
+        NULL,
+        hInstance,
+        NULL);
+
+    SnapToWinInfoPos(hwndMain, g_IniWinInfo, SCR_NORMAL);
 
     if (g_IniWinInfo.max) {
         nCmdShow = SW_SHOWMAXIMIZED;
     }
 
-    SetDialogIconNP3(Globals.hwndMain);
-    InitWindowCommon(Globals.hwndMain, true);
+    SetDialogIconNP3(hwndMain);
+    InitWindowCommon(hwndMain, true);
 
     // manual (no automatic) reset & initial state: not signaled (TRUE, FALSE)
     s_hEventFileChangedExt = CreateEvent(NULL, TRUE, FALSE, NULL);
     s_hEventFileDeletedExt = CreateEvent(NULL, TRUE, FALSE, NULL);
 
     if (Settings.TransparentMode) {
-        SetWindowTransparentMode(Globals.hwndMain, true, Settings2.OpacityLevel);
+        SetWindowTransparentMode(hwndMain, true, Settings2.OpacityLevel);
     }
 
-    SetMenu(Globals.hwndMain, Globals.hMainMenu);
-    SetMenu(Globals.hwndMain, (Settings.ShowMenubar ? Globals.hMainMenu : NULL));
-    DrawMenuBar(Globals.hwndMain);
+    SetMenu(hwndMain, Globals.hMainMenu);
+    SetMenu(hwndMain, (Settings.ShowMenubar ? Globals.hMainMenu : NULL));
+    DrawMenuBar(hwndMain);
+
+    Globals.hwndMain = hwndMain; // make main window globaly available
 
     // Current file information -- moved in front of ShowWindow()
     FileLoad(L"", true, true, false, Settings.SkipUnicodeDetection, Settings.SkipANSICodePageDetection, false);
 
     if (!s_flagStartAsTrayIcon) {
-        ShowWindow(Globals.hwndMain,nCmdShow);
-        UpdateWindow(Globals.hwndMain);
+        ShowWindow(hwndMain,nCmdShow);
+        UpdateWindow(hwndMain);
     } else {
-        ShowWindow(Globals.hwndMain,SW_HIDE);    // trick ShowWindow()
-        ShowNotifyIcon(Globals.hwndMain,true);
+        ShowWindow(hwndMain,SW_HIDE);    // trick ShowWindow()
+        ShowNotifyIcon(hwndMain,true);
     }
 
     // Source Encoding
@@ -1755,7 +1760,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
     case WM_SETTINGCHANGE: {
         if (IsColorSchemeChangeMessage(lParam)) {
             RefreshTitleBarThemeColor(hwnd);
-            PostMessage(Globals.hwndEdit, WM_THEMECHANGED, 0, 0);
+            SendMessage(Globals.hwndEdit, WM_THEMECHANGED, 0, 0);
         }
     }
     break;
@@ -2218,6 +2223,9 @@ static bool _EvalTinyExpr(bool qmark)
 //
 static void _InitEditWndFrame()
 {
+    s_cxEditFrame = 0;
+    s_cyEditFrame = 0;
+
     s_bIsAppThemed = IsAppThemed();
 
     if (s_bIsAppThemed) {
@@ -2225,14 +2233,10 @@ static void _InitEditWndFrame()
         SetWindowLongPtr(Globals.hwndEdit, GWL_EXSTYLE, GetWindowLongPtr(Globals.hwndEdit, GWL_EXSTYLE) & ~WS_EX_CLIENTEDGE);
         SetWindowPos(Globals.hwndEdit, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
-        if (IsWindowsVistaOrGreater()) {
+        if (!IsWindowsVistaOrGreater()) {
 
-            s_cxEditFrame = 0;
-            s_cyEditFrame = 0;
-
-        } else {
-
-            SetWindowPos(s_hwndEditFrame, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+            SetWindowPos(s_hwndEditFrame, Globals.hwndEdit, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+            ShowWindow(s_hwndEditFrame, SW_SHOWNORMAL);
 
             RECT rc, rc2;
             GetClientRect(s_hwndEditFrame, &rc);
@@ -2246,8 +2250,6 @@ static void _InitEditWndFrame()
         SetWindowLongPtr(Globals.hwndEdit, GWL_EXSTYLE, WS_EX_CLIENTEDGE | GetWindowLongPtr(Globals.hwndEdit, GWL_EXSTYLE));
         SetWindowPos(Globals.hwndEdit, NULL, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
 
-        s_cxEditFrame = 0;
-        s_cyEditFrame = 0;
     }
 }
 
@@ -2275,7 +2277,7 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam,LPARAM lParam)
                            WS_EX_CLIENTEDGE,
                            L"Scintilla",
                            NULL,
-                           WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS,
+                           WS_CHILD | WS_CLIPSIBLINGS,
                            0, 0, 0, 0,
                            hwnd,
                            (HMENU)IDC_EDIT,
@@ -2286,16 +2288,17 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam,LPARAM lParam)
 
     _InitializeSciEditCtrl(Globals.hwndEdit);
 
+    // Create Border Frame
     s_hwndEditFrame = CreateWindowEx(
-                          WS_EX_CLIENTEDGE,
-                          WC_LISTVIEW,
-                          NULL,
-                          WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
-                          0,0,100,100,
-                          hwnd,
-                          (HMENU)IDC_EDITFRAME,
-                          hInstance,
-                          NULL);
+        WS_EX_CLIENTEDGE,
+        WC_LISTVIEW,
+        NULL,
+        WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+        0, 0, 8, 8,
+        hwnd,
+        (HMENU)IDC_EDITFRAME,
+        hInstance,
+        NULL);
 
     _InitEditWndFrame();
 
@@ -2307,7 +2310,7 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam,LPARAM lParam)
     (void)CreateWindow(
         WC_STATIC,
         NULL,
-        WS_CHILD|WS_CLIPSIBLINGS|WS_CLIPCHILDREN,
+        WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
         0,0,10,10,
         hwnd,
         (HMENU)IDC_FILENAME,
@@ -2339,6 +2342,8 @@ LRESULT MsgCreate(HWND hwnd, WPARAM wParam,LPARAM lParam)
     }
 
     //~ Style_SetDefaultLexer(Globals.hwndEdit); -- done by WM_THEMECHANGED
+
+    ShowWindow(Globals.hwndEdit, SW_SHOWNORMAL);
 
     Encoding_Current(Settings.DefaultEncoding);
 
@@ -2711,12 +2716,10 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
     // ------------------------------
     // Create ReBar and add Toolbar
     // ------------------------------
-    DWORD const dwReBarStyle = Settings.ShowToolbar ? (NP3_WS_REBAR | WS_VISIBLE) : (NP3_WS_REBAR);
-
     if (Globals.hwndRebar) {
         DestroyWindow(Globals.hwndRebar);
     }
-    Globals.hwndRebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL, dwReBarStyle,
+    Globals.hwndRebar = CreateWindowEx(WS_EX_TOOLWINDOW, REBARCLASSNAME, NULL, NP3_WS_REBAR,
                                        0,0,0,0,hwnd,(HMENU)IDC_REBAR,hInstance,NULL);
 
     // Theme = false (!) ~ you cannot change a toolbar's color when a visual style is active
@@ -2757,11 +2760,15 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
     s_cyReBar = (rc.bottom - rc.top);
     s_cyReBarFrame = s_bIsAppThemed ? 0 : 2;  // (!) frame color is same as INITIAL title-bar ???
 
+    if (Settings.ShowToolbar) {
+        ShowWindow(Globals.hwndRebar, SW_SHOWNORMAL);
+    }
+
+
     // -------------------
     // Create Statusbar
     // -------------------
-    DWORD const dwStatusbarStyle = SBT_NOBORDERS | SBT_OWNERDRAW |
-        (Settings.ShowStatusbar ? (WS_CHILD | WS_CLIPSIBLINGS | WS_VISIBLE) : (WS_CHILD | WS_CLIPSIBLINGS));
+    DWORD const dwStatusbarStyle = SBT_NOBORDERS | SBT_OWNERDRAW | WS_CHILD | WS_CLIPSIBLINGS;
 
     if (Globals.hwndStatus) {
         DestroyWindow(Globals.hwndStatus);
@@ -2796,6 +2803,9 @@ void CreateBars(HWND hwnd, HINSTANCE hInstance)
     //~ReleaseDC(Globals.hwndStatus, hdc);
 #endif
 
+    if (Settings.ShowStatusbar) {
+        ShowWindow(Globals.hwndStatus, SW_SHOWNORMAL);
+    }
 }
 
 
@@ -2888,38 +2898,44 @@ LRESULT MsgThemeChanged(HWND hwnd, WPARAM wParam,LPARAM lParam)
 
 #ifdef D_NP3_WIN10_DARK_MODE
     AllowDarkModeForWindowEx(hwnd, UseDarkMode());
-    RefreshTitleBarThemeColor(hwnd);
 #endif
-    UpdateTitleBar(hwnd);
 
-    // reinitialize edit frame
-    _InitEditWndFrame();
+    if (Globals.hwndMain) {
 
-    // recreate toolbar and statusbar
-    CreateBars(hwnd,Globals.hInstance);
+#ifdef D_NP3_WIN10_DARK_MODE
+        RefreshTitleBarThemeColor(hwnd);
+#endif
+        UpdateTitleBar(hwnd);
 
-    Style_ResetCurrentLexer(Globals.hwndEdit);
+        // reinitialize edit frame
+        _InitEditWndFrame();
 
-    Sci_RedrawScrollbars();
+        // recreate toolbar and statusbar
+        CreateBars(hwnd, Globals.hInstance);
 
-    SetMenu(hwnd, (Settings.ShowMenubar ? Globals.hMainMenu : NULL));
-    DrawMenuBar(hwnd);
+        Style_ResetCurrentLexer(Globals.hwndEdit);
 
-    if (FocusedView.HideNonMatchedLines) {
-        EditToggleView(Globals.hwndEdit);
+        Sci_RedrawScrollbars();
+
+        SetMenu(hwnd, (Settings.ShowMenubar ? Globals.hMainMenu : NULL));
+        DrawMenuBar(hwnd);
+
+        if (FocusedView.HideNonMatchedLines) {
+            EditToggleView(Globals.hwndEdit);
+        }
+
+        MarkAllOccurrences(_MQ_FAST, false);
+
+        SciCall_StartStyling(0);
+        Sci_ColouriseAll();
+
+        EditUpdateVisibleIndicators();
+
+        UpdateToolbar();
+        UpdateStatusbar(true);
+        UpdateMarginWidth(true);
+        UpdateUI();
     }
-
-    MarkAllOccurrences(_MQ_FAST, false);
-
-    SciCall_StartStyling(0);
-    Sci_ColouriseAll();
-
-    EditUpdateVisibleIndicators();
-
-    UpdateToolbar();
-    UpdateStatusbar(true);
-    UpdateMarginWidth(true);
-    UpdateUI();
 
     UpdateWindowEx(hwnd);
 
@@ -2973,12 +2989,13 @@ LRESULT MsgSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
         cy -= (rc.bottom - rc.top);
     }
 
+
     HDWP hdwp = BeginDeferWindowPos(2);
 
     DeferWindowPos(hdwp,s_hwndEditFrame,NULL,x,y,cx,cy, SWP_NOZORDER | SWP_NOACTIVATE);
 
-    DeferWindowPos(hdwp,Globals.hwndEdit,NULL,x+s_cxEditFrame,y+s_cyEditFrame,
-                   cx-2*s_cxEditFrame,cy-2*s_cyEditFrame,
+    DeferWindowPos(hdwp, Globals.hwndEdit, s_hwndEditFrame,
+                   x+s_cxEditFrame,y+s_cyEditFrame, cx-2*s_cxEditFrame,cy-2*s_cyEditFrame,
                    SWP_NOZORDER | SWP_NOACTIVATE);
 
     EndDeferWindowPos(hdwp);
@@ -5577,6 +5594,7 @@ LRESULT MsgCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
     case IDM_VIEW_HYPERLINKHOTSPOTS:
         Settings.HyperlinkHotspot = !Settings.HyperlinkHotspot;
         EditUpdateVisibleIndicators();
+        ResetMouseDWellTime();
         break;
 
     case IDM_VIEW_SHOW_HYPLNK_CALLTIP:
@@ -6813,7 +6831,7 @@ LRESULT MsgSysCommand(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 //
 static DocPos prevCursorPosition = -1;
 
-void HandleDWellStartEnd(const DocPos position, const UINT uid)
+void HandleDWellStartEnd(const DocPos position, const int modifiers, const UINT uid)
 {
     static DocPos prevStartPosition = -1;
     static DocPos prevEndPosition = -1;
@@ -6861,7 +6879,11 @@ void HandleDWellStartEnd(const DocPos position, const UINT uid)
         }
 
         switch (indicator_id) {
+
         case INDIC_NP3_HYPERLINK:
+            if (modifiers & SCMOD_CTRL) {
+                SciCall_SetCursor(SC_NP3_CURSORHAND);
+            }
             if (!Settings.ShowHypLnkToolTip || SciCall_CallTipActive()) {
                 return;
             }
@@ -6888,8 +6910,6 @@ void HandleDWellStartEnd(const DocPos position, const UINT uid)
         if ((position < prevStartPosition) || (position > prevEndPosition)) {
             s_bCallTipEscDisabled = false;
         }
-
-        //SciCall_SetCursor(SC_NP3_CURSORHAND);
 
         DocPos const firstPos = SciCall_IndicatorStart(indicator_id, position);
         DocPos const lastPos = SciCall_IndicatorEnd(indicator_id, position);
@@ -7562,6 +7582,9 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
     LRESULT resMN = _MsgNotifyLean(scn, &bModified);
 
     switch (pnmh->code) {
+    // not send
+    //~ case SCN_KEY:
+    
     // unused:
     case SCN_HOTSPOTCLICK:
     case SCN_HOTSPOTDOUBLECLICK:
@@ -7675,7 +7698,7 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
 
     case SCN_DWELLSTART:
     case SCN_DWELLEND: {
-        HandleDWellStartEnd(scn->position, pnmh->code);
+        HandleDWellStartEnd(scn->position, scn->modifiers, pnmh->code);
     }
     break;
 
@@ -8672,7 +8695,7 @@ static void  _CalculateStatusbarSections(int vSectionWidth[], sectionTxt_t tchSt
     for (int i = 0; i < STATUS_SECTOR_COUNT; ++i) {
         if (g_iStatusbarVisible[i]) {
             if (g_iStatusbarWidthSpec[i] == 0) { // dynamic optimized
-                SIZE const size = _StatusCalcPaneSize(Globals.hwndStatus, tchStatusBar[i]);
+                SIZE const size = _StatusCalcTextSize(Globals.hwndStatus, tchStatusBar[i]);
                 vSectionWidth[i] = (size.cx + 8L);
             } else if (g_iStatusbarWidthSpec[i] < -1) { // fixed pixel count
                 vSectionWidth[i] = -(g_iStatusbarWidthSpec[i]);
@@ -8701,7 +8724,7 @@ static void  _CalculateStatusbarSections(int vSectionWidth[], sectionTxt_t tchSt
     int iTotalMinWidth = 0;
     for (int i = 0; i < STATUS_SECTOR_COUNT; ++i) {
         if (bIsPropSection[i]) {
-            SIZE const size = _StatusCalcPaneSize(Globals.hwndStatus, tchStatusBar[i]);
+            SIZE const size = _StatusCalcTextSize(Globals.hwndStatus, tchStatusBar[i]);
             int const iMinWidth = (size.cx + 8L);
             vMinWidth[i] = iMinWidth;
             iTotalMinWidth += iMinWidth;
@@ -9279,7 +9302,7 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
             Settings.ShowStatusbar = false;
         }
 
-        SIZE const size = _StatusCalcPaneSize(Globals.hwndStatus, L"X");
+        SIZE const size = _StatusCalcTextSize(Globals.hwndStatus, L"X");
         SendMessage(Globals.hwndStatus, SB_SETMINHEIGHT, MAKEWPARAM(size.cy + 2, 0), 0);
 
         SendMessage(Globals.hwndStatus, SB_SETPARTS, (WPARAM)cnt, (LPARAM)aStatusbarSections);
@@ -11241,7 +11264,7 @@ void SetNotifyIconTitle(HWND hwnd)
 //
 void ResetMouseDWellTime()
 {
-    if (Settings.ShowHypLnkToolTip || IsColorDefHotspotEnabled() || Settings.HighlightUnicodePoints) {
+    if (Settings.HyperlinkHotspot || IsColorDefHotspotEnabled() || Settings.HighlightUnicodePoints) {
         SciCall_SetMouseDWellTime(USER_TIMER_MINIMUM << 4);
     } else {
         Sci_DisableMouseDWellNotification();

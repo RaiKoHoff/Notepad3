@@ -33,7 +33,7 @@ UCD - (UCD)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA/RC Version 5.21.822.(build_#) (2021-08-22)
+Current BETA/RC Version 5.21.825.(build_#) (2021-08-25)
 ========================================================
 
 --------------------------------------------------------
@@ -86,6 +86,7 @@ NEW:
 CHANGES:
 --------------------------------------------------------
 [.###.#]- .
+[.825.2]- Non themed app: edit-window frame visibility.
 [.811.1]- Current Lexilla dev (chg: HTML(PHP) Lexer) (LEX).
 [.811.1]- Scintilla Python generator methods for embeddable Python (SCI).
 [.811.1]- MUI base language definition moved to solution's preprocessors (C/C++ & RC) defines.
@@ -161,6 +162,10 @@ CHANGES Versions in Tools or Libraries:
 FIXES:
 --------------------------------------------------------
 [.###.#]- .
+[.825.2]- Caret change to hand over hyperlink only if ctrl is pressed.
+[.825.1]- Some minor corrections on visual appearance.
+[.824.1]- Sync status bar font size on system font size change.
+[.824.1]- Restore previous window position while DPI scaling changed meanwhile.
 [.822.1]- Missing .ini must not have an assertion failure, allowed case here.
 [.820.1]- Specify "/utf-8" compiler option for "Scintilla, Lexilla and grepWinNP3" projects.
 [.813.1]- "grepWinNP3" project: post build step - xcopy .lang files to desired build output dir (GRE).
