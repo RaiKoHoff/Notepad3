@@ -633,6 +633,11 @@
     <ClCompile Include="crypto\rijndael-api-fst.c" />
     <ClCompile Include="crypto\sha-256.c" />
     <ClCompile Include="DynStrg.c" />
+    <ClCompile Include="edcfg\ec_glob.c" />
+    <ClCompile Include="edcfg\editorconfig.c" />
+    <ClCompile Include="edcfg\editorconfig_handle.c" />
+    <ClCompile Include="edcfg\ini.c" />
+    <ClCompile Include="edcfg\misc.c" />
     <ClCompile Include="PathLib.c" />
     <ClCompile Include="StyleLexers\EditLexer.c" />
     <ClCompile Include="StyleLexers\styleLexAHK.c" />
@@ -785,6 +790,15 @@
     <ClInclude Include="crypto\sha-256.h" />
     <ClInclude Include="..\language\common_res.h" />
     <ClInclude Include="DynStrg.h" />
+    <ClInclude Include="edcfg\config.h" />
+    <ClInclude Include="edcfg\ec_glob.h" />
+    <ClInclude Include="edcfg\editorconfig.h" />
+    <ClInclude Include="edcfg\editorconfig\editorconfig.h" />
+    <ClInclude Include="edcfg\editorconfig\editorconfig_handle.h" />
+    <ClInclude Include="edcfg\editorconfig_handle.h" />
+    <ClInclude Include="edcfg\global.h" />
+    <ClInclude Include="edcfg\ini.h" />
+    <ClInclude Include="edcfg\misc.h" />
     <ClInclude Include="PathLib.h" />
     <ClInclude Include="tinyexpr\tinyexpr.h" />
     <ClInclude Include="uchardet\uchardet\src\CharDistribution.h" />

@@ -46,6 +46,12 @@
     <Filter Include="Source Files\tinyexpr">
       <UniqueIdentifier>{60486982-91be-42d2-b154-86c2706ca60f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\EdCfg">
+      <UniqueIdentifier>{6cebc65b-72dc-460d-b6ff-4d393633d128}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EdCfg\editorconfig">
+      <UniqueIdentifier>{ffac4c0c-9c92-4fa9-92af-e0d380189144}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dialogs.c">
@@ -432,6 +438,21 @@
     <ClCompile Include="StyleLexers\styleLexVerilog.c">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
+    <ClCompile Include="edcfg\ec_glob.c">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClCompile>
+    <ClCompile Include="edcfg\editorconfig.c">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClCompile>
+    <ClCompile Include="edcfg\editorconfig_handle.c">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClCompile>
+    <ClCompile Include="edcfg\ini.c">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClCompile>
+    <ClCompile Include="edcfg\misc.c">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dlapi.h">
@@ -613,6 +634,33 @@
     </ClInclude>
     <ClInclude Include="tinyexpr\tinyexpr.h">
       <Filter>Source Files\tinyexpr</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\editorconfig\editorconfig.h">
+      <Filter>Source Files\EdCfg\editorconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\editorconfig\editorconfig_handle.h">
+      <Filter>Source Files\EdCfg\editorconfig</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\ec_glob.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\editorconfig.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\editorconfig_handle.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\global.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\ini.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\misc.h">
+      <Filter>Source Files\EdCfg</Filter>
+    </ClInclude>
+    <ClInclude Include="edcfg\config.h">
+      <Filter>Source Files\EdCfg</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
