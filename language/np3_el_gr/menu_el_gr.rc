@@ -473,11 +473,11 @@ BEGIN
         MENUITEM "Ρυθμίσεις &μεγάλης γραμμής...",                   IDM_SET_LONGLINESETTINGS
         MENUITEM "Αυτόματη εσ&οχή κειμένου",                        IDM_SET_AUTOINDENTTEXT
         MENUITEM "Αυτόματο κλείσιμο &εισαγωγικών",                  IDM_SET_AUTOCLOSEQUOTES
-        MENUITEM "Αυτόματο κλείσιμο αγκυλών",                       IDM_SET_AUTOCLOSEBRACKETS
+        MENUITEM "&Αυτόματο κλείσιμο αγκυλών",                      IDM_SET_AUTOCLOSEBRACKETS
         MENUITEM "Αυτόματο κλείσιμο Η&ΤΜL/XML\tCtrl+Shift+H",       IDM_SET_AUTOCLOSETAGS
         MENUITEM "Αυτόματη συμπλήρωση λέ&ξεων",                     IDM_SET_AUTOCOMPLETEWORDS
         MENUITEM "Α&υτόμ. συμπλήρωση λέξεων-κλειδιών του Lexer",    IDM_SET_AUTOCLEXKEYWORDS
-        MENUITEM "Alternate Word Se&parators\tCtrl+Alt+A",          IDM_SET_ALTERNATE_WORD_SEPS
+        MENUITEM "Εναλλακτικοί δια&χωριστές λέξεων\tCtrl+Alt+A",    IDM_SET_ALTERNATE_WORD_SEPS
         MENUITEM SEPARATOR
         MENUITEM "Μόνο μία παρουσία ανά &αρχείο",                   IDM_SET_SINGLEFILEINSTANCE
         MENUITEM "Ειδοποίηση μετα&βολής αρχείου...\tAlt+F5",        IDM_SET_CHANGENOTIFY
