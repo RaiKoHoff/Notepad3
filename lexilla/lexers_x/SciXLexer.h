@@ -9,6 +9,32 @@
 #define SCLEX_SYSVERILOG  203
 
 // -----------------------------------------------------------------------------
+// Embedded CSS sub-states for the extended HTML lexer (lexers_x/LexHTML.cxx).
+//
+// Upstream Lexilla reserves no constants for embedded CSS in SciLexer.h; the
+// lexer's lexicalClassesHTML[] uses placeholder rows for indices 32-39 because
+// those collide with Scintilla system styles (STYLE_DEFAULT .. STYLE_FOLDDISPLAYTEXT).
+// The Notepad3 extended HTML lexer styles inline `<style>` blocks as CSS and
+// needs real states; we place the whole SCE_HCSS_* block contiguously at
+// 128-140 — safely above all Scintilla reserved styles AND above every other
+// embedded sub-language used by SCLEX_HTML (PHP ends at 127).
+// -----------------------------------------------------------------------------
+
+#define SCE_HCSS_DEFAULT      128
+#define SCE_HCSS_COMMENT      129
+#define SCE_HCSS_SELECTOR     130
+#define SCE_HCSS_CLASS        131
+#define SCE_HCSS_ID           132
+#define SCE_HCSS_PROPERTY     133
+#define SCE_HCSS_VALUE        134
+#define SCE_HCSS_OPERATOR     135
+#define SCE_HCSS_STRING       136
+#define SCE_HCSS_PSEUDOCLASS  137
+#define SCE_HCSS_IMPORTANT    138
+#define SCE_HCSS_DIRECTIVE    139
+#define SCE_HCSS_NUMBER       140
+
+// -----------------------------------------------------------------------------
 // !!!!! ADD  Lexer Linkage in:  scintilla\src\Catalogue.cxx  !!!!!
 // -----------------------------------------------------------------------------
 

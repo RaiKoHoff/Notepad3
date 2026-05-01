@@ -212,6 +212,12 @@
     <ClCompile Include="lexers_x\LexJSON.cxx">
       <Filter>lexers_x</Filter>
     </ClCompile>
+    <None Include="lexers_x\LexHTML.cxx">
+      <Filter>lexers_x</Filter>
+    </None>
+    <None Include="lexers_x\LexHTML_NOTES.md">
+      <Filter>lexers_x</Filter>
+    </None>
     <ClCompile Include="lexlib\Accessor.cxx">
       <Filter>lexlib</Filter>
     </ClCompile>

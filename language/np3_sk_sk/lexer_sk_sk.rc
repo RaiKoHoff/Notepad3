@@ -520,14 +520,6 @@ BEGIN
     IDS_LEX_STR_SlashCmd    "Príkaz lomítka"
     IDS_LEX_STR_Processor   "Procesor"
     IDS_LEX_STR_Argument    "Argument"
-    IDS_LEX_STR_CSSDefault  "Predvolené CSS"
-    IDS_LEX_STR_CSSComment  "Komentár CSS"
-    IDS_LEX_STR_CSSSelector "Selektor CSS"
-    IDS_LEX_STR_CSSClassID  "CSS trieda/ID"
-    IDS_LEX_STR_CSSProperty "Vlastníctvo CSS"
-    IDS_LEX_STR_CSSValue    "Hodnota CSS"
-    IDS_LEX_STR_CSSString   "Reťazec CSS"
-    IDS_LEX_STR_CSSDirOp    "Smernica/operátor CSS"
 END
 
 STRINGTABLE

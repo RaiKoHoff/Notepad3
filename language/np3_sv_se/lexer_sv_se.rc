@@ -520,14 +520,6 @@ BEGIN
     IDS_LEX_STR_SlashCmd    "Snedstreckskommando"
     IDS_LEX_STR_Processor   "Processor"
     IDS_LEX_STR_Argument    "Argument"
-    IDS_LEX_STR_CSSDefault  "CSS-standard"
-    IDS_LEX_STR_CSSComment  "CSS-kommentar"
-    IDS_LEX_STR_CSSSelector "CSS-väljare"
-    IDS_LEX_STR_CSSClassID  "CSS-klass/ID"
-    IDS_LEX_STR_CSSProperty "CSS-egenskap"
-    IDS_LEX_STR_CSSValue    "CSS-värde"
-    IDS_LEX_STR_CSSString   "CSS-sträng"
-    IDS_LEX_STR_CSSDirOp    "CSS-direktiv/operator"
 END
 
 STRINGTABLE

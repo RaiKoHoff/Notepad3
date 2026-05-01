@@ -89,3 +89,21 @@ val SCE_KOTLIN_FUNCTION_DEFINITION=26
 # val SCE_YAML_DATETIME=18
 # val SCE_YAML_INDENTED_TEXT=19
 
+
+
+# Embedded CSS sub-states (extended HTML lexer in lexers_x/LexHTML.cxx).
+# Placed at 128-140 to avoid Scintilla reserved styles 32-39 and to sit
+# above every other embedded sub-language inside SCLEX_HTML (PHP ends at 127).
+val SCE_HCSS_DEFAULT=128
+val SCE_HCSS_COMMENT=129
+val SCE_HCSS_SELECTOR=130
+val SCE_HCSS_CLASS=131
+val SCE_HCSS_ID=132
+val SCE_HCSS_PROPERTY=133
+val SCE_HCSS_VALUE=134
+val SCE_HCSS_OPERATOR=135
+val SCE_HCSS_STRING=136
+val SCE_HCSS_PSEUDOCLASS=137
+val SCE_HCSS_IMPORTANT=138
+val SCE_HCSS_DIRECTIVE=139
+val SCE_HCSS_NUMBER=140

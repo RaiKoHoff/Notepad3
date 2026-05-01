@@ -520,14 +520,6 @@ BEGIN
     IDS_LEX_STR_SlashCmd    "Per parancs"
     IDS_LEX_STR_Processor   "Processzor"
     IDS_LEX_STR_Argument    "Argumentum"
-    IDS_LEX_STR_CSSDefault  "CSS alapért."
-    IDS_LEX_STR_CSSComment  "CSS Megjegyzés"
-    IDS_LEX_STR_CSSSelector "CSS Selector"
-    IDS_LEX_STR_CSSClassID  "CSS Class/ID"
-    IDS_LEX_STR_CSSProperty "CSS Tulajdonság"
-    IDS_LEX_STR_CSSValue    "CSS Érték"
-    IDS_LEX_STR_CSSString   "CSS String"
-    IDS_LEX_STR_CSSDirOp    "CSS Directive/Operator"
 END
 
 STRINGTABLE
