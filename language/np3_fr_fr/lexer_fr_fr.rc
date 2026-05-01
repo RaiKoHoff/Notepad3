@@ -520,14 +520,6 @@ BEGIN
     IDS_LEX_STR_SlashCmd    "Commande Slash"
     IDS_LEX_STR_Processor   "Processeur"
     IDS_LEX_STR_Argument    "Argument"
-    IDS_LEX_STR_CSSDefault  "Défaut CSS"
-    IDS_LEX_STR_CSSComment  "Commentaire CSS"
-    IDS_LEX_STR_CSSSelector "Sélecteur CSS"
-    IDS_LEX_STR_CSSClassID  "Classe / ID CSS"
-    IDS_LEX_STR_CSSProperty "Propriété CSS"
-    IDS_LEX_STR_CSSValue    "Valeur CSS"
-    IDS_LEX_STR_CSSString   "Chaîne CSS"
-    IDS_LEX_STR_CSSDirOp    "Directive/Opérateur CSS"
 END
 
 STRINGTABLE

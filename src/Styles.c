@@ -1881,15 +1881,6 @@ void Style_FillRelatedStyles(HWND hwnd, const PEDITLEXER pLexer) {
             }
         }
 
-        if (pLexer->lexerID == SCLEX_HTML && pLexer->Styles[i].iStyle8[0] == SCE_HCSS_DEFAULT) {
-            int iRelated[] = { SCE_HCSS_COMMENT, SCE_HCSS_SELECTOR, SCE_HCSS_CLASS, SCE_HCSS_ID,
-                SCE_HCSS_PROPERTY, SCE_HCSS_VALUE, SCE_HCSS_OPERATOR, SCE_HCSS_STRING,
-                SCE_HCSS_PSEUDOCLASS, SCE_HCSS_IMPORTANT, SCE_HCSS_DIRECTIVE, SCE_HCSS_NUMBER };
-            for (int j = 0; j < COUNTOF(iRelated); j++) {
-                Style_SetStyles(hwnd, iRelated[j], pLexer->Styles[i].szValue, fBaseFontSize);
-            }
-        }
-
         if ((pLexer->lexerID == SCLEX_HTML || pLexer->lexerID == SCLEX_XML) && pLexer->Styles[i].iStyle8[0] == SCE_H_SGML_DEFAULT) {
             int iRelated[] = { SCE_H_SGML_COMMAND, SCE_H_SGML_1ST_PARAM, SCE_H_SGML_DOUBLESTRING, SCE_H_SGML_SIMPLESTRING, SCE_H_SGML_ERROR,
                 SCE_H_SGML_SPECIAL, SCE_H_SGML_ENTITY, SCE_H_SGML_COMMENT, SCE_H_SGML_1ST_PARAM_COMMENT, SCE_H_SGML_BLOCK_DEFAULT };

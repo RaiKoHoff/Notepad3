@@ -520,14 +520,6 @@ BEGIN
     IDS_LEX_STR_SlashCmd    "斜杠命令"
     IDS_LEX_STR_Processor   "处理器"
     IDS_LEX_STR_Argument    "参数"
-    IDS_LEX_STR_CSSDefault  "CSS 默认"
-    IDS_LEX_STR_CSSComment  "CSS 注释"
-    IDS_LEX_STR_CSSSelector "CSS 选择器"
-    IDS_LEX_STR_CSSClassID  "CSS 类/ID"
-    IDS_LEX_STR_CSSProperty "CSS 属性"
-    IDS_LEX_STR_CSSValue    "CSS 值"
-    IDS_LEX_STR_CSSString   "CSS 字符串"
-    IDS_LEX_STR_CSSDirOp    "CSS 指令/运算符"
 END
 
 STRINGTABLE
