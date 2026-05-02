@@ -186,74 +186,114 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
         //UINT const tabStopDist[3] = { 4, 4, 8 };
         //SendMessage(GetDlgItem(hwnd, IDC_INFOBOXTEXT), EM_SETTABSTOPS, 3, (LPARAM)tabStopDist);
 
-        // --- Dynamic text sizing: grow dialog vertically to fit message ---
+        // --- Dynamic dialog sizing: shrink for short text, grow proportionally (W & H) for long text ---
         {
             HWND const hWndText = GetDlgItem(hwnd, IDC_INFOBOXTEXT);
 
-            // 1. Get current text control rect in parent client coords
             RECT rcText;
             GetWindowRect(hWndText, &rcText);
             MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rcText, 2);
+            int const origTextWidth  = rcText.right - rcText.left;
             int const origTextHeight = rcText.bottom - rcText.top;
-            int const textWidth = rcText.right - rcText.left;
 
-            // 2. Measure required text height with correct font
+            RECT rcDlg;
+            GetWindowRect(hwnd, &rcDlg);
+            int const origDlgWidth  = rcDlg.right - rcDlg.left;
+            int const origDlgHeight = rcDlg.bottom - rcDlg.top;
+
+            RECT rcWork;
+            SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWork, 0);
+            int const maxDlgWidth  = MulDiv(rcWork.right - rcWork.left, 70, 100);
+            int const maxDlgHeight = MulDiv(rcWork.bottom - rcWork.top, 70, 100);
+            int const maxTextWidth = origTextWidth + max(0, maxDlgWidth - origDlgWidth);
+
             HDC hdc = GetDC(hWndText);
             HFONT hFont = (HFONT)SendMessage(hWndText, WM_GETFONT, 0, 0);
             HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
 
-            RECT rcCalc = { 0, 0, textWidth, 0 };
-            DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcCalc,
-                     DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EDITCONTROL);
+            // Single-line natural width and one-line height (used as growth ceiling and shrink floor).
+            RECT rcNat = { 0, 0, 0, 0 };
+            DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcNat,
+                     DT_CALCRECT | DT_NOPREFIX | DT_EXPANDTABS | DT_SINGLELINE);
+            int const naturalWidth = rcNat.right;
+            int const lineHeight   = (rcNat.bottom > 0) ? rcNat.bottom : 14;
+
+            // Wrapped height at the template width (baseline).
+            int targetWidth = origTextWidth;
+            int targetHeight;
+            {
+                RECT rcCalc = { 0, 0, targetWidth, 0 };
+                DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcCalc,
+                         DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EDITCONTROL);
+                targetHeight = rcCalc.bottom;
+            }
+
+            // If the wrapped block is too tall vs wide, grow width in steps until aspect ≈ 3:1 or limits hit.
+            int const growStep = max(origTextWidth / 4, lineHeight * 2);
+            while (targetWidth < maxTextWidth && targetWidth < naturalWidth &&
+                   (targetHeight * 3) > targetWidth) {
+                int newWidth = targetWidth + growStep;
+                if (newWidth > maxTextWidth) newWidth = maxTextWidth;
+                if (newWidth > naturalWidth) newWidth = naturalWidth;
+                if (newWidth <= targetWidth) break;
+                targetWidth = newWidth;
+                RECT rcCalc = { 0, 0, targetWidth, 0 };
+                DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcCalc,
+                         DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EDITCONTROL);
+                targetHeight = rcCalc.bottom;
+            }
 
             SelectObject(hdc, hOldFont);
             ReleaseDC(hWndText, hdc);
 
-            int const measuredHeight = rcCalc.bottom;
-
-            // 3. Calculate delta (only grow, never shrink below template size)
-            int deltaY = measuredHeight - origTextHeight;
-            if (deltaY < 0) {
-                deltaY = 0;
+            // Allow the text region to shrink, but keep at least ~1.25 line heights so descenders aren't clipped.
+            int const minTextHeight = lineHeight + lineHeight / 4;
+            if (targetHeight < minTextHeight) {
+                targetHeight = minTextHeight;
             }
 
-            // 4. Clamp: don't let dialog exceed ~70% of work area
-            if (deltaY > 0) {
-                RECT rcWorkArea;
-                SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0);
-                RECT rcDialog;
-                GetWindowRect(hwnd, &rcDialog);
-                int const curDlgHeight = rcDialog.bottom - rcDialog.top;
-                int const maxDlgHeight = MulDiv(rcWorkArea.bottom - rcWorkArea.top, 70, 100);
-                if (curDlgHeight + deltaY > maxDlgHeight) {
-                    deltaY = max(0, maxDlgHeight - curDlgHeight);
-                }
+            int deltaX = targetWidth  - origTextWidth;
+            int deltaY = targetHeight - origTextHeight;
+
+            if (origDlgWidth + deltaX > maxDlgWidth) {
+                deltaX = maxDlgWidth - origDlgWidth;
+            }
+            if (origDlgHeight + deltaY > maxDlgHeight) {
+                deltaY = maxDlgHeight - origDlgHeight;
             }
 
-            // 5. Apply resize: grow text control, shift buttons/checkbox down, grow dialog
-            if (deltaY > 0) {
-                SetWindowPos(hWndText, NULL, 0, 0, textWidth, origTextHeight + deltaY,
+            if (deltaX != 0 || deltaY != 0) {
+                SetWindowPos(hWndText, NULL, 0, 0,
+                             origTextWidth  + deltaX,
+                             origTextHeight + deltaY,
                              SWP_NOMOVE | SWP_NOZORDER);
 
-                int const ctlIDs[] = { IDOK, IDYES, IDNO, IDCANCEL, IDABORT, IDRETRY,
-                                        IDIGNORE, IDTRYAGAIN, IDCONTINUE, IDCLOSE,
-                                        IDC_INFOBOXCHECK };
-                for (int i = 0; i < COUNTOF(ctlIDs); ++i) {
-                    HWND hCtl = GetDlgItem(hwnd, ctlIDs[i]);
+                // Buttons: shift right by deltaX (right-anchored as a group) and down by deltaY.
+                int const buttonIDs[] = { IDOK, IDYES, IDNO, IDCANCEL, IDABORT, IDRETRY,
+                                          IDIGNORE, IDTRYAGAIN, IDCONTINUE, IDCLOSE };
+                for (int i = 0; i < COUNTOF(buttonIDs); ++i) {
+                    HWND hCtl = GetDlgItem(hwnd, buttonIDs[i]);
                     if (hCtl) {
                         RECT rc;
                         GetWindowRect(hCtl, &rc);
                         MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rc, 2);
-                        SetWindowPos(hCtl, NULL, rc.left, rc.top + deltaY, 0, 0,
+                        SetWindowPos(hCtl, NULL, rc.left + deltaX, rc.top + deltaY, 0, 0,
                                      SWP_NOSIZE | SWP_NOZORDER);
                     }
                 }
+                // Checkbox: left-anchored, shift only by deltaY.
+                HWND const hChk = GetDlgItem(hwnd, IDC_INFOBOXCHECK);
+                if (hChk) {
+                    RECT rc;
+                    GetWindowRect(hChk, &rc);
+                    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rc, 2);
+                    SetWindowPos(hChk, NULL, rc.left, rc.top + deltaY, 0, 0,
+                                 SWP_NOSIZE | SWP_NOZORDER);
+                }
 
-                RECT rcDlg;
-                GetWindowRect(hwnd, &rcDlg);
                 SetWindowPos(hwnd, NULL, 0, 0,
-                             rcDlg.right - rcDlg.left,
-                             (rcDlg.bottom - rcDlg.top) + deltaY,
+                             origDlgWidth  + deltaX,
+                             origDlgHeight + deltaY,
                              SWP_NOMOVE | SWP_NOZORDER);
             }
         }
