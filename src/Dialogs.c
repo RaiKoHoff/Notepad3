@@ -1483,7 +1483,7 @@ CASE_WM_CTLCOLOR_SET:
             LPWSTR const args2_buf = StrgWriteAccessBuf(hargs2_str, StrgGetAllocLength(hargs_str));
 
             HSTRINGW hflt_str = StrgCreate(NULL);
-            LPWSTR const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENTIONS_FILTER_BUFFER);
+            LPWSTR const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENSIONS_FILTER_BUFFER);
 
             GetDlgItemText(hwnd, IDC_COMMANDLINE, args_buf, (int)StrgGetAllocLength(hargs_str));
             StrgSanitize(hargs_str);
@@ -7335,7 +7335,7 @@ bool OpenFileDlg(HWND hwnd, HPATHL hfile_pth_io, const HPATHL hinidir_pth)
         Path_Empty(hfile_pth_io, false);
     }
     WCHAR szDefExt[64] = { L'\0' };
-    WCHAR szFilter[EXTENTIONS_FILTER_BUFFER];
+    WCHAR szFilter[EXTENSIONS_FILTER_BUFFER];
     Style_GetFileFilterStr(szFilter, COUNTOF(szFilter), szDefExt, COUNTOF(szDefExt), false);
 
     HPATHL hpth_dir = Path_Copy(hinidir_pth);
@@ -7369,7 +7369,7 @@ bool SaveFileDlg(HWND hwnd, HPATHL hfile_pth_io, const HPATHL hinidir_pth)
     }
 
     WCHAR szDefExt[64] = { L'\0' };
-    WCHAR szFilter[EXTENTIONS_FILTER_BUFFER];
+    WCHAR szFilter[EXTENSIONS_FILTER_BUFFER];
     Style_GetFileFilterStr(szFilter, COUNTOF(szFilter), szDefExt, COUNTOF(szDefExt), true);
 
     HPATHL hpth_dir = Path_Copy(hinidir_pth);

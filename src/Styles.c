@@ -716,7 +716,7 @@ bool Style_Import(HWND hwnd)
     HPATHL hfile_pth = Path_Allocate(NULL);
 
     HSTRINGW       hflt_str = StrgCreate(NULL);
-    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENTIONS_FILTER_BUFFER);
+    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENSIONS_FILTER_BUFFER);
 
     GetLngString(IDS_MUI_FILTER_INI, flt_buf, (int)StrgGetAllocLength(hflt_str));
     StrgSanitize(hflt_str);
@@ -754,8 +754,22 @@ static void _LoadLexerFileExtensions()
                 Lexer_Section = (iLexer == 0) ? L"Default Text" : L"2nd Default Text";
             }
 
-            IniSectionGetString(Lexer_Section, L"FileNameExtensions", g_pLexArray[iLexer]->pszDefExt,
-                g_pLexArray[iLexer]->szExtensions, COUNTOF(g_pLexArray[iLexer]->szExtensions));
+            // Read into an oversized buffer so we can detect when the INI value
+            // would exceed the per-schema STYLE_EXTENSIONS_BUFFER limit and warn,
+            // instead of silently dropping the tail.
+            WCHAR tmpExt[STYLE_EXTENSIONS_BUFFER * 2] = { L'\0' };
+            size_t const cchRead = IniSectionGetString(Lexer_Section, L"FileNameExtensions",
+                g_pLexArray[iLexer]->pszDefExt, tmpExt, COUNTOF(tmpExt));
+
+            if (cchRead >= (size_t)STYLE_EXTENSIONS_BUFFER) {
+                WCHAR warnMsg[256];
+                StringCchPrintf(warnMsg, COUNTOF(warnMsg),
+                    L"Notepad3: FileNameExtensions for [%s] is %zu chars, exceeds %d-char limit; truncating.\n",
+                    Lexer_Section, cchRead, STYLE_EXTENSIONS_BUFFER - 1);
+                OutputDebugStringW(warnMsg);
+            }
+            StringCchCopy(g_pLexArray[iLexer]->szExtensions,
+                COUNTOF(g_pLexArray[iLexer]->szExtensions), tmpExt);
 
             // don't allow empty extensions settings => use default ext
             if (StrIsEmpty(g_pLexArray[iLexer]->szExtensions)) {
@@ -1001,7 +1015,7 @@ bool Style_Export(HWND hwnd)
     HPATHL hfile_pth = Path_Allocate(NULL);
 
     HSTRINGW       hflt_str = StrgCreate(NULL);
-    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENTIONS_FILTER_BUFFER);
+    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENSIONS_FILTER_BUFFER);
 
     GetLngString(IDS_MUI_FILTER_INI, flt_buf, (int)StrgGetAllocLength(hflt_str));
     StrgSanitize(hflt_str);
@@ -2640,6 +2654,9 @@ PEDITLEXER Style_RegExMatchLexer(LPCWSTR lpszFileName)
                     ++f; // exclude '\'
                     char regexpat[HUGE_BUFFER] = { '\0' };
                     WideCharToMultiByte(CP_UTF8, 0, f, (int)(e-f), regexpat, (int)COUNTOF(regexpat), NULL, NULL);
+                    // Strip incidental whitespace around the pattern so entries like
+                    // "py; \^setup\.py$ ;txt" don't carry a leading/trailing space into PCRE2.
+                    StrTrimA(regexpat, " \t");
 
                     if (RegExFind(regexpat, chFilePath, false, NULL) >= 0) {
                         return g_pLexArray[iLex];
@@ -3050,7 +3067,7 @@ bool Style_GetFileFilterStr(LPWSTR lpszFilter, int cchFilter, LPWSTR lpszDefExt,
     WCHAR filterAll[80] = { L'\0' };
     GetLngString(IDS_MUI_FILTER_ALL, filterAll, COUNTOF(filterAll));
 
-    WCHAR  filterDef[EXTENTIONS_FILTER_BUFFER] = { L'\0' };
+    WCHAR  filterDef[EXTENSIONS_FILTER_BUFFER] = { L'\0' };
     WCHAR ext[64] = { L'\0' };
     WCHAR append[80] = { L'\0' };
     bool bCurExtIncl = false;
@@ -4457,7 +4474,7 @@ void Style_GetStyleDisplayName(PEDITSTYLE pStyle, LPWSTR lpszName, int cchName)
 //
 int Style_GetLexerIconId(PEDITLEXER plex)
 {
-    WCHAR pszFile[STYLE_EXTENTIONS_BUFFER << 1];
+    WCHAR pszFile[STYLE_EXTENSIONS_BUFFER << 1];
 
     LPCWSTR pszExtensions = StrIsNotEmpty(plex->szExtensions) ? plex->szExtensions : plex->pszDefExt;
     StringCchCopy(pszFile, COUNTOF(pszFile), L"*.");
@@ -4564,10 +4581,10 @@ static bool  _ApplyDialogItemText(HWND hwnd, PEDITLEXER pDlgLexer, PEDITSTYLE pD
     bool bChgNfy = false;
     bool bForce = false;
 
-    WCHAR szBuf[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = { L'\0' };
+    WCHAR szBuf[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = { L'\0' };
     GetDlgItemText(hwnd, IDC_STYLEEDIT, szBuf, COUNTOF(szBuf));
     // normalize
-    WCHAR szBufNorm[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = { L'\0' };
+    WCHAR szBufNorm[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = { L'\0' };
     Style_CopyStyles_IfNotDefined(szBuf, szBufNorm, COUNTOF(szBufNorm));
 
     if (StringCchCompareXI(szBufNorm, pDlgStyle->szValue) != 0) {
@@ -4652,7 +4669,7 @@ INT_PTR CALLBACK Style_CustomizeSchemesDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
     static bool       bWarnedNoIniFile = false;
     static int        iDMHighliteContrast = 75;
 
-    static WCHAR      tchTmpBuffer[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+    static WCHAR      tchTmpBuffer[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
     static UT_array  *pStylesBackup = NULL;
 
     switch (umsg) {
@@ -4753,7 +4770,7 @@ INT_PTR CALLBACK Style_CustomizeSchemesDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
         pCurrentStyle = &(pCurrentLexer->Styles[STY_DEFAULT]);
         iCurStyleIdx  = STY_DEFAULT;
 
-        SendDlgItemMessage(hwnd, IDC_STYLEEDIT, EM_LIMITTEXT, max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER) - 1, 0);
+        SendDlgItemMessage(hwnd, IDC_STYLEEDIT, EM_LIMITTEXT, max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER) - 1, 0);
 
         MakeBitmapButton(hwnd, IDC_PREVSTYLE, IDB_PREV, -1, -1);
         MakeBitmapButton(hwnd, IDC_NEXTSTYLE, IDB_NEXT, -1, -1);
@@ -5098,7 +5115,7 @@ CASE_WM_CTLCOLOR_SET:
             //ImageList_EndDrag();
             HTREEITEM htiTarget = TreeView_GetDropHilight(hwndTV);
             if (htiTarget) {
-                WCHAR tchCopy[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+                WCHAR tchCopy[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
                 TreeView_SelectDropTarget(hwndTV, NULL);
                 GetDlgItemText(hwnd, IDC_STYLEEDIT, tchCopy, COUNTOF(tchCopy));
                 TreeView_Select(hwndTV, htiTarget, TVGN_CARET);
@@ -5216,7 +5233,7 @@ CASE_WM_CTLCOLOR_SET:
 
         case IDC_STYLEEDIT: {
             if (HIWORD(wParam) == EN_CHANGE) {
-                WCHAR tch[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+                WCHAR tch[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
 
                 GetDlgItemText(hwnd, IDC_STYLEEDIT, tch, COUNTOF(tch));
 

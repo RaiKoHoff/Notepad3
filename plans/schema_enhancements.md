@@ -27,7 +27,7 @@ low-to-moderate effort; several are trivial single-call-site fixes.
 |------|------------------|
 | `src/Styles.c` | `g_pLexArray[]`, load/save, mini-DSL parsers, Customize / Select / Themes dialogs, Import / Export |
 | `src/StyleLexers/EditLexer.h` | `EDITLEXER`, `EDITSTYLE`, `KEYWORDLIST`, `BUFSIZE_STYLE_VALUE = 256` |
-| `src/TypeDefs.h` | `STYLE_EXTENTIONS_BUFFER = 512`, `EXTENTIONS_FILTER_BUFFER = 1024` |
+| `src/TypeDefs.h` | `STYLE_EXTENSIONS_BUFFER = 512`, `EXTENSIONS_FILTER_BUFFER = 1024` |
 | `src/StyleLexers/*.c` | 60+ per-language lexer definitions |
 | `src/Config/Config.cpp` | Settings → theme name persistence (`Settings.CurrentThemeName`) |
 | `language/common_res.h` | Menu IDs: `IDM_VIEW_SCHEME=41001`, `IDM_VIEW_USE2NDDEFAULT=41002`, `IDM_VIEW_SCHEMECONFIG=41003`, `IDM_THEMES_FACTORY_RESET=37001`, `IDM_THEMES_STD_CFG=37002` |
