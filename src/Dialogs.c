@@ -475,12 +475,13 @@ LONG InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...)
     msgBox.uType = uType;
     msgBox.lpstrMessage = AllocMem((COUNTOF(wchMessage)+1) * sizeof(WCHAR), HEAP_ZERO_MEMORY);
 
-    const PUINT_PTR argp = (PUINT_PTR)& uidMsg + 1;
-    if (argp && *argp) {
-        StringCchVPrintfW(msgBox.lpstrMessage, COUNTOF(wchMessage), wchMessage, (LPVOID)argp);
-    } else {
-        StringCchCopy(msgBox.lpstrMessage, COUNTOF(wchMessage), wchMessage);
-    }
+    // Use va_list (not the &uidMsg+1 stack-walk hack): on Windows ARM64 the first 8
+    // varargs are in registers X0–X7, not at &uidMsg+1, so the old code read garbage and
+    // typically fell through to the no-args branch — leaving literal "%s" in the message.
+    va_list args;
+    va_start(args, uidMsg);
+    StringCchVPrintfW(msgBox.lpstrMessage, COUNTOF(wchMessage), wchMessage, args);
+    va_end(args);
 
     bool bLastError = false;
     switch (uidMsg) {
