@@ -10992,6 +10992,20 @@ void EndUndoActionSelection(const LONG token)
 }
 
 
+static inline bool IsFileVarLogFile()
+{
+    DocPos const len = SciCall_GetTextLength();
+    if (len < 4) {
+        return false;
+    }
+    char tch[6] = { '\0' };
+    SciCall_GetText(COUNTOF(tch) - 1, tch); // up to 5 bytes, null-terminated
+    if (memcmp(tch, ".LOG", 4) != 0) {
+        return false;
+    }
+    return (len == 4) || (tch[4] == '\r') || (tch[4] == '\n');
+}
+
 //=============================================================================
 //
 //  FileIO()
@@ -11009,9 +11023,10 @@ bool FileIO(bool fLoad, const HPATHL hfile_pth, EditFileIOStatus* status,
     else {
         int idx = 0;
         if (MRU_FindPath(Globals.pFileMRU, hfile_pth, &idx)) {
+            bool const bSkipCaretMRU = !Settings.PreserveCaretPos || IsFileVarLogFile();
             Globals.pFileMRU->iEncoding[idx] = status->iEncoding;
-            Globals.pFileMRU->iCaretPos[idx] = (Settings.PreserveCaretPos ? SciCall_GetCurrentPos() : -1);
-            Globals.pFileMRU->iSelAnchPos[idx] = (Settings.PreserveCaretPos ? SciCall_GetAnchor() : -1);
+            Globals.pFileMRU->iCaretPos[idx] = bSkipCaretMRU ? -1 : SciCall_GetCurrentPos();
+            Globals.pFileMRU->iSelAnchPos[idx] = bSkipCaretMRU ? -1 : SciCall_GetAnchor();
 
             WCHAR wchBookMarks[MRU_BMRK_SIZE] = { L'\0' };
             EditGetBookmarkList(Globals.hwndEdit, wchBookMarks, COUNTOF(wchBookMarks));
@@ -11066,16 +11081,6 @@ bool ConsistentIndentationCheck(EditFileIOStatus* status)
 //  FileLoad()
 //
 //
-
-static inline bool IsFileVarLogFile()
-{
-    if (SciCall_GetTextLength() >= 4) {
-        char tch[5] = { '\0', '\0', '\0', '\0', '\0' };
-        SciCall_GetText(COUNTOF(tch) - 1, tch);
-        return (StrCmpA(tch, ".LOG") == 0); 
-    }
-    return false;
-}
 
 static inline void _ResetFileWatchingMode() {
     if (FileWatching.MonitoringLog) {
@@ -11316,8 +11321,8 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
         // consistent settings file handling (if loaded in editor)
         Flags.bSettingsFileSoftLocked = (Path_StrgComparePath(Paths.CurrentFile, Paths.IniFile, Paths.WorkingDirectory, true) == 0);
 
-        // the .LOG feature ...
-        if (IsFileVarLogFile()) {
+        // the .LOG feature ... (initial open only)
+        if (!bReloadFile && IsFileVarLogFile()) {
             Sci_SetCaretScrollDocEnd();
             UndoTransActionBegin();
             SciCall_NewLine();
@@ -11331,8 +11336,8 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
             UpdateSaveSettingsCmds();
         }
 
-        // set historic caret/selection  pos
-        if (!FileWatching.MonitoringLog && (s_flagChangeNotify != FWM_AUTORELOAD)) {
+        // set historic caret/selection  pos (suppressed for .LOG files - datetime placement wins)
+        if (!IsFileVarLogFile() && !FileWatching.MonitoringLog && (s_flagChangeNotify != FWM_AUTORELOAD)) {
             if ((iCaretPos >= 0) && (iAnchorPos >= 0)) {
                 Sci_SetStreamSelection(iAnchorPos, iCaretPos, true);
                 Sci_ScrollSelectionToView();
@@ -11584,9 +11589,10 @@ static void _MRU_UpdateSession()
 {
     int idx = 0;
     if (MRU_FindPath(Globals.pFileMRU, Paths.CurrentFile, &idx)) {
+        bool const bSkipCaretMRU = !Settings.PreserveCaretPos || IsFileVarLogFile();
         Globals.pFileMRU->iEncoding[idx] = Encoding_GetCurrent();
-        Globals.pFileMRU->iCaretPos[idx] = (Settings.PreserveCaretPos) ? SciCall_GetCurrentPos() : -1;
-        Globals.pFileMRU->iSelAnchPos[idx] = (Settings.PreserveCaretPos) ? (Sci_IsMultiOrRectangleSelection() ? -1 : SciCall_GetAnchor()) : -1;
+        Globals.pFileMRU->iCaretPos[idx] = bSkipCaretMRU ? -1 : SciCall_GetCurrentPos();
+        Globals.pFileMRU->iSelAnchPos[idx] = bSkipCaretMRU ? -1 : (Sci_IsMultiOrRectangleSelection() ? -1 : SciCall_GetAnchor());
         WCHAR wchBookMarks[MRU_BMRK_SIZE] = { L'\0' };
         EditGetBookmarkList(Globals.hwndEdit, wchBookMarks, COUNTOF(wchBookMarks));
         if (Globals.pFileMRU->pszBookMarks[idx]) {
@@ -11599,9 +11605,10 @@ static void _MRU_UpdateSession()
 
 static void _MRU_AddSession()
 {
+    bool const   bIsLogFile = IsFileVarLogFile();
     cpi_enc_t    iCurrEnc = Encoding_GetCurrent();
-    const DocPos iCaretPos = SciCall_GetCurrentPos();
-    const DocPos iAnchorPos = Sci_IsMultiOrRectangleSelection() ? -1 : SciCall_GetAnchor();
+    const DocPos iCaretPos = bIsLogFile ? -1 : SciCall_GetCurrentPos();
+    const DocPos iAnchorPos = bIsLogFile ? -1 : (Sci_IsMultiOrRectangleSelection() ? -1 : SciCall_GetAnchor());
     WCHAR        wchBookMarks[MRU_BMRK_SIZE] = { L'\0' };
     EditGetBookmarkList(Globals.hwndEdit, wchBookMarks, COUNTOF(wchBookMarks));
     MRU_AddPath(Globals.pFileMRU, Paths.CurrentFile, Flags.RelativeFileMRU, Flags.PortableMyDocs, iCurrEnc, iCaretPos, iAnchorPos, wchBookMarks);

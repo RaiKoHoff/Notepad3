@@ -107,6 +107,7 @@ This pattern is used by **Shift+F5** to update timestamps, e.g., `$Date: 2018/04
 
 **Notes:**
 - All `DateTime` formats accept [`strftime()`](https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/strftime-wcsftime-strftime-l-wcsftime-l?view=vs-2019) format strings.
+- `DateTimeFormat` is also the format used by the **`.LOG` auto-timestamp** feature (files starting with `.LOG`); see [File Content Flags](FileContentFlags.md#log-auto-timestamp).
 - `TimeStampFormat` also accepts `%s` as a placeholder for a `DateTimeFormat`-formatted current date/time string (mixing `strftime()` codes with `%s` is not allowed).
 - If you define a custom `TimeStampFormat`, define a matching `TimeStampRegEx` so that "Update Timestamps" can find and replace them correctly.
 
@@ -165,6 +166,10 @@ Text Files|*.txt;*.wtx;*.log;*.asc;*.doc;*.diz;*.nfo|All Files|*.*
 #### `FileLoadWarningMB=4`
 
 Size limit (MB) for large-file warning. Set to `0` to disable.
+
+#### `FileVarScanBytes=512`
+
+Number of bytes scanned at the file's head **and** (as fallback) at its tail for Emacs file variables, Vim modelines, and encoding tags. Increase if your project's headers (license blocks, banners) push the modeline past 512 bytes. Range: `256`–`2048`. See [File Content Flags](FileContentFlags.md).
 
 #### `MultiFileArg=0`
 

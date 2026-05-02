@@ -40,7 +40,7 @@ typedef struct _editlexer
     int          resID;        // language resource
     LPCWSTR      pszName;      // config/settings section
     LPCWSTR      pszDefExt;    // default file name ext (4 reset)
-    WCHAR        szExtensions[STYLE_EXTENTIONS_BUFFER];
+    WCHAR        szExtensions[STYLE_EXTENSIONS_BUFFER];
     PKEYWORDLIST pKeyWords;
     EDITSTYLE    Styles[];     // must be last
 

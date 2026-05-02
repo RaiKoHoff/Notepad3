@@ -1392,6 +1392,7 @@ void LoadSettings()
     Settings2.UchardetLanguageFilter = clampi(IniSectionGetInt(IniSecSettings2, L"UchardetLanguageFilter", 0x1F), 0, 0x1F);
 
     Settings2.FileLoadWarningMB = clampi(IniSectionGetInt(IniSecSettings2, L"FileLoadWarningMB", 4), 0, 2048);
+    Settings2.FileVarScanBytes = clampi(IniSectionGetInt(IniSecSettings2, L"FileVarScanBytes", LARGE_BUFFER), MIDSZ_BUFFER, XHUGE_BUFFER);
 
     Settings2.OpacityLevel = clampi(IniSectionGetInt(IniSecSettings2, L"OpacityLevel", 75), 10, 100);
 

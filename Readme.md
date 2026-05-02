@@ -46,7 +46,8 @@ Over 55 languages supported, including:
 - **[AES-256 Rijndael](readme/encryption/Encryption.md)** encryption/decryption (in-app and command-line batch tool)
 - **[Encoding detection](readme/uchardet/EncodingDetection.md)** powered by [uchardet](https://www.freedesktop.org/wiki/Software/uchardet/)
 - **File change monitoring** with configurable check intervals
-- **Emacs file variables** support (encoding, mode, tab-width, etc.)
+- **[`.LOG` auto-timestamp](readme/config/FileContentFlags.md#log-auto-timestamp)** — files whose first line is `.LOG` get a fresh date + time appended on open, matching classic Notepad behaviour
+- **[Emacs file variables](readme/config/FileContentFlags.md#emacs-file-variables)** support (encoding, mode, tab-width, etc.)
 - **File history** that preserves caret position and encoding
 - **Portable design** — runs from USB drives with relative path storage
 
@@ -118,6 +119,8 @@ Notepad3 uses a portable INI file for all settings. Press **Ctrl+F7** to open it
 📖 **Full configuration reference:** [readme/config/Configuration.md](readme/config/Configuration.md)
 
 🎨 **Schemas, styles & themes:** [readme/schema/CustomSchema.md](readme/schema/CustomSchema.md) — the layered override model, the style mini-language, `View → Customize Schemes` (**F12**), and how to export / import / collect custom themes.
+
+📄 **File content flags** (`.LOG`, Emacs file variables, encoding tags, shebang lexer hint): [readme/config/FileContentFlags.md](readme/config/FileContentFlags.md) — markers you can put inside a file to control how Notepad3 opens or styles it.
 
 ## Command-Line Options
 

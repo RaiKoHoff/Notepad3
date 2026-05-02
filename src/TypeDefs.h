@@ -218,8 +218,8 @@ typedef enum BUFFER_SIZES {
 
     EDGELINE_NUM_LIMIT = 256,
     ANSI_CHAR_BUFFER = 258,
-    STYLE_EXTENTIONS_BUFFER = 512,
-    EXTENTIONS_FILTER_BUFFER = (STYLE_EXTENTIONS_BUFFER << 1),
+    STYLE_EXTENSIONS_BUFFER = 512,
+    EXTENSIONS_FILTER_BUFFER = (STYLE_EXTENSIONS_BUFFER << 1),
     FNDRPL_BUFFER = 4096, // TODO: eliminate limit
     LONG_LINES_MARKER_LIMIT = 8192,
     CMDLN_LENGTH_LIMIT = 8192
@@ -803,6 +803,7 @@ extern FLAGS_T DefaultFlags;
 typedef struct SETTINGS2_T {
 
     int     FileLoadWarningMB;
+    int     FileVarScanBytes;
     int     OpacityLevel;
     int     FindReplaceOpacityLevel;
     LONG64  FileCheckInterval;
