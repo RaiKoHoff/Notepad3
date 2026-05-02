@@ -580,7 +580,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Zaznacz wszystko",                          IDM_EDIT_SELECTALL
         MENUITEM SEPARATOR
-        POPUP "Convert Case"
+        POPUP "Zmień wielkość liter"
         BEGIN
             MENUITEM "Wielkie litery",              CMD_CTX_UPPERCASE
             MENUITEM "Małe litery",              CMD_CTX_LOWERCASE
