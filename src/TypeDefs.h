@@ -803,6 +803,7 @@ extern FLAGS_T DefaultFlags;
 typedef struct SETTINGS2_T {
 
     int     FileLoadWarningMB;
+    int     FileVarScanBytes;
     int     OpacityLevel;
     int     FindReplaceOpacityLevel;
     LONG64  FileCheckInterval;

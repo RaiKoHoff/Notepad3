@@ -570,6 +570,136 @@ static void _SetEncodingTitleInfo(const ENC_DET_T* pEncDetInfo)
 
 //=============================================================================
 //
+//  _ParseVimModeline()
+//
+//  Recognizes the Vim modeline forms:
+//    [text] vim: option=value option=value :    (also vi: / ex:)
+//    [text] vim:set option=value option=value:  (with optional "set" keyword)
+//    [text] vim:option=value:option=value       (colon-separated form)
+//  The marker must be preceded by whitespace or be at line start.
+//  Honored options:
+//    ts/tabstop, sw/shiftwidth, et/expandtab, noet/noexpandtab,
+//    wrap/nowrap, tw/textwidth, ft/filetype
+//
+static void _ParseVimModeline(const char* buffer, LPFILEVARS lpfv)
+{
+    static const char* const markers[] = { "vim:", "ex:", "vi:" };
+    const char* mlStart = NULL;
+    for (int m = 0; m < (int)COUNTOF(markers) && !mlStart; ++m) {
+        size_t const mLen = StringCchLenA(markers[m], 0);
+        const char* p = StrStrIA(buffer, markers[m]);
+        while (p) {
+            if (p == buffer || p[-1] == ' ' || p[-1] == '\t') {
+                mlStart = p + mLen;
+                break;
+            }
+            p = StrStrIA(p + 1, markers[m]);
+        }
+    }
+    if (!mlStart) {
+        return;
+    }
+
+    const char* mlEnd = mlStart;
+    while (*mlEnd && *mlEnd != '\r' && *mlEnd != '\n') {
+        ++mlEnd;
+    }
+
+    const char* p = mlStart;
+    while (p < mlEnd && (*p == ' ' || *p == '\t')) {
+        ++p;
+    }
+
+    bool bSetForm = false;
+    if ((p + 4 <= mlEnd) && (_strnicmp(p, "set ", 4) == 0)) {
+        bSetForm = true;
+        p += 4;
+    } else if ((p + 3 <= mlEnd) && (_strnicmp(p, "se ", 3) == 0)) {
+        bSetForm = true;
+        p += 3;
+    }
+
+    char nameBuf[32];
+    char valBuf[64];
+    while (p < mlEnd) {
+        while (p < mlEnd && (*p == ' ' || *p == '\t' || *p == ':')) {
+            ++p;
+        }
+        if (p >= mlEnd) {
+            break;
+        }
+
+        const char* nameStart = p;
+        while (p < mlEnd && *p != '=' && *p != ':' && *p != ' ' && *p != '\t') {
+            ++p;
+        }
+        size_t nameLen = (size_t)(p - nameStart);
+        if (nameLen == 0) {
+            break;
+        }
+        if (nameLen >= COUNTOF(nameBuf)) {
+            nameLen = COUNTOF(nameBuf) - 1;
+        }
+        memcpy(nameBuf, nameStart, nameLen);
+        nameBuf[nameLen] = '\0';
+
+        valBuf[0] = '\0';
+        if (p < mlEnd && *p == '=') {
+            ++p;
+            const char* valStart = p;
+            while (p < mlEnd && *p != ':' && (!bSetForm || (*p != ' ' && *p != '\t'))) {
+                ++p;
+            }
+            size_t valLen = (size_t)(p - valStart);
+            if (valLen >= COUNTOF(valBuf)) {
+                valLen = COUNTOF(valBuf) - 1;
+            }
+            memcpy(valBuf, valStart, valLen);
+            valBuf[valLen] = '\0';
+        }
+
+        if ((_stricmp(nameBuf, "ts") == 0) || (_stricmp(nameBuf, "tabstop") == 0)) {
+            int const i = atoi(valBuf);
+            if (i > 0) {
+                lpfv->iTabWidth = clampi(i, 1, 256);
+                lpfv->mask |= FV_TABWIDTH;
+            }
+        } else if ((_stricmp(nameBuf, "sw") == 0) || (_stricmp(nameBuf, "shiftwidth") == 0)) {
+            int const i = atoi(valBuf);
+            lpfv->iIndentWidth = clampi(i, 0, 256);
+            lpfv->mask |= FV_INDENTWIDTH;
+        } else if ((_stricmp(nameBuf, "et") == 0) || (_stricmp(nameBuf, "expandtab") == 0)) {
+            lpfv->bTabsAsSpaces = true;
+            lpfv->mask |= FV_TABSASSPACES;
+        } else if ((_stricmp(nameBuf, "noet") == 0) || (_stricmp(nameBuf, "noexpandtab") == 0)) {
+            lpfv->bTabsAsSpaces = false;
+            lpfv->mask |= FV_TABSASSPACES;
+        } else if (_stricmp(nameBuf, "wrap") == 0) {
+            lpfv->bWordWrap = true;
+            lpfv->mask |= FV_WORDWRAP;
+        } else if (_stricmp(nameBuf, "nowrap") == 0) {
+            lpfv->bWordWrap = false;
+            lpfv->mask |= FV_WORDWRAP;
+        } else if ((_stricmp(nameBuf, "tw") == 0) || (_stricmp(nameBuf, "textwidth") == 0)) {
+            int const i = atoi(valBuf);
+            if (i > 0) {
+                WCHAR wbuf[16];
+                StringCchPrintf(wbuf, COUNTOF(wbuf), L"%d", i);
+                StringCchCopy(lpfv->wchMultiEdgeLines, COUNTOF(lpfv->wchMultiEdgeLines), wbuf);
+                lpfv->mask |= FV_LONGLINESLIMIT;
+            }
+        } else if ((_stricmp(nameBuf, "ft") == 0) || (_stricmp(nameBuf, "filetype") == 0)) {
+            if (valBuf[0] && !(lpfv->mask & FV_MODE)) {
+                StringCchCopyA(lpfv->chMode, COUNTOF(lpfv->chMode), valBuf);
+                lpfv->mask |= FV_MODE;
+            }
+        }
+    }
+}
+
+
+//=============================================================================
+//
 //  _SetFileVars()
 //
 static void _SetFileVars(char* buffer, size_t cch, LPFILEVARS lpfv)
@@ -617,6 +747,9 @@ static void _SetFileVars(char* buffer, size_t cch, LPFILEVARS lpfv)
             if (FileVars_ParseStr(buffer, "mode", lpfv->chMode, COUNTOF(lpfv->chMode))) {
                 lpfv->mask |= FV_MODE;
             }
+
+            // Vim modelines (`vim:` / `vi:` / `ex:`) — parsed alongside Emacs file variables.
+            _ParseVimModeline(buffer, lpfv);
         }
     }
 
@@ -662,15 +795,16 @@ extern "C" bool FileVars_GetFromData(const char* lpData, size_t cbData, LPFILEVA
         return true;
     }
 
-    char tmpbuf[LARGE_BUFFER];
-    size_t const cch = min_s(cbData + 1, COUNTOF(tmpbuf));
+    size_t const scanBytes = (size_t)clampi(Settings2.FileVarScanBytes, MIDSZ_BUFFER, XHUGE_BUFFER);
+    char tmpbuf[XHUGE_BUFFER];
+    size_t const cch = min_s(cbData + 1, scanBytes);
 
-    StringCchCopyNA(tmpbuf, COUNTOF(tmpbuf), lpData, cch);
+    StringCchCopyNA(tmpbuf, scanBytes, lpData, cch);
     _SetFileVars(tmpbuf, cch, lpfv);
 
     // if no file vars found, look at EOF
-    if ((lpfv->mask == 0) && (cbData > COUNTOF(tmpbuf))) {
-        StringCchCopyNA(tmpbuf, COUNTOF(tmpbuf), lpData + cbData - COUNTOF(tmpbuf) + 1, COUNTOF(tmpbuf));
+    if ((lpfv->mask == 0) && (cbData > scanBytes)) {
+        StringCchCopyNA(tmpbuf, scanBytes, lpData + cbData - scanBytes + 1, scanBytes);
         _SetFileVars(tmpbuf, cch, lpfv);
     }
 
