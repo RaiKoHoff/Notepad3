@@ -644,7 +644,12 @@ int FormatLngStringW(LPWSTR lpOutput, int nOutput, UINT uIdFormat, ...)
     WCHAR* const pBuffer = AllocMem(sizeof(WCHAR) * nOutput, HEAP_ZERO_MEMORY);
     if (pBuffer) {
         if (LoadLngStringW(uIdFormat, pBuffer, nOutput)) {
-            StringCchVPrintfW(lpOutput, nOutput, pBuffer, (LPVOID)((PUINT_PTR)& uIdFormat + 1));
+            // va_list, not &uIdFormat+1 — the latter walks the stack and breaks on ARM64
+            // where the first 8 varargs are in X0–X7 registers.
+            va_list args;
+            va_start(args, uIdFormat);
+            StringCchVPrintfW(lpOutput, nOutput, pBuffer, args);
+            va_end(args);
         }
         FreeMem(pBuffer);
         return (int)StringCchLen(lpOutput, nOutput);
@@ -661,7 +666,10 @@ int FormatLngStringA(LPSTR lpOutput, int nOutput, UINT uIdFormat, ...)
     CHAR* const pBuffer = AllocMem(sizeof(CHAR) * nOutput, HEAP_ZERO_MEMORY);
     if (pBuffer) {
         if (LoadLngStringA(uIdFormat, pBuffer, nOutput)) {
-            StringCchVPrintfA(lpOutput, nOutput, pBuffer, (LPVOID)((PUINT_PTR)& uIdFormat + 1));
+            va_list args;
+            va_start(args, uIdFormat);
+            StringCchVPrintfA(lpOutput, nOutput, pBuffer, args);
+            va_end(args);
         }
         FreeMem(pBuffer);
         return (int)StringCchLenA(lpOutput, nOutput);
