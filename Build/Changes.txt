@@ -36,7 +36,7 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.501.(build_#) (2026-05-01)
+Current BETA Version 7.26.502.(build_#) (2026-05-02)
 ========================================================
 
 --------------------------------------------------------
@@ -53,20 +53,23 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.502.1]- ".LOG" feature + enhancements around file-vars + docs (#5791).
+[.502.1]- InfoBoxLng proportional dynamic sizing (#5790).
+[.502.1]- About requester show ARM compilation, missing file path on open non-existent file (#5790).
 
 --------------------------------------------------------
 REMOVED:
 --------------------------------------------------------
 [.xxx.x]- .
-[.501.1]- Chore: revert experimental CSS styling for HTML Lexer.
+[.501.1]- Chore: revert experimental CSS styling for HTML Lexer (#5787).
 
 --------------------------------------------------------
 CHANGES Versions in Tools or Libraries:
 --------------------------------------------------------
-[.418.1]- Update TinyExpr++ (TIN) version 1.1.0 (2026-01-16).
-[.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26).
-[.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26).
-[.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24).
+[.418.1]- Update TinyExpr++ (TIN) version 1.1.0 (2026-01-16) (#5707).
+[.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26) (#5683).
+[.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26) (#5683).
+[.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24) (#5635).
 [.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08).
 [.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21).
 [1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13).
@@ -83,19 +86,19 @@ Version 7.26.426.1 (26 April 2026)
 --------------------------------------------------------
 NEW:
 --------------------------------------------------------
-[.425.1]- Paste-board minimization (/B /I) escape hatch if Ctrl-key held down.
-[.425.1]- PasteBoard: defer minimize on /B + /I startup so auto-pasted clipboard is visible briefly.
-[.425.1]- PasteBoard: opt-out 'Don't ask again' on closing modified untitled documents.
-[.424.1]- Feat: /B auto-pastes current clipboard on empty untitled buffer.
-[.422.1]- Add search pattern placeholder (%pattern%) for editor command.
-[.422.1]- Feat: option to stop Clipboard monitoring during runtime.
-[.422.1]- In Notepad3 Portable, add a redirect to the Favorites folder.
-[.418.1]- Feat: switching from old tinyexpr lib to modern TinyExpr++ (TIN).
-[.418.1]- In Notepad3Portable PAF, add a redirect to the Favorites folder.
-[.417.1]- Feat: Prep for grepWin search pattern editorcmd patching.
-[.417.1]- Feat: HTML CSS Styles.
-[.417.1]- Add default directory selection to settings menu.
-[.417.1]- Add special grepWinPortable error msg.
+[.425.1]- Paste-board minimization (/B /I) escape hatch if Ctrl-key held down (#5769).
+[.425.1]- PasteBoard: defer minimize on /B + /I startup so auto-pasted clipboard is visible briefly (#5760).
+[.425.1]- PasteBoard: opt-out 'Don't ask again' on closing modified untitled documents (#5760).
+[.424.1]- Feat: /B auto-pastes current clipboard on empty untitled buffer (#5754).
+[.422.1]- Add search pattern placeholder (%pattern%) for editor command (#5727).
+[.422.1]- Feat: option to stop Clipboard monitoring during runtime (#5723).
+[.422.1]- In Notepad3 Portable, add a redirect to the Favorites folder (#5719).
+[.418.1]- Feat: switching from old tinyexpr lib to modern TinyExpr++ (TIN) (#5707).
+[.418.1]- In Notepad3Portable PAF, add a redirect to the Favorites folder (#5704).
+[.417.1]- Feat: Prep for grepWin search pattern editorcmd patching (#5691).
+[.417.1]- Feat: HTML CSS Styles (#5681).
+[.417.1]- Add default directory selection to settings menu (#5614).
+[.417.1]- Add special grepWinPortable error msg (#5661).
 [.411.1]- Add Tab Settings - Tab/Backspace always indent (not only at beginning of line).
 [.411.1]- Add [Settings2]CopyMultiSelectionSeparator config.
 [.411.1]- Add case conversions on rmb context menu.
@@ -114,17 +117,17 @@ NEW:
 --------------------------------------------------------
 CHANGES:
 --------------------------------------------------------
-[.425.1]- ARM: LimitNotifyEvents around the four paste sites.
-[.424.1]- Clipboard Monitoring and log "Chasing doc tail" are mutually exclusive (mutex).
-[.417.1]- Replacing "Tab/Backspace" with "Tab/Shift-Tab.
-[.417.1]- Revert auto resolving to UNC for mapped network-drives.
-[.411.1]- MUI - Migrate tool "grepWin" into NotepadPortableApp (PAF).
+[.425.1]- ARM: LimitNotifyEvents around the four paste sites (#5764).
+[.424.1]- Clipboard Monitoring (Paste-Board) runtime toggle (mutex with Log-Monitoring) (#5748).
+[.417.1]- Replacing "Tab/Backspace" with "Tab/Shift-Tab (#5694).
+[.417.1]- Revert auto resolving to UNC for mapped network-drives (#5677).
+[.411.1]- MUI - Migrate tool "grepWin" into NotepadPortableApp (PAF) (#5635).
 [.411.1]- MUI - Cleanup and add missing files in NP3PortableApp.
-[.411.1]- PortableApps Build (new build script, settings, grepWin orig handling).
-[.411.1]- Migration to original grepWin tooling (remove home brew project) (GRE).
-[.411.1]- AnalyzeReliableConfidenceLevel dialog configurable.
-[.411.1]- Crtl+c / RMB-copy for line (empty selection) and hyperlinks.
-[.411.1]- Win10 modernization.
+[.411.1]- PortableApps Build (new build script, settings, grepWin orig handling) (#5626).
+[.411.1]- Migration to original grepWin tooling (remove home brew project) (GRE) (#5624).
+[.411.1]- AnalyzeReliableConfidenceLevel dialog configurable (#5619).
+[.411.1]- Crtl+c / RMB-copy for line (empty selection) and hyperlinks (#5606).
+[.411.1]- Win10 modernization (#5604).
 [.306.1]- Synchronise with current scintilla mirror.
 [.306.1]- Update SimpleIni header only lib (to v4.25).
 [.306.1]- Major version 6 → 7 for Win10 minimum.
@@ -147,25 +150,25 @@ CHANGES:
 --------------------------------------------------------
 FIXES:
 --------------------------------------------------------
-[.425.1]- Editable combo the edit field IS the explicit source.
-[.425.1]- Try to address ARM flickering on clipboard paste.
-[.422.1]- Modernizing (Win10+) Clipboard monitoring feature.
-[.417.1]- LexHTML.cxx.
-[.417.1]- Language file names for grepWinPortable.
-[.417.1]- Error prone manual numbering of menu child-items for checkboxes.
-[.417.1]- NONE vs EMPTY INI file handling, remove styling empty sections.
-[.417.1]- Encoding dialog system codepage special handling.
-[.411.1]- No PAF .7z creation - not supposed to be used that way.
-[.411.1]- ARM64 flickering/rendering issues on Windows 11 25H2.
-[.411.1]- Win32 build and build-scripts.
-[.411.1]- PortableApps Platform build should use PA's grepWinPortable (GRE).
-[.411.1]- Esc search pattern on commandline for grepWinPortable(App) call (GRE).
-[.411.1]- grepWin call parameter issues (GRE).
-[.411.1]- Simplify encoding settings and invisible border (aero snap) problem.
-[.411.1]- Default encoding (forced fallback).
-[.411.1]- Claude Code review of pathlib methods.
-[.411.1]- Sec-issue load system library hijacking.
-[.411.1]- Unicode vs. binary encoding detection.
+[.425.1]- Editable combo the edit field IS the explicit source (#5770).
+[.425.1]- Try to address ARM flickering on clipboard paste (#5764).
+[.422.1]- Modernizing (Win10+) Clipboard monitoring feature (#5725).
+[.417.1]- LexHTML.cxx  (#5683).
+[.417.1]- Language file names for grepWinPortable (#5657).
+[.417.1]- Error prone manual numbering of menu child-items for checkboxes (#5655).
+[.417.1]- NONE vs EMPTY INI file handling, remove styling empty sections (#5653).
+[.417.1]- Encoding dialog system codepage special handling (#5613).
+[.411.1]- No PAF .7z creation - not supposed to be used that way (#5638).
+[.411.1]- ARM64 flickering/rendering issues on Windows 11 25H2 (#5638).
+[.411.1]- Win32 build and build-scripts (#5629).
+[.411.1]- PortableApps Platform build should use PA's grepWinPortable (GRE) (#5636).
+[.411.1]- Esc search pattern on commandline for grepWinPortable(App) call (GRE) (#5629).
+[.411.1]- grepWin call parameter issues (GRE) (#5629).
+[.411.1]- Simplify encoding settings and invisible border (aero snap) problem (#5621).
+[.411.1]- Default encoding (forced fallback) (#5619).
+[.411.1]- Claude Code review of pathlib methods (#5616).
+[.411.1]- Sec-issue load system library hijacking (#5606).
+[.411.1]- Unicode vs. binary encoding detection (#5604).
 [.314.1]- PCRE2 line end detection (PCR).
 [.314.1]- Claude Code based refactoring of encoding detection.
 [.314.1]- Remove too strong UTF-8 affinity.
@@ -206,7 +209,7 @@ FIXES:
 
 --------------------------------------------------------
 REMOVED:
-[.411.1]- Remove grepWinNP3 project from main (GRE).
+[.411.1]- Remove grepWinNP3 project from main (GRE) (#5627).
 [.306.1]- Remove deprecated Win7 compatibility and UTF-32 detection.
 [.303.1]- Remove retired Oniguruma regex Engine (ONI).
 [.227.1]- Remove obsolete AppVeyor CI build.
@@ -216,10 +219,10 @@ REMOVED:
 --------------------------------------------------------
 CHANGES Versions in Tools or Libraries:
 --------------------------------------------------------
-[.418.1]- Update TinyExpr++ (TIN) version 1.1.0 (2026-01-16).
-[.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26).
-[.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26).
-[.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24).
+[.418.1]- Update TinyExpr++ (TIN) version 1.1.0 (2026-01-16) (#5707).
+[.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26) (#5683).
+[.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26) (#5683).
+[.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24) (#5635).
 [.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08).
 [.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21).
 [1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13).

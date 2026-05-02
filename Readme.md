@@ -64,9 +64,9 @@ Over 55 languages supported, including:
 - **Transparent window mode** with configurable opacity
 
 ### Localization
-27 language translations:
+26 language translations:
 
-> Afrikaans, Belarusian, Chinese (Simplified & Traditional), Dutch, English (US & UK), Finnish, French, German, Greek, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Polish, Portuguese (Brazil & Portugal), Russian, Slovak, Spanish (Spain & Latin America), Swedish, Turkish, Vietnamese
+> Afrikaans, Belarusian, Chinese (Simplified & Traditional), Dutch, English (US & UK), Finnish, French, German, Greek, Hindi, Hungarian, Indonesian, Italian, Japanese, Korean, Polish, Portuguese (Brazil & Portugal), Russian, Slovak, Spanish, Swedish, Turkish, Vietnamese
 
 ### Companion Tools
 - **[MiniPath](minipath/)** — fast file browser plugin (Ctrl+M)
