@@ -1255,6 +1255,19 @@ __forceinline bool Sci_IsPosValid(const DocPos pos)
 }
 // ----------------------------------------------------------------------------
 
+// Read-and-clear SC_STATUS_WARN_REGEX from Scintilla's status field.
+// Set by Editor::FindText/SearchInTarget when the regex engine throws
+// RegexError. Clearing on consume keeps the field clean for the next call.
+__forceinline bool Sci_ConsumeRegexWarnStatus(void)
+{
+    if (SciCall_GetStatus() == SC_STATUS_WARN_REGEX) {
+        SciCall_SetStatus(SC_STATUS_OK);
+        return true;
+    }
+    return false;
+}
+// ----------------------------------------------------------------------------
+
 // max. line length in range (incl. line-breaks)
 inline DocPos Sci_GetRangeMaxLineLength(DocLn iBeginLine, DocLn iEndLine)
 {

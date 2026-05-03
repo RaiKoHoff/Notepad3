@@ -302,7 +302,7 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
         OutputDebugStringA(m_ErrorInfo);
         OutputDebugStringA("\n");
         clear();
-        return SciPos(-2);   // -1 is normally used for not found, -2 is used here for invalid regex
+        throw RegexError();   // signals SC_STATUS_WARN_REGEX via Editor::FindText catch
       }
 
       m_MatchData = pcre2_match_data_create_from_pattern(m_CompiledPattern, nullptr);
@@ -310,9 +310,12 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
       // JIT compile for performance (silently ignored if JIT not available)
       pcre2_jit_compile(m_CompiledPattern, PCRE2_JIT_COMPLETE);
     }
+    catch (RegexError &) {
+      throw;   // already a regex warning — re-raise unchanged
+    }
     catch (...) {
       clear();
-      return SciPos(-2);
+      throw RegexError();
     }
   } else {
     // check if already searched for (same range = same result)
@@ -459,7 +462,7 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
     }
   }
   catch (...) {
-    return SciPos(-3);  // -1 is normally used for not found, -3 is used here for exception
+    throw RegexError();   // signals SC_STATUS_WARN_REGEX via Editor::FindText catch
   }
 
   //NOTE: potential 64-bit-size issue at interface here:

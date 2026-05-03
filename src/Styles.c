@@ -812,7 +812,7 @@ static bool _TryTranslateRegexEntry(const WCHAR *pat, size_t patLen, LPWSTR out,
 
 //=============================================================================
 //
-//   _StripLegacyRegexEntries()
+//   _MigrateLegacyRegexEntries()
 //
 //   Walks a ';'-separated FileNameExtensions list in-place and migrates any
 //   entry beginning with '\' (the legacy PCRE2 syntax that the wildcard
@@ -822,7 +822,7 @@ static bool _TryTranslateRegexEntry(const WCHAR *pat, size_t patLen, LPWSTR out,
 //   in which case the buffer has been compacted. Buffer size is
 //   STYLE_EXTENSIONS_BUFFER (the szExtensions slot's size).
 //
-static bool _StripLegacyRegexEntries(LPWSTR lpszList)
+static bool _MigrateLegacyRegexEntries(LPWSTR lpszList)
 {
     if (StrIsEmpty(lpszList)) {
         return false;
@@ -925,7 +925,7 @@ static void _LoadLexerFileExtensions()
 
             // Auto-migrate: translate or drop any legacy '\regex' entries from
             // user INIs so the next save writes the cleaned wildcard-only form.
-            if (_StripLegacyRegexEntries(g_pLexArray[iLexer]->szExtensions)) {
+            if (_MigrateLegacyRegexEntries(g_pLexArray[iLexer]->szExtensions)) {
                 WCHAR migMsg[256];
                 StringCchPrintf(migMsg, COUNTOF(migMsg),
                     L"Notepad3: migrated legacy '\\regex' entries in FileNameExtensions for [%s]; will be rewritten on next save.\n",

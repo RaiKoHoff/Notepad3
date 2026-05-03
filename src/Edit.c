@@ -6323,9 +6323,22 @@ static DocPos  _FindInTarget(LPCWSTR wchFind, int sFlags,
 
     DocPos const len = (DocPos)(WideCharToMultiByte(Encoding_SciCP, 0, wchFind, -1, chFind, COUNTOF(chFind), NULL, NULL) - 1);
 
+    // Clear any lingering regex-warning status so the post-call state reflects
+    // this search only. Without this, a stale SC_STATUS_WARN_REGEX from an
+    // earlier _FindInTarget call could leak into the next caller's Sci_ConsumeRegexWarnStatus.
+    SciCall_SetStatus(SC_STATUS_OK);
+
     SciCall_SetSearchFlags(sFlags);
     SciCall_SetTargetRange(start, stop);
     iPos = SciCall_SearchInTarget(len, chFind);
+
+    // Bail out before the retry loop if the regex engine flagged an invalid
+    // pattern — every subsequent SearchInTarget would just re-set the warning.
+    // Status stays raised for the caller to consume via Sci_ConsumeRegexWarnStatus.
+    if ((sFlags & SCFIND_REGEXP) && SciCall_GetStatus() == SC_STATUS_WARN_REGEX) {
+        SciCall_SetTargetRange(saveTargetBeg, saveTargetEnd);
+        return NOT_FOUND;
+    }
 
 #if 1
     //  handle next in case of zero-length-matches or invalid position (regex) !
@@ -6401,6 +6414,7 @@ static RegExResult_t _FindHasMatch(HWND hwnd, const LPEDITFINDREPLACE lpefr, Doc
 
     LPCWSTR      wchFind = _EditGetFindStrg(hwnd, lpefr, false);
     DocPos const iPos = _FindInTarget(wchFind, sFlags, &start, &end, false, FRMOD_IGNORE);
+    bool const   bRegexInvalid = (sFlags & SCFIND_REGEXP) && Sci_ConsumeRegexWarnStatus();
 
     if (bMarkAll) {
         EditClearAllOccurrenceMarkers(hwnd);
@@ -6415,7 +6429,7 @@ static RegExResult_t _FindHasMatch(HWND hwnd, const LPEDITFINDREPLACE lpefr, Doc
             }
         }
     }
-    return ((iPos >= 0) ? MATCH : ((iPos == (DocPos)(-1)) ? NO_MATCH : INVALID));
+    return ((iPos >= 0) ? MATCH : (bRegexInvalid ? INVALID : NO_MATCH));
 }
 
 
@@ -7549,7 +7563,7 @@ bool EditFindNext(HWND hwnd, const LPEDITFINDREPLACE lpefr, bool bExtendSelectio
 
     DocPos iPos = _FindInTarget(wchFind, sFlags, &start, &end, true, FRMOD_NORM);
 
-    if ((iPos < NOT_FOUND) && bIsRegExpr) {
+    if (bIsRegExpr && Sci_ConsumeRegexWarnStatus()) {
         InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.MsgInvalidRegex, IDS_MUI_REGEX_INVALID);
         bSuppressNotFound = true;
     } else if ((iPos < 0LL) && (start >= 0LL) && !bExtendSelection) {
@@ -7563,7 +7577,7 @@ bool EditFindNext(HWND hwnd, const LPEDITFINDREPLACE lpefr, bool bExtendSelectio
             iPos = _FindInTarget(wchFind, sFlags, &start, &end, false, FRMOD_WRAPED);
 
             if ((iPos < 0LL) || (end == _start)) {
-                if ((iPos < -1) && bIsRegExpr) {
+                if (bIsRegExpr && Sci_ConsumeRegexWarnStatus()) {
                     InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.MsgInvalidRegex, IDS_MUI_REGEX_INVALID);
                     bSuppressNotFound = true;
                 }
@@ -7650,7 +7664,7 @@ bool EditFindPrev(HWND hwnd, LPEDITFINDREPLACE lpefr, bool bExtendSelection, boo
 
     DocPos iPos = _FindInTarget(wchFind, sFlags, &start, &end, true, FRMOD_NORM);
 
-    if ((iPos < NOT_FOUND) && bIsRegExpr) {
+    if (bIsRegExpr && Sci_ConsumeRegexWarnStatus()) {
         InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.MsgInvalidRegex, IDS_MUI_REGEX_INVALID);
         bSuppressNotFound = true;
     } else if ((iPos < 0LL) && (start <= iDocEndPos) &&  !bExtendSelection) {
@@ -7664,7 +7678,7 @@ bool EditFindPrev(HWND hwnd, LPEDITFINDREPLACE lpefr, bool bExtendSelection, boo
             iPos = _FindInTarget(wchFind, sFlags, &start, &end, false, FRMOD_WRAPED);
 
             if ((iPos < 0LL) || (start == _start)) {
-                if ((iPos < NOT_FOUND) && bIsRegExpr) {
+                if (bIsRegExpr && Sci_ConsumeRegexWarnStatus()) {
                     InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.MsgInvalidRegex, IDS_MUI_REGEX_INVALID);
                     bSuppressNotFound = true;
                 }
@@ -7907,7 +7921,7 @@ DocPosU EditReplaceAllInRange(HWND hwnd, LPEDITFINDREPLACE lpefr, DocPos iStartP
     DocPos end   = iEndPos;
     DocPos iPos = _FindInTarget(wchFind, sFlags, &start, &end, false, FRMOD_NORM);
 
-    if ((iPos < NOT_FOUND) && bIsRegExpr) {
+    if (bIsRegExpr && Sci_ConsumeRegexWarnStatus()) {
         InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.MsgInvalidRegex, IDS_MUI_REGEX_INVALID);
         return 0;
     }
