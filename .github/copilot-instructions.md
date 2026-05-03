@@ -42,11 +42,19 @@ Pre-built exes under `grepWin\portables\`; `.lang` files under `grepWin\translat
 
 Each language is one `styleLexXXX.c` defining an `EDITLEXER` struct (see existing files for template). To add: create the file, register in `Styles.c` lexer array, add localization string IDs.
 
+Easy-to-miss touchpoints — derivable but only if you know to look:
+
+- **Property setter arm in `EditLexer.c`.** If the lexer exposes Scintilla properties (e.g. `lexer.foo.allow.X`), add a `case SCLEX_FOO:` in the top-of-file dispatch that calls `SciCall_SetProperty(...)`. Without it the `OptionsXXX` constructor defaults silently apply — symptom is "feature looks broken" (e.g. comments highlighted as ERROR).
+- **Comment-toggle arms.** If the lexer has comments, add `case SCLEX_FOO:` in BOTH `Lexer_GetStreamCommentStrgs` and `Lexer_GetLineCommentStrg` in `EditLexer.c`, or Edit > Toggle Block/Line Comment is a no-op.
+- **Theme INI sections live under `pszName` (4th `EDITLEXER` field), not the lexer name string.** Each new lexer needs a `[<pszName>]` block in every theme INI: `Build\Notepad3.ini`, `Build\Themes\*.ini`, `res\StdDarkModeScheme.ini`, locale variants `Build\Notepad3_<locale>.ini`. Renaming `pszName` orphans existing user style customizations.
+
 ## Localization (`language\`)
 
 27+ locales under `np3_LANG_COUNTRY\`. Language packs build as separate DLLs.
 
 **Invariant:** every `IDS_MUI_*` defined in `common_res.h` must exist in **all** `strings_*.rc` files. A missing entry breaks the corresponding language DLL build. For bulk insertions across locales, use a `.venv/Scripts/python.exe` script — `sed`/`perl` `\n` escaping is unreliable in Cygwin.
+
+**Same rule for `IDS_LEX_*`** — these live in `language\np3_*\lexer_*.rc` (not `strings_*.rc`).
 
 ### Adding a string resource
 

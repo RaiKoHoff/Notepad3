@@ -1,6 +1,6 @@
 // Scintilla source code edit control
 /**
- * @file LexJSON.cxx
+ * @file LexJSON5.cxx
  * @date February 19, 2016
  * @brief Lexer for JSON and JSON-LD formats
  * @author nkmathew
@@ -36,7 +36,9 @@
 using namespace Scintilla;
 using namespace Lexilla;
 
-static const char *const JSONWordListDesc[] = {
+namespace {
+
+const char *const JSON5WordListDesc[] = {
 	"JSON Keywords",
 	"JSON-LD Keywords",
 	nullptr
@@ -57,18 +59,18 @@ struct CompactIRI {
 		foundInvalidChar = false;
 		setCompactIRI = CharacterSet(CharacterSet::setAlpha, "$_-");
 	}
-	void resetState() {
+	void resetState() noexcept {
 		colonCount = 0;
 		foundInvalidChar = false;
 	}
-	void checkChar(int ch) {
+	void checkChar(int ch) noexcept {
 		if (ch == ':') {
 			colonCount++;
 		} else {
 			foundInvalidChar |= !setCompactIRI.Contains(ch);
 		}
 	}
-	bool shouldHighlight() const {
+	[[nodiscard]] bool shouldHighlight() const noexcept {
 		return !foundInvalidChar && colonCount == 1;
 	}
 };
@@ -81,36 +83,39 @@ struct CompactIRI {
 struct EscapeSequence {
 	int digitsLeft;
 	CharacterSet setHexDigits;
-	CharacterSet setEscapeChars;
 	EscapeSequence() {
 		digitsLeft = 0;
 		setHexDigits = CharacterSet(CharacterSet::setDigits, "ABCDEFabcdef");
-		setEscapeChars = CharacterSet(CharacterSet::setNone, "\\\"tnbfru/");
 	}
-	// Returns true if the following character is a valid escaped character
-	bool newSequence(int nextChar) {
+	// Validates the char immediately after '\' per JSON5 §5.5.4.
+	// Sets digitsLeft for multi-char escapes (\u, \x); 0 for single-char.
+	bool newSequence(int nextChar) noexcept {
 		digitsLeft = 0;
 		if (nextChar == 'u') {
-			digitsLeft = 5;
-		} else if (!setEscapeChars.Contains(nextChar)) {
+			digitsLeft = 5;     // u + 4 hex digits
+		} else if (nextChar == 'x') {
+			digitsLeft = 3;     // x + 2 hex digits
+		} else if (nextChar >= '1' && nextChar <= '9') {
+			// legacy-octal escapes (\1..\9) are forbidden in JSON5
 			return false;
 		}
+		// any other char is a valid 1-char escape (standard or identity)
 		return true;
 	}
-	bool atEscapeEnd() const {
+	[[nodiscard]] bool atEscapeEnd() const noexcept {
 		return digitsLeft <= 0;
 	}
-	bool isInvalidChar(int currChar) const {
+	[[nodiscard]] bool isInvalidChar(int currChar) const noexcept {
 		return !setHexDigits.Contains(currChar);
 	}
 };
 
-struct OptionsJSON {
+struct OptionsJSON5 {
 	bool foldCompact;
 	bool fold;
 	bool allowComments;
 	bool escapeSequence;
-	OptionsJSON() {
+	OptionsJSON5() {
 		foldCompact = false;
 		fold = false;
 		allowComments = false;
@@ -118,30 +123,30 @@ struct OptionsJSON {
 	}
 };
 
-struct OptionSetJSON : public OptionSet<OptionsJSON> {
-	OptionSetJSON() {
-		DefineProperty("lexer.json.escape.sequence", &OptionsJSON::escapeSequence,
+struct OptionSetJSON5 : public OptionSet<OptionsJSON5> {
+	OptionSetJSON5() {
+		DefineProperty("lexer.json5.escape.sequence", &OptionsJSON5::escapeSequence,
 					   "Set to 1 to enable highlighting of escape sequences in strings");
 
-		DefineProperty("lexer.json.allow.comments", &OptionsJSON::allowComments,
+		DefineProperty("lexer.json5.allow.comments", &OptionsJSON5::allowComments,
 					   "Set to 1 to enable highlighting of line/block comments in JSON");
 
-		DefineProperty("fold.compact", &OptionsJSON::foldCompact);
-		DefineProperty("fold", &OptionsJSON::fold);
-		DefineWordListSets(JSONWordListDesc);
+		DefineProperty("fold.compact", &OptionsJSON5::foldCompact);
+		DefineProperty("fold", &OptionsJSON5::fold);
+		DefineWordListSets(JSON5WordListDesc);
 	}
 };
 
-class LexerJSON : public DefaultLexer {
-	OptionsJSON options;
-	OptionSetJSON optSetJSON;
+class LexerJSON5 : public DefaultLexer {
+	OptionsJSON5 options;
+	OptionSetJSON5 optSetJSON5;
 	EscapeSequence escapeSeq;
-	WordList keywordsJSON;
-	WordList keywordsJSON_LD;
+	WordList keywordsJSON5;
+	WordList keywordsJSON5_LD;
 	CharacterSet setOperators;
 	CharacterSet setURL;
-	CharacterSet setKeywordJSON_LD;
-	CharacterSet setKeywordJSON;
+	CharacterSet setKeywordJSON5_LD;
+	CharacterSet setKeywordJSON5;
 	CompactIRI compactIRI;
 
 	static bool IsNextNonWhitespace(LexAccessor &styler, Sci_PositionU start, char ch) {
@@ -159,19 +164,6 @@ class LexerJSON : public DefaultLexer {
 		return false;
 	}
 
-	static bool IsOnlyWhitespaceTillLnEnd(LexAccessor& styler, Sci_PositionU start) {
-		Sci_PositionU i = 0;
-		while (true) {
-			char const curr = styler.SafeGetCharAt(start + i, '\0');
-			char const next = styler.SafeGetCharAt(start + i + 1, '\0');
-			bool const atEOL = (curr == '\r' && next != '\n') || (curr == '\n');
-			if (!curr || atEOL) { break; }
-			if (!isspacechar(curr)) { return false; }
-			++i;
-		}
-		return true;
-	}
-
 	/**
 	 * Looks for the colon following the end quote
 	 *
@@ -180,7 +172,8 @@ class LexerJSON : public DefaultLexer {
 	 * quote for the string to be considered a property name
 	 */
 	static constexpr bool IsPropChar(int ch) noexcept {
-		return IsAlphaNumeric(ch); // || ch == '_';
+		// JSON5 / ECMAScript IdentifierStart + IdentifierPart (ASCII subset)
+		return IsAlphaNumeric(ch) || ch == '$' || ch == '_';
 	}
 
 	static bool AtPropertyName(LexAccessor &styler, const Sci_PositionU start, bool bQuoted) {
@@ -206,13 +199,13 @@ class LexerJSON : public DefaultLexer {
 		return false;
 	}
 
-	static bool IsNextWordInList(WordList &keywordList, CharacterSet wordSet,
-								 const StyleContext& context, LexAccessor& styler) {
+	static bool IsNextWordInList(const WordList &keywordList, const CharacterSet &wordSet,
+								 const StyleContext &context, LexAccessor &styler) {
 		char word[51];
-		Sci_Position currPos = (Sci_Position) context.currentPos;
+		const Sci_Position currPos = static_cast<Sci_Position>(context.currentPos);
 		int i = 0;
 		while (i < 50) {
-			char const ch = styler.SafeGetCharAt(currPos + i);
+			const char ch = styler.SafeGetCharAt(currPos + i);
 			if (!wordSet.Contains(ch)) {
 				break;
 			}
@@ -253,8 +246,7 @@ class LexerJSON : public DefaultLexer {
 			IsADigit(context.ch) && IsADigit(context.chPrev);
 		bool afterExponent = IsADigit(context.ch) && tolower(context.chPrev) == 'e';
 		bool dotPart = context.ch == '.' &&
-			(IsADigit(context.chPrev) || IsASpace(context.chPrev)) &&
-			(IsADigit(context.chNext) || IsASpace(context.chNext) || context.chNext == ',');
+			(IsADigit(context.chPrev) || IsADigit(context.chNext));
 		bool afterDot = IsADigit(context.ch) && context.chPrev == '.';
 
 		return (
@@ -271,14 +263,14 @@ class LexerJSON : public DefaultLexer {
 
 
 	public:
-	LexerJSON() :
-		DefaultLexer("json", SCLEX_JSON),
+	LexerJSON5() :
+		DefaultLexer("json5", SCLEX_JSON5),
 		setOperators(CharacterSet::setNone, "[{}]:,"),
 		setURL(CharacterSet::setAlphaNum, "-._~:/?#[]@!$&'()*+,),="),
-		setKeywordJSON_LD(CharacterSet::setAlpha, ":@"),
-		setKeywordJSON(CharacterSet::setAlpha, "$_+-") {
+		setKeywordJSON5_LD(CharacterSet::setAlpha, ":@"),
+		setKeywordJSON5(CharacterSet::setAlpha, "$_+-") {
 	}
-    virtual ~LexerJSON() = default;
+    virtual ~LexerJSON5() = default;
 	int SCI_METHOD Version() const override {
 		return lvRelease5;
 	}
@@ -286,31 +278,31 @@ class LexerJSON : public DefaultLexer {
 		delete this;
 	}
 	const char *SCI_METHOD PropertyNames() override {
-		return optSetJSON.PropertyNames();
+		return optSetJSON5.PropertyNames();
 	}
 	int SCI_METHOD PropertyType(const char *name) override {
-		return optSetJSON.PropertyType(name);
+		return optSetJSON5.PropertyType(name);
 	}
 	const char *SCI_METHOD DescribeProperty(const char *name) override {
-		return optSetJSON.DescribeProperty(name);
+		return optSetJSON5.DescribeProperty(name);
 	}
 	Sci_Position SCI_METHOD PropertySet(const char *key, const char *val) override {
-		if (optSetJSON.PropertySet(&options, key, val)) {
+		if (optSetJSON5.PropertySet(&options, key, val)) {
 			return 0;
 		}
 		return -1;
 	}
 	const char * SCI_METHOD PropertyGet(const char *key) override {
-		return optSetJSON.PropertyGet(key);
+		return optSetJSON5.PropertyGet(key);
 	}
 	Sci_Position SCI_METHOD WordListSet(int n, const char *wl) override {
 		WordList* wordListN = nullptr;
 		switch (n) {
 			case 0:
-				wordListN = &keywordsJSON;
+				wordListN = &keywordsJSON5;
 				break;
 			case 1:
-				wordListN = &keywordsJSON_LD;
+				wordListN = &keywordsJSON5_LD;
 				break;
 		}
 		Sci_Position firstModification = -1;
@@ -322,13 +314,13 @@ class LexerJSON : public DefaultLexer {
 		return firstModification;
 	}
 	void *SCI_METHOD PrivateCall(int, void *) override {
-		return 0;
+		return nullptr;
 	}
-	static ILexer5 *LexerFactoryJSON() {
-		return new LexerJSON;
+	static ILexer5 *LexerFactoryJSON5() {
+		return new LexerJSON5;
 	}
 	const char *SCI_METHOD DescribeWordListSets() override {
-		return optSetJSON.DescribeWordListSets();
+		return optSetJSON5.DescribeWordListSets();
 	}
 	void SCI_METHOD Lex(Sci_PositionU startPos,
 								Sci_Position length,
@@ -340,83 +332,88 @@ class LexerJSON : public DefaultLexer {
 								 IDocument *pAccess) override;
 };
 
-void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
+void SCI_METHOD LexerJSON5::Lex(Sci_PositionU startPos,
 							   Sci_Position length,
 							   int initStyle,
 							   IDocument *pAccess) {
 	LexAccessor styler(pAccess);
 	StyleContext context(startPos, length, initStyle, styler);
-	int stringStyleBefore = SCE_JSON_STRING;
+	int stringStyleBefore = SCE_JSON5_STRING;
 	bool doubleQuotCntx = false;
 	bool singleQuotCntx = false;
 	while (context.More()) {
 		switch (context.state) {
-			case SCE_JSON_BLOCKCOMMENT:
+			case SCE_JSON5_BLOCKCOMMENT:
 				if (context.Match("*/")) {
 					context.Forward();
-					context.ForwardSetState(SCE_JSON_DEFAULT);
+					context.ForwardSetState(SCE_JSON5_DEFAULT);
 				}
 				break;
-			case SCE_JSON_LINECOMMENT:
+			case SCE_JSON5_LINECOMMENT:
 				if (context.MatchLineEnd()) {
-					context.SetState(SCE_JSON_DEFAULT);
+					context.SetState(SCE_JSON5_DEFAULT);
 				}
 				break;
-			case SCE_JSON_STRINGEOL:
+			case SCE_JSON5_STRINGEOL:
 				if (context.atLineStart) {
-					context.SetState(SCE_JSON_DEFAULT);
+					context.SetState(SCE_JSON5_DEFAULT);
 				}
 				break;
-			case SCE_JSON_ESCAPESEQUENCE:
+			case SCE_JSON5_ESCAPESEQUENCE:
 				escapeSeq.digitsLeft--;
 				if (!escapeSeq.atEscapeEnd()) {
 					if (escapeSeq.isInvalidChar(context.ch)) {
-						context.SetState(SCE_JSON_ERROR);
+						context.SetState(SCE_JSON5_ERROR);
 					}
 					break;
 				}
-				if (context.ch == '"' || context.ch == '\'') {
-					context.SetState(stringStyleBefore);
-					context.ForwardSetState(SCE_JSON_DEFAULT);
-				} else if (context.ch == '\\') {
-					if (!escapeSeq.newSequence(context.chNext)) {
-						context.SetState(SCE_JSON_ERROR);
-					}
-					context.Forward();
-				} else {
-					context.SetState(stringStyleBefore);
-					if (context.atLineEnd) {
-						context.ChangeState(SCE_JSON_STRINGEOL);
+				{
+					const bool atCloseDouble = (context.ch == '"' && doubleQuotCntx);
+					const bool atCloseSingle = (context.ch == '\'' && singleQuotCntx);
+					if (atCloseDouble || atCloseSingle) {
+						if (atCloseDouble) { doubleQuotCntx = false; } else { singleQuotCntx = false; }
+						context.SetState(stringStyleBefore);
+						context.ForwardSetState(SCE_JSON5_DEFAULT);
+					} else if (context.ch == '\\') {
+						if (!escapeSeq.newSequence(context.chNext)) {
+							context.SetState(SCE_JSON5_ERROR);
+						}
+						context.Forward();
+					} else {
+						context.SetState(stringStyleBefore);
+						if (context.atLineEnd) {
+							context.ChangeState(SCE_JSON5_STRINGEOL);
+						}
 					}
 				}
 				break;
-			case SCE_JSON_PROPERTYNAME:
+			case SCE_JSON5_PROPERTYNAME:
 				[[fallthrough]];
-			case SCE_JSON_STRING:
+			case SCE_JSON5_STRING:
 				if (context.ch == ':' && !(doubleQuotCntx || singleQuotCntx)) {
-					context.SetState(SCE_JSON_OPERATOR);
+					context.SetState(SCE_JSON5_OPERATOR);
 				} else if (context.ch == '"' && doubleQuotCntx) {
 					if (compactIRI.shouldHighlight()) {
-						context.ChangeState(SCE_JSON_COMPACTIRI);
-						context.ForwardSetState(SCE_JSON_DEFAULT);
+						context.ChangeState(SCE_JSON5_COMPACTIRI);
+						context.ForwardSetState(SCE_JSON5_DEFAULT);
 						compactIRI.resetState();
 					} else {
-						context.ForwardSetState(SCE_JSON_DEFAULT);
+						context.ForwardSetState(SCE_JSON5_DEFAULT);
 					}
 					doubleQuotCntx = false;
 				}
 				else if (context.ch == '\'' && singleQuotCntx) {
 					if (compactIRI.shouldHighlight()) {
-						context.ChangeState(SCE_JSON_COMPACTIRI);
-						context.ForwardSetState(SCE_JSON_DEFAULT);
+						context.ChangeState(SCE_JSON5_COMPACTIRI);
+						context.ForwardSetState(SCE_JSON5_DEFAULT);
 						compactIRI.resetState();
 					}
 					else {
-						context.ForwardSetState(SCE_JSON_DEFAULT);
+						context.ForwardSetState(SCE_JSON5_DEFAULT);
 					}
 					singleQuotCntx = false;
 				} else if (context.ch == '\\') {
-					// line continuation (yet: LF and CRLF only) ?
+					// line continuation: JSON5 LineTerminator = LF | CR | LS (U+2028) | PS (U+2029)
 					if (context.Match("\\\n")) {
 						context.Forward();
 						context.ForwardSetState(context.state);
@@ -428,18 +425,30 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 						context.ForwardSetState(context.state);
 						continue;
 					}
+					else if (context.Match("\\\r")) {
+						context.Forward();
+						context.ForwardSetState(context.state);
+						continue;
+					}
+					else if (context.Match("\\\xE2\x80\xA8") || context.Match("\\\xE2\x80\xA9")) {
+						context.Forward();
+						context.Forward();
+						context.Forward();
+						context.ForwardSetState(context.state);
+						continue;
+					}
 					else {
 						stringStyleBefore = context.state;
 						if (options.escapeSequence) {
-							context.SetState(SCE_JSON_ESCAPESEQUENCE);
+							context.SetState(SCE_JSON5_ESCAPESEQUENCE);
 							if (!escapeSeq.newSequence(context.chNext)) {
-								context.SetState(SCE_JSON_ERROR);
+								context.SetState(SCE_JSON5_ERROR);
 							}
 						}
 						context.Forward();
 					}
 				} else if (context.atLineEnd) {
-					context.ChangeState(SCE_JSON_STRINGEOL);
+					context.ChangeState(SCE_JSON5_STRINGEOL);
 				} else if (context.Match("https://") ||
 						   context.Match("http://") ||
 						   context.Match("ssh://") ||
@@ -449,18 +458,18 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 						   context.Match("mailto:")) {
 					// Handle most common URI schemes only
 					stringStyleBefore = context.state;
-					context.SetState(SCE_JSON_URI);
+					context.SetState(SCE_JSON5_URI);
 				} else if (context.ch == '@') {
 					// https://www.w3.org/TR/json-ld/#dfn-keyword
-					if (IsNextWordInList(keywordsJSON_LD, setKeywordJSON_LD, context, styler)) {
+					if (IsNextWordInList(keywordsJSON5_LD, setKeywordJSON5_LD, context, styler)) {
 						stringStyleBefore = context.state;
-						context.SetState(SCE_JSON_LDKEYWORD);
+						context.SetState(SCE_JSON5_LDKEYWORD);
 					}
 				}
 				else if (IsPropChar(context.ch)) {
 					if (!AtPropertyName(styler, context.currentPos, (doubleQuotCntx || singleQuotCntx))) {
-						if (context.state == SCE_JSON_PROPERTYNAME) {
-							context.SetState(SCE_JSON_ERROR);
+						if (context.state == SCE_JSON5_PROPERTYNAME) {
+							context.SetState(SCE_JSON5_ERROR);
 						}
 					}
 				}
@@ -468,74 +477,83 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 					compactIRI.checkChar(context.ch);
 				}
 				break;
-			case SCE_JSON_LDKEYWORD:
-			case SCE_JSON_URI:
-				if ((!setKeywordJSON_LD.Contains(context.ch) &&
-					 (context.state == SCE_JSON_LDKEYWORD)) ||
+			case SCE_JSON5_LDKEYWORD:
+			case SCE_JSON5_URI:
+				if ((!setKeywordJSON5_LD.Contains(context.ch) &&
+					 (context.state == SCE_JSON5_LDKEYWORD)) ||
 					(!setURL.Contains(context.ch))) {
 					context.SetState(stringStyleBefore);
 				}
-				if (context.ch == '"' || context.ch == '\'') {
-					context.ForwardSetState(SCE_JSON_DEFAULT);
+				if ((context.ch == '"' && doubleQuotCntx) || (context.ch == '\'' && singleQuotCntx)) {
+					if (context.ch == '"') { doubleQuotCntx = false; } else { singleQuotCntx = false; }
+					context.ForwardSetState(SCE_JSON5_DEFAULT);
+				} else if (context.ch == '\\') {
+					if (options.escapeSequence) {
+						context.SetState(SCE_JSON5_ESCAPESEQUENCE);
+						if (!escapeSeq.newSequence(context.chNext)) {
+							context.SetState(SCE_JSON5_ERROR);
+						}
+					}
+					context.Forward();
 				} else if (context.atLineEnd) {
-					context.ChangeState(SCE_JSON_STRINGEOL);
+					context.ChangeState(SCE_JSON5_STRINGEOL);
 				}
 				break;
-			case SCE_JSON_OPERATOR:
-			case SCE_JSON_NUMBER:
-				context.SetState(SCE_JSON_DEFAULT);
+			case SCE_JSON5_OPERATOR:
+			case SCE_JSON5_NUMBER:
+				context.SetState(SCE_JSON5_DEFAULT);
 				break;
-			case SCE_JSON_ERROR:
+			case SCE_JSON5_ERROR:
 				if (context.MatchLineEnd()) {
-					context.SetState(SCE_JSON_DEFAULT);
+					context.SetState(SCE_JSON5_DEFAULT);
 				}
 				break;
-			case SCE_JSON_KEYWORD:
-				if (!setKeywordJSON.Contains(context.ch)) {
-					context.SetState(SCE_JSON_DEFAULT);
+			case SCE_JSON5_KEYWORD:
+				if (!setKeywordJSON5.Contains(context.ch)) {
+					context.SetState(SCE_JSON5_DEFAULT);
 				}
 				break;
 		}
 
-		if (context.state == SCE_JSON_DEFAULT) {
+		if (context.state == SCE_JSON5_DEFAULT) {
 			if (context.ch == '"') {
 				compactIRI.resetState();
-				context.SetState(SCE_JSON_STRING);
+				context.SetState(SCE_JSON5_STRING);
 				doubleQuotCntx = !singleQuotCntx;
 				if (AtPropertyName(styler, context.currentPos, true)) {
-					context.SetState(SCE_JSON_PROPERTYNAME);
+					context.SetState(SCE_JSON5_PROPERTYNAME);
 				}
 			} else if (context.ch == '\'') {
 				compactIRI.resetState();
-				context.SetState(SCE_JSON_STRING);
+				context.SetState(SCE_JSON5_STRING);
 				singleQuotCntx = !doubleQuotCntx;
 				if (AtPropertyName(styler, context.currentPos, true)) {
-					context.SetState(SCE_JSON_PROPERTYNAME);
+					context.SetState(SCE_JSON5_PROPERTYNAME);
 				}
-			} else if (setKeywordJSON.Contains(context.ch)) {
-				if (IsNextWordInList(keywordsJSON, setKeywordJSON, context, styler)) {
-					context.SetState(SCE_JSON_KEYWORD);
+			} else if (setKeywordJSON5.Contains(context.ch)) {
+				if (IsNextWordInList(keywordsJSON5, setKeywordJSON5, context, styler)) {
+					context.SetState(SCE_JSON5_KEYWORD);
 				}
 			} else if (setOperators.Contains(context.ch)) {
-				context.SetState(SCE_JSON_OPERATOR);
+				context.SetState(SCE_JSON5_OPERATOR);
 			} else if (options.allowComments && context.Match("/*")) {
-				context.SetState(SCE_JSON_BLOCKCOMMENT);
+				context.SetState(SCE_JSON5_BLOCKCOMMENT);
 				context.Forward();
 			} else if (options.allowComments && context.Match("//")) {
-				context.SetState(SCE_JSON_LINECOMMENT);
+				context.SetState(SCE_JSON5_LINECOMMENT);
 			}
 
 			if (IsJSONNumber(context, setOperators.Contains(context.chPrev))) {
-				context.SetState(SCE_JSON_NUMBER);
+				context.SetState(SCE_JSON5_NUMBER);
 			}
-			else if (context.state == SCE_JSON_DEFAULT) {
+			else if (context.state == SCE_JSON5_DEFAULT) {
 				if (IsPropChar(context.ch)) {
 					if (AtPropertyName(styler, context.currentPos, (doubleQuotCntx || singleQuotCntx))) {
-						context.SetState(SCE_JSON_PROPERTYNAME);
+						context.SetState(SCE_JSON5_PROPERTYNAME);
 					}
 				}
-				else if (context.state == SCE_JSON_DEFAULT && !IsASpace(context.ch)) {
-					context.SetState(SCE_JSON_ERROR);
+				else if (context.state == SCE_JSON5_DEFAULT && !IsASpace(context.ch)) {
+					context.SetState(SCE_JSON5_ERROR);
 				}
 			}
 		}
@@ -544,7 +562,7 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 	context.Complete();
 }
 
-void SCI_METHOD LexerJSON::Fold(Sci_PositionU startPos,
+void SCI_METHOD LexerJSON5::Fold(Sci_PositionU startPos,
 								Sci_Position length,
 								int,
 								IDocument *pAccess) {
@@ -563,7 +581,7 @@ void SCI_METHOD LexerJSON::Fold(Sci_PositionU startPos,
 		char curr = styler.SafeGetCharAt(i);
 		char next = styler.SafeGetCharAt(i+1);
 		bool atEOL = (curr == '\r' && next != '\n') || (curr == '\n');
-		if (styler.StyleAt(i) == SCE_JSON_OPERATOR) {
+		if (styler.StyleAt(i) == SCE_JSON5_OPERATOR) {
 			if (curr == '{' || curr == '[') {
 				nextLevel++;
 			} else if (curr == '}' || curr == ']') {
@@ -590,4 +608,6 @@ void SCI_METHOD LexerJSON::Fold(Sci_PositionU startPos,
 	}
 }
 
-extern const LexerModule lmJSON(SCLEX_JSON, LexerJSON::LexerFactoryJSON, "json", JSONWordListDesc);
+}
+
+extern const LexerModule lmJSON5(SCLEX_JSON5, LexerJSON5::LexerFactoryJSON5, "json5", JSON5WordListDesc);

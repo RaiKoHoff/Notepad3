@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "Arquivos de Registro"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Inno (Script de Configuração)"
     IDS_LEX_RUBY            "Ruby (Script)"

@@ -1351,6 +1351,7 @@
 #define IDS_LEX_CSV_COL_7               63497
 #define IDS_LEX_CSV_COL_8               63498
 #define IDS_LEX_CSV_COL_9               63499
+#define IDS_LEX_JSON5                   63500
 
 #define RICHEDIT_CONTROL_VER            "RichEdit50W"  // RICHEDIT_CONTROL_VER
 
