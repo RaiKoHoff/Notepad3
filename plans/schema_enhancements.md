@@ -133,18 +133,20 @@ future session should pick one and stick with it.
 **Risk.** Low. Either variant is easy to revert if feedback is
 negative.
 
-#### E-04 — Tooltip documenting `\regex` extension syntax (closes I-12)
+#### E-04 — Tooltip documenting wildcard extension syntax (closes I-12)
 
-**Motivation.** `\^CMakeLists$` style regex entries in `FileNameExtensions`
-are a real feature, implemented in `Style_RegExMatchLexer()`
-(`src/Styles.c:2543`), but the UI never mentions it.
+**Motivation.** Wildcard entries in `FileNameExtensions` (e.g. `Makefile*`,
+`CMakeLists.txt`) are a real feature, implemented in
+`Style_WildcardMatchLexer()` (`src/Styles.c`, replacing the prior PCRE2 path
+that was removed in the wildcard refactor), but the UI never mentions it.
 
 **Change.**
 - Add a tooltip (`TOOLTIPS_CLASS`) to the `IDC_STYLEEDIT_ROOT` control
   in `Style_CustomizeSchemesDlgProc`.
 - Text (new localised string `IDS_MUI_EXTLIST_TOOLTIP`): "Semicolon-
-  separated. Prefix with `\` for a regex matched against the full file
-  name, e.g. `\^CMakeLists$`."
+  separated. Plain extensions (`py`) match by extension; entries with
+  `*`, `?`, or `.` (e.g. `Makefile*`, `CMakeLists.txt`) match the full
+  filename."
 - Add the string to all 26 locale files.
 
 **Risk.** Trivial.
