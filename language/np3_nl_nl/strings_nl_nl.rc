@@ -343,13 +343,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-Bestandsextensies moeten worden gescheiden door ';'\r\n\
-gebruik \\<regex>; om een overeenkomstig bestandsnaam patroon te definiëren:\r\n\
-   \\xyz$;   => bestandsnamen(basename+ext) met 'xyz' als laatste tekens\r\n\r\n\
-Stijl-formaat:\r\n\
+Filename extensions must be separated by ';'\r\n\
+entries containing '*', '?' or '.' match the full filename (wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
+Style format:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-Opmaak kopiëren: gebruik 'kopiëren en plakken' of 'slepen en neerzetten'\
+Style properties can be copied using copy and paste or drag and drop\
 "
 
 END
