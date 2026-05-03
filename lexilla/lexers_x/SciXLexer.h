@@ -7,6 +7,7 @@
 #define SCLEX_CSV         201
 #define SCLEX_KOTLIN      202
 #define SCLEX_SYSVERILOG  203
+#define SCLEX_JSON5       204
 
 // -----------------------------------------------------------------------------
 // Embedded CSS sub-states for the extended HTML lexer (lexers_x/LexHTML.cxx).
@@ -99,6 +100,26 @@
 #define SCE_KOTLIN_ENUM 24
 #define SCE_KOTLIN_FUNCTION 25
 #define SCE_KOTLIN_FUNCTION_DEFINITION 26
+
+
+// JSON5 / JSON-LD homebrew lexer (SCLEX_JSON5).  Style values mirror the
+// strict-JSON SCE_JSON_* range in SciLexer.h so visual themes can share
+// colors, but the symbols live in their own namespace to keep the strict
+// and JSON5 lexers independent.
+#define SCE_JSON5_DEFAULT 0
+#define SCE_JSON5_NUMBER 1
+#define SCE_JSON5_STRING 2
+#define SCE_JSON5_STRINGEOL 3
+#define SCE_JSON5_PROPERTYNAME 4
+#define SCE_JSON5_ESCAPESEQUENCE 5
+#define SCE_JSON5_LINECOMMENT 6
+#define SCE_JSON5_BLOCKCOMMENT 7
+#define SCE_JSON5_OPERATOR 8
+#define SCE_JSON5_URI 9
+#define SCE_JSON5_COMPACTIRI 10
+#define SCE_JSON5_KEYWORD 11
+#define SCE_JSON5_LDKEYWORD 12
+#define SCE_JSON5_ERROR 13
 
 
 //#define SCE_YAML_DEFAULT 0

@@ -115,7 +115,8 @@
          the extension work, switch the ClCompile path back. -->
     <None Include="lexers_x\LexHTML.cxx" />
     <None Include="lexers_x\LexHTML_NOTES.md" />
-    <ClCompile Include="lexers_x\LexJSON.cxx" />
+    <ClCompile Include="lexers\LexJSON.cxx" />
+    <ClCompile Include="lexers_x\LexJSON5.cxx" />
     <ClCompile Include="lexers_x\LexKotlin.cxx" />
     <ClCompile Include="lexers_x\LexVerilog.cxx" />
     <ClCompile Include="lexlib\Accessor.cxx" />

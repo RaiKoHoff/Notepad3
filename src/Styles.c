@@ -83,7 +83,8 @@ static PEDITLEXER g_pLexArray[] = {
     &lexINNO,          // Inno Setup Script
     &lexJAVA,          // Java Source Code
     &lexJS,            // JavaScript
-    &lexJSON,          // JSON
+    &lexJSON,          // JSON (strict)
+    &lexJSON5,         // JSON5 / JSON-LD (Notepad3 homebrew)
     &lexJulia,         // Julia
     &lexKiX,           // KiX
     &lexKotlin,        // Kotlin

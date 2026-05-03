@@ -141,6 +141,9 @@
     <ClCompile Include="StyleLexers\styleLexJSON.c">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
+    <ClCompile Include="StyleLexers\styleLexJSON5.c">
+      <Filter>Source Files\StyleLexers</Filter>
+    </ClCompile>
     <ClCompile Include="StyleLexers\styleLexLUA.c">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>

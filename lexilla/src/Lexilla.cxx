@@ -51,6 +51,7 @@ extern const LexerModule lmFortran;
 extern const LexerModule lmHTML;
 extern const LexerModule lmInno;
 extern const LexerModule lmJSON;
+extern const LexerModule lmJSON5;
 extern const LexerModule lmJulia;
 extern const LexerModule lmKix;
 extern const LexerModule lmKotlin;
@@ -122,6 +123,7 @@ void AddEachLexer() {
 		&lmHTML,
 		&lmInno,
 		&lmJSON,
+		&lmJSON5,
 		&lmJulia,
 		&lmKix,
 		&lmKotlin,

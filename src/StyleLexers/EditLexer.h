@@ -117,7 +117,8 @@ extern EDITLEXER lexGo;            // Go Source Code
 extern EDITLEXER lexINNO;          // Inno Setup Script
 extern EDITLEXER lexJAVA;          // Java Source Code
 extern EDITLEXER lexJS;            // JavaScript
-extern EDITLEXER lexJSON;          // JSON
+extern EDITLEXER lexJSON;          // JSON (strict, upstream Lexilla)
+extern EDITLEXER lexJSON5;         // JSON5 / JSON-LD (Notepad3 homebrew)
 extern EDITLEXER lexJulia;         // Julia
 extern EDITLEXER lexKiX;           // KiX
 extern EDITLEXER lexKotlin;        // Kotlin

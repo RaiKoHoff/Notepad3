@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "注册表项"
     IDS_LEX_VHDL            "VHDL 源代码"
     IDS_LEX_JSON            "JSON 文件"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS 脚本"
     IDS_LEX_INNO            "Inno 脚本"
     IDS_LEX_RUBY            "Ruby 脚本"
