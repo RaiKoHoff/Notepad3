@@ -36,7 +36,9 @@
 using namespace Scintilla;
 using namespace Lexilla;
 
-static const char *const JSONWordListDesc[] = {
+namespace {
+
+const char *const JSONWordListDesc[] = {
 	"JSON Keywords",
 	"JSON-LD Keywords",
 	nullptr
@@ -57,18 +59,18 @@ struct CompactIRI {
 		foundInvalidChar = false;
 		setCompactIRI = CharacterSet(CharacterSet::setAlpha, "$_-");
 	}
-	void resetState() {
+	void resetState() noexcept {
 		colonCount = 0;
 		foundInvalidChar = false;
 	}
-	void checkChar(int ch) {
+	void checkChar(int ch) noexcept {
 		if (ch == ':') {
 			colonCount++;
 		} else {
 			foundInvalidChar |= !setCompactIRI.Contains(ch);
 		}
 	}
-	bool shouldHighlight() const {
+	[[nodiscard]] bool shouldHighlight() const noexcept {
 		return !foundInvalidChar && colonCount == 1;
 	}
 };
@@ -81,26 +83,29 @@ struct CompactIRI {
 struct EscapeSequence {
 	int digitsLeft;
 	CharacterSet setHexDigits;
-	CharacterSet setEscapeChars;
 	EscapeSequence() {
 		digitsLeft = 0;
 		setHexDigits = CharacterSet(CharacterSet::setDigits, "ABCDEFabcdef");
-		setEscapeChars = CharacterSet(CharacterSet::setNone, "\\\"tnbfru/");
 	}
-	// Returns true if the following character is a valid escaped character
-	bool newSequence(int nextChar) {
+	// Validates the char immediately after '\' per JSON5 §5.5.4.
+	// Sets digitsLeft for multi-char escapes (\u, \x); 0 for single-char.
+	bool newSequence(int nextChar) noexcept {
 		digitsLeft = 0;
 		if (nextChar == 'u') {
-			digitsLeft = 5;
-		} else if (!setEscapeChars.Contains(nextChar)) {
+			digitsLeft = 5;     // u + 4 hex digits
+		} else if (nextChar == 'x') {
+			digitsLeft = 3;     // x + 2 hex digits
+		} else if (nextChar >= '1' && nextChar <= '9') {
+			// legacy-octal escapes (\1..\9) are forbidden in JSON5
 			return false;
 		}
+		// any other char is a valid 1-char escape (standard or identity)
 		return true;
 	}
-	bool atEscapeEnd() const {
+	[[nodiscard]] bool atEscapeEnd() const noexcept {
 		return digitsLeft <= 0;
 	}
-	bool isInvalidChar(int currChar) const {
+	[[nodiscard]] bool isInvalidChar(int currChar) const noexcept {
 		return !setHexDigits.Contains(currChar);
 	}
 };
@@ -159,19 +164,6 @@ class LexerJSON : public DefaultLexer {
 		return false;
 	}
 
-	static bool IsOnlyWhitespaceTillLnEnd(LexAccessor& styler, Sci_PositionU start) {
-		Sci_PositionU i = 0;
-		while (true) {
-			char const curr = styler.SafeGetCharAt(start + i, '\0');
-			char const next = styler.SafeGetCharAt(start + i + 1, '\0');
-			bool const atEOL = (curr == '\r' && next != '\n') || (curr == '\n');
-			if (!curr || atEOL) { break; }
-			if (!isspacechar(curr)) { return false; }
-			++i;
-		}
-		return true;
-	}
-
 	/**
 	 * Looks for the colon following the end quote
 	 *
@@ -180,7 +172,8 @@ class LexerJSON : public DefaultLexer {
 	 * quote for the string to be considered a property name
 	 */
 	static constexpr bool IsPropChar(int ch) noexcept {
-		return IsAlphaNumeric(ch); // || ch == '_';
+		// JSON5 / ECMAScript IdentifierStart + IdentifierPart (ASCII subset)
+		return IsAlphaNumeric(ch) || ch == '$' || ch == '_';
 	}
 
 	static bool AtPropertyName(LexAccessor &styler, const Sci_PositionU start, bool bQuoted) {
@@ -206,13 +199,13 @@ class LexerJSON : public DefaultLexer {
 		return false;
 	}
 
-	static bool IsNextWordInList(WordList &keywordList, CharacterSet wordSet,
-								 const StyleContext& context, LexAccessor& styler) {
+	static bool IsNextWordInList(const WordList &keywordList, const CharacterSet &wordSet,
+								 const StyleContext &context, LexAccessor &styler) {
 		char word[51];
-		Sci_Position currPos = (Sci_Position) context.currentPos;
+		const Sci_Position currPos = static_cast<Sci_Position>(context.currentPos);
 		int i = 0;
 		while (i < 50) {
-			char const ch = styler.SafeGetCharAt(currPos + i);
+			const char ch = styler.SafeGetCharAt(currPos + i);
 			if (!wordSet.Contains(ch)) {
 				break;
 			}
@@ -253,8 +246,7 @@ class LexerJSON : public DefaultLexer {
 			IsADigit(context.ch) && IsADigit(context.chPrev);
 		bool afterExponent = IsADigit(context.ch) && tolower(context.chPrev) == 'e';
 		bool dotPart = context.ch == '.' &&
-			(IsADigit(context.chPrev) || IsASpace(context.chPrev)) &&
-			(IsADigit(context.chNext) || IsASpace(context.chNext) || context.chNext == ',');
+			(IsADigit(context.chPrev) || IsADigit(context.chNext));
 		bool afterDot = IsADigit(context.ch) && context.chPrev == '.';
 
 		return (
@@ -322,7 +314,7 @@ class LexerJSON : public DefaultLexer {
 		return firstModification;
 	}
 	void *SCI_METHOD PrivateCall(int, void *) override {
-		return 0;
+		return nullptr;
 	}
 	static ILexer5 *LexerFactoryJSON() {
 		return new LexerJSON;
@@ -375,18 +367,23 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 					}
 					break;
 				}
-				if (context.ch == '"' || context.ch == '\'') {
-					context.SetState(stringStyleBefore);
-					context.ForwardSetState(SCE_JSON_DEFAULT);
-				} else if (context.ch == '\\') {
-					if (!escapeSeq.newSequence(context.chNext)) {
-						context.SetState(SCE_JSON_ERROR);
-					}
-					context.Forward();
-				} else {
-					context.SetState(stringStyleBefore);
-					if (context.atLineEnd) {
-						context.ChangeState(SCE_JSON_STRINGEOL);
+				{
+					const bool atCloseDouble = (context.ch == '"' && doubleQuotCntx);
+					const bool atCloseSingle = (context.ch == '\'' && singleQuotCntx);
+					if (atCloseDouble || atCloseSingle) {
+						if (atCloseDouble) { doubleQuotCntx = false; } else { singleQuotCntx = false; }
+						context.SetState(stringStyleBefore);
+						context.ForwardSetState(SCE_JSON_DEFAULT);
+					} else if (context.ch == '\\') {
+						if (!escapeSeq.newSequence(context.chNext)) {
+							context.SetState(SCE_JSON_ERROR);
+						}
+						context.Forward();
+					} else {
+						context.SetState(stringStyleBefore);
+						if (context.atLineEnd) {
+							context.ChangeState(SCE_JSON_STRINGEOL);
+						}
 					}
 				}
 				break;
@@ -416,13 +413,25 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 					}
 					singleQuotCntx = false;
 				} else if (context.ch == '\\') {
-					// line continuation (yet: LF and CRLF only) ?
+					// line continuation: JSON5 LineTerminator = LF | CR | LS (U+2028) | PS (U+2029)
 					if (context.Match("\\\n")) {
 						context.Forward();
 						context.ForwardSetState(context.state);
 						continue;
 					}
 					else if (context.Match("\\\r\n")) {
+						context.Forward();
+						context.Forward();
+						context.ForwardSetState(context.state);
+						continue;
+					}
+					else if (context.Match("\\\r")) {
+						context.Forward();
+						context.ForwardSetState(context.state);
+						continue;
+					}
+					else if (context.Match("\\\xE2\x80\xA8") || context.Match("\\\xE2\x80\xA9")) {
+						context.Forward();
 						context.Forward();
 						context.Forward();
 						context.ForwardSetState(context.state);
@@ -475,8 +484,17 @@ void SCI_METHOD LexerJSON::Lex(Sci_PositionU startPos,
 					(!setURL.Contains(context.ch))) {
 					context.SetState(stringStyleBefore);
 				}
-				if (context.ch == '"' || context.ch == '\'') {
+				if ((context.ch == '"' && doubleQuotCntx) || (context.ch == '\'' && singleQuotCntx)) {
+					if (context.ch == '"') { doubleQuotCntx = false; } else { singleQuotCntx = false; }
 					context.ForwardSetState(SCE_JSON_DEFAULT);
+				} else if (context.ch == '\\') {
+					if (options.escapeSequence) {
+						context.SetState(SCE_JSON_ESCAPESEQUENCE);
+						if (!escapeSeq.newSequence(context.chNext)) {
+							context.SetState(SCE_JSON_ERROR);
+						}
+					}
+					context.Forward();
 				} else if (context.atLineEnd) {
 					context.ChangeState(SCE_JSON_STRINGEOL);
 				}
@@ -588,6 +606,8 @@ void SCI_METHOD LexerJSON::Fold(Sci_PositionU startPos,
 			visibleChars++;
 		}
 	}
+}
+
 }
 
 extern const LexerModule lmJSON(SCLEX_JSON, LexerJSON::LexerFactoryJSON, "json", JSONWordListDesc);
