@@ -1058,9 +1058,16 @@ static void _SetResultingEncoding(ENC_DET_T* encDetRes, bool bBOM_LE, bool bBOM_
         if (Settings.UseDefaultForFileEncoding) {
             encDetRes->Encoding = _SetAnsiDefaultEncoding(encDetRes);
         }
-        else if (encDetRes->bValidUTF8 || (encDetRes->bPureASCII7Bit && Settings.LoadASCIIasUTF8))
-            // pure ASCII (no null bytes, all 0x01-0x7F) — treat as UTF-8 or ANSI
+        else if ((encDetRes->bValidUTF8 && !encDetRes->bPureASCII7Bit) ||
+                 (encDetRes->bPureASCII7Bit && Settings.LoadASCIIasUTF8)) {
+            // Promote to UTF-8 when either:
+            //  - the file has multi-byte valid UTF-8 sequences (always preferred), or
+            //  - it's pure ASCII AND the user opted in via LoadASCIIasUTF8.
+            // Splitting the disjuncts is required: pure ASCII implies bValidUTF8, so
+            // a flat `bValidUTF8 || (bPureASCII7Bit && LoadASCIIasUTF8)` makes the
+            // setting dead — pure-ASCII files would always become UTF-8.
             encDetRes->Encoding = CPI_UTF8;
+        }
         else {
             cpi_enc_t const weak = Encoding_SrcWeak(CPI_GET);
             if (Encoding_IsValid(weak)) {
