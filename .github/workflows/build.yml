@@ -1,10 +1,45 @@
 name: Build
 
+# Skip the build when only documentation / metadata files change.
+# `paths-ignore` evaluates per file: if EVERY changed file matches the list,
+# the workflow is not started; any non-matching file forces the full build.
+# `workflow_dispatch` is not affected and can always force a manual run.
+#
+# CAVEAT - required status checks: if a branch-protection rule on `master`
+# ever requires the "Build" check to report on every PR, doc-only PRs will
+# become un-mergeable because no run is created and no check is posted.
+# In that case, switch from `paths-ignore` to a `dorny/paths-filter` step
+# that gates each build step with `if:`, so the workflow always starts and
+# reports a green check even on doc-only changes.
+# (Required status check = a check name listed in Settings -> Branches ->
+#  -> Branch protection rules -> Require status checks to pass before merging.)
 on:
   push:
     branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'readme/**'
+      - 'todo/**'
+      - 'plans/**'
+      - 'lexilla/doc/**'
+      - 'scintilla/doc/**'
+      - '.github/copilot-instructions.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'LICENSE*'
   pull_request:
     branches: [master]
+    paths-ignore:
+      - '**/*.md'
+      - 'readme/**'
+      - 'todo/**'
+      - 'plans/**'
+      - 'lexilla/doc/**'
+      - 'scintilla/doc/**'
+      - '.github/copilot-instructions.md'
+      - '.gitignore'
+      - '.gitattributes'
+      - 'LICENSE*'
   workflow_dispatch:
 
 env:
