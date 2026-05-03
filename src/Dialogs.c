@@ -186,9 +186,14 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
         //UINT const tabStopDist[3] = { 4, 4, 8 };
         //SendMessage(GetDlgItem(hwnd, IDC_INFOBOXTEXT), EM_SETTABSTOPS, 3, (LPARAM)tabStopDist);
 
-        // --- Dynamic dialog sizing: shrink for short text, grow proportionally (W & H) for long text ---
-        // Always inserts ~one line of breathing room between message text and buttons; reclaims that
-        // band when the checkbox is hidden and the template puts it between text and buttons.
+        // --- Dynamic dialog sizing ---
+        // Unified path for single- and multi-line messages: naturalWidth is the widest extent
+        // honouring authored \n breaks (no wrap), and the aspect-ratio loop grows the wrap
+        // width up to that ceiling. Authored \n's keep multi-line shape; long lines without
+        // internal breaks word-wrap to a balanced ~3:1 aspect instead of stretching to the
+        // screen budget.
+        // Always inserts ~one line of breathing room between message text and buttons; reclaims
+        // that band when the checkbox is hidden and the template puts it between text and buttons.
         {
             HWND const hWndText = GetDlgItem(hwnd, IDC_INFOBOXTEXT);
 
@@ -214,14 +219,26 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
             HFONT hFont = (HFONT)SendMessage(hWndText, WM_GETFONT, 0, 0);
             HFONT hOldFont = (HFONT)SelectObject(hdc, hFont);
 
-            // Single-line natural width and one-line height (used as growth ceiling and shrink floor).
-            RECT rcNat = { 0, 0, 0, 0 };
-            DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcNat,
-                     DT_CALCRECT | DT_NOPREFIX | DT_EXPANDTABS | DT_SINGLELINE);
-            int const naturalWidth = rcNat.right;
-            int const lineHeight   = (rcNat.bottom > 0) ? rcNat.bottom : 14;
+            // Font line height — used by the descender floor, growStep, and safety margin.
+            int lineHeight;
+            {
+                RECT rcLh = { 0, 0, 0, 0 };
+                DrawText(hdc, L"Mg", -1, &rcLh, DT_CALCRECT | DT_NOPREFIX | DT_SINGLELINE);
+                lineHeight = (rcLh.bottom > 0) ? rcLh.bottom : 14;
+            }
 
-            // Wrapped height at the template width (baseline).
+            // naturalWidth: widest authored line. No DT_SINGLELINE (would collapse \n into one
+            // huge synthetic line) and no DT_WORDBREAK — only \n acts as a break here, so
+            // .right is the longest unbroken line in the source text.
+            int naturalWidth;
+            {
+                RECT rcNat = { 0, 0, 0, 0 };
+                DrawText(hdc, lpMsgBox->lpstrMessage, -1, &rcNat,
+                         DT_CALCRECT | DT_NOPREFIX | DT_EXPANDTABS);
+                naturalWidth = rcNat.right;
+            }
+
+            // Wrapped baseline at template width (DT_WORDBREAK respects \n AND wraps long lines).
             int targetWidth = origTextWidth;
             int targetHeight;
             {
@@ -231,7 +248,8 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
                 targetHeight = rcCalc.bottom;
             }
 
-            // If the wrapped block is too tall vs wide, grow width in steps until aspect ≈ 3:1 or limits hit.
+            // Grow width in steps until aspect ≈ 3:1 or limits hit. naturalWidth caps growth:
+            // there's no benefit going wider than the widest unbroken authored line.
             int const growStep = max(origTextWidth / 4, lineHeight * 2);
             while (targetWidth < maxTextWidth && targetWidth < naturalWidth &&
                    (targetHeight * 3) > targetWidth) {
@@ -245,6 +263,11 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
                          DT_CALCRECT | DT_WORDBREAK | DT_EXPANDTABS | DT_NOPREFIX | DT_EDITCONTROL);
                 targetHeight = rcCalc.bottom;
             }
+
+            // SS_EDITCONTROL has a small internal margin and DT_CALCRECT can under-count tab
+            // expansion vs the rendered control by a pixel or two per wrapped line. Half a line
+            // of vertical safety absorbs the cumulative drift on long messages.
+            targetHeight += lineHeight / 2;
 
             SelectObject(hdc, hOldFont);
             ReleaseDC(hWndText, hdc);
