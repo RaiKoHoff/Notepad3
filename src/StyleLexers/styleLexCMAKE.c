@@ -35,7 +35,7 @@ KEYWORDLIST KeyWords_CMAKE =
 
 EDITLEXER lexCmake =
 {
-    SCLEX_CMAKE, "cmake", IDS_LEX_CMAKE, L"Cmake Script", L"cmake; ctest; \\^cmakelists\\.txt$", L"",
+    SCLEX_CMAKE, "cmake", IDS_LEX_CMAKE, L"Cmake Script", L"cmake; ctest; cmakelists.txt", L"",
     &KeyWords_CMAKE, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_CMAKE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },

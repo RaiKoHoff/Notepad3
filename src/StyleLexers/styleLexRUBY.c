@@ -11,7 +11,7 @@ KEYWORDLIST KeyWords_RUBY =
 
 EDITLEXER lexRUBY =
 {
-    SCLEX_RUBY, "ruby", IDS_LEX_RUBY, L"Ruby Script", L"rb; ruby; rbw; rake; rjs; rakefile; gemspec; podspec; \\^Rakefile$; \\^Podfile$", L"",
+    SCLEX_RUBY, "ruby", IDS_LEX_RUBY, L"Ruby Script", L"rb; ruby; rbw; rake; rjs; rakefile; gemspec; podspec; Rakefile*; Podfile*", L"",
     &KeyWords_RUBY, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_RB_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },

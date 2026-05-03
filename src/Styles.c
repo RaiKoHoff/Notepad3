@@ -740,6 +740,158 @@ bool Style_Import(HWND hwnd)
 
 //=============================================================================
 //
+//   _TryTranslateRegexEntry()
+//
+//   Conservative migration helper: try to translate a simple legacy regex
+//   pattern (without its leading '\' marker) into an equivalent wildcard
+//   entry. Only patterns of the form '^<inner>$' are accepted, where <inner>
+//   contains exclusively ASCII alphanumerics, '_', '-', and optional '\.'
+//   escapes for literal dots — anything else (real regex metacharacters,
+//   missing anchors, etc.) is rejected and the caller drops the entry.
+//
+//   Output rules:
+//     - Bare name (no literal dot): append '*' so the result is still
+//       classified as a wildcard pattern by Style_WildcardMatchLexer. E.g.
+//       '^Makefile$' → 'Makefile*' (matches the extensionless file plus
+//       suffixed variants like 'Makefile.dev'; same broadening as the
+//       hard-coded defaults).
+//     - With at least one '\.': unescape to '.' and emit verbatim. E.g.
+//       '^cmakelists\.txt$' → 'cmakelists.txt' (literal whole-filename
+//       match via PathMatchSpec).
+//
+//   Returns true on successful translation (writes a NUL-terminated string
+//   to `out`); false otherwise.
+//
+static bool _TryTranslateRegexEntry(const WCHAR *pat, size_t patLen, LPWSTR out, size_t outCap)
+{
+    if (patLen < 3 || pat[0] != L'^' || pat[patLen - 1] != L'$') {
+        return false;
+    }
+
+    const WCHAR *inner    = pat + 1;
+    const WCHAR *innerEnd = pat + patLen - 1; // exclusive (points at '$')
+
+    bool   hasDot = false;
+    size_t outLen = 0;
+    for (const WCHAR *c = inner; c < innerEnd; ) {
+        WCHAR ch = *c;
+        if (ch == L'\\' && (c + 1) < innerEnd && c[1] == L'.') {
+            if (outLen + 1 >= outCap) {
+                return false;
+            }
+            out[outLen++] = L'.';
+            hasDot = true;
+            c += 2;
+        } else if ((ch >= L'a' && ch <= L'z') ||
+                   (ch >= L'A' && ch <= L'Z') ||
+                   (ch >= L'0' && ch <= L'9') ||
+                   ch == L'_' || ch == L'-') {
+            if (outLen + 1 >= outCap) {
+                return false;
+            }
+            out[outLen++] = ch;
+            ++c;
+        } else {
+            return false; // potential regex metacharacter — refuse
+        }
+    }
+
+    if (outLen == 0) {
+        return false;
+    }
+    if (!hasDot) {
+        if (outLen + 1 >= outCap) {
+            return false;
+        }
+        out[outLen++] = L'*';
+    }
+    out[outLen] = L'\0';
+    return true;
+}
+
+
+//=============================================================================
+//
+//   _StripLegacyRegexEntries()
+//
+//   Walks a ';'-separated FileNameExtensions list in-place and migrates any
+//   entry beginning with '\' (the legacy PCRE2 syntax that the wildcard
+//   refactor replaced). Simple patterns of the form '\^<chars>$' are
+//   translated to their wildcard equivalents via _TryTranslateRegexEntry();
+//   anything more complex is dropped. Returns true if the list was changed,
+//   in which case the buffer has been compacted. Buffer size is
+//   STYLE_EXTENSIONS_BUFFER (the szExtensions slot's size).
+//
+static bool _StripLegacyRegexEntries(LPWSTR lpszList)
+{
+    if (StrIsEmpty(lpszList)) {
+        return false;
+    }
+    WCHAR cleaned[STYLE_EXTENSIONS_BUFFER] = { L'\0' };
+    size_t cleanedLen = 0;
+    bool changed = false;
+
+    const WCHAR *p = lpszList;
+    while (*p) {
+        while (*p == L';' || *p == L' ' || *p == L'\t') {
+            ++p;
+        }
+        if (!*p) {
+            break;
+        }
+        const WCHAR *e = p;
+        while (*e && *e != L';') {
+            ++e;
+        }
+        const WCHAR *eTrim = e;
+        while (eTrim > p && (eTrim[-1] == L' ' || eTrim[-1] == L'\t')) {
+            --eTrim;
+        }
+
+        // Decide what (if anything) to append to the cleaned buffer.
+        const WCHAR *src      = NULL;
+        size_t       entryLen = 0;
+        WCHAR        translated[STYLE_EXTENSIONS_BUFFER];
+
+        if (*p == L'\\') {
+            // Legacy regex entry. Try to translate; otherwise drop.
+            if (_TryTranslateRegexEntry(p + 1, (size_t)(eTrim - p - 1),
+                                        translated, COUNTOF(translated))) {
+                src      = translated;
+                entryLen = StringCchLen(translated, COUNTOF(translated));
+            }
+            changed = true; // either we translated (different shape) or dropped
+        } else {
+            src      = p;
+            entryLen = (size_t)(eTrim - p);
+        }
+
+        if (src && entryLen > 0) {
+            if (cleanedLen > 0 && cleanedLen + 1 < COUNTOF(cleaned)) {
+                cleaned[cleanedLen++] = L';';
+            }
+            size_t copyLen = entryLen;
+            if (cleanedLen + copyLen >= COUNTOF(cleaned)) {
+                copyLen = COUNTOF(cleaned) - cleanedLen - 1;
+            }
+            if (copyLen > 0) {
+                CopyMemory(&cleaned[cleanedLen], src, copyLen * sizeof(WCHAR));
+                cleanedLen += copyLen;
+            }
+            cleaned[cleanedLen] = L'\0';
+        }
+        p = e;
+    }
+
+    if (changed) {
+        StringCchCopy(lpszList, STYLE_EXTENSIONS_BUFFER, cleaned);
+    }
+    return changed;
+}
+
+
+//=============================================================================
+//
 //   _LoadLexerFileExtensions()
 //
 static void _LoadLexerFileExtensions()
@@ -770,6 +922,16 @@ static void _LoadLexerFileExtensions()
             }
             StringCchCopy(g_pLexArray[iLexer]->szExtensions,
                 COUNTOF(g_pLexArray[iLexer]->szExtensions), tmpExt);
+
+            // Auto-migrate: translate or drop any legacy '\regex' entries from
+            // user INIs so the next save writes the cleaned wildcard-only form.
+            if (_StripLegacyRegexEntries(g_pLexArray[iLexer]->szExtensions)) {
+                WCHAR migMsg[256];
+                StringCchPrintf(migMsg, COUNTOF(migMsg),
+                    L"Notepad3: migrated legacy '\\regex' entries in FileNameExtensions for [%s]; will be rewritten on next save.\n",
+                    Lexer_Section);
+                OutputDebugStringW(migMsg);
+            }
 
             // don't allow empty extensions settings => use default ext
             if (StrIsEmpty(g_pLexArray[iLexer]->szExtensions)) {
@@ -2632,38 +2794,72 @@ PEDITLEXER Style_MatchLexer(LPCWSTR lpszMatch, bool bCheckNames)
 
 //=============================================================================
 //
-//  Style_RegExMatchLexer()
+//  Style_WildcardMatchLexer()
 //
-PEDITLEXER Style_RegExMatchLexer(LPCWSTR lpszFileName)
+//  Match the bare filename against any wildcard or literal-filename entries
+//  in each schema's FileNameExtensions list. An entry qualifies for this
+//  pass if it contains '*', '?', or '.' — anything else is a plain-extension
+//  token handled by Style_MatchLexer().
+//
+//  Uses Win32 PathMatchSpecW (case-insensitive, supports * and ?). Entries
+//  beginning with '\' (legacy PCRE2 syntax) are skipped — see _LoadLexerFileExtensions
+//  for the matching strip-on-load that keeps user INIs clean.
+//
+PEDITLEXER Style_WildcardMatchLexer(LPCWSTR lpszFileName)
 {
-    if (StrIsNotEmpty(lpszFileName)) {
+    if (StrIsEmpty(lpszFileName)) {
+        return NULL;
+    }
 
-        char chFilePath[XHUGE_BUFFER] = { '\0' };
-        WideCharToMultiByteEx(CP_UTF8, 0, lpszFileName, -1, chFilePath, COUNTOF(chFilePath), NULL, NULL);
+    for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
+        const WCHAR *p = g_pLexArray[iLex]->szExtensions;
+        while (p && *p) {
+            // skip leading separators and whitespace
+            while (*p == L';' || *p == L' ' || *p == L'\t') {
+                ++p;
+            }
+            if (!*p) {
+                break;
+            }
+            // find end of this entry
+            const WCHAR *e = p;
+            while (*e && *e != L';') {
+                ++e;
+            }
+            // trim trailing whitespace
+            const WCHAR *eTrim = e;
+            while (eTrim > p && (eTrim[-1] == L' ' || eTrim[-1] == L'\t')) {
+                --eTrim;
+            }
 
-        for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
-            const WCHAR *p = g_pLexArray[iLex]->szExtensions;
-            do {
-                const WCHAR* f = StrChr(p, L'\\');
-                const WCHAR* e = f;
-                if (f) {
-                    e = StrChr(f, L';');
-                    if (!e) {
-                        e = f + StringCchLen(f, 0);
-                    }
-                    ++f; // exclude '\'
-                    char regexpat[HUGE_BUFFER] = { '\0' };
-                    WideCharToMultiByte(CP_UTF8, 0, f, (int)(e-f), regexpat, (int)COUNTOF(regexpat), NULL, NULL);
-                    // Strip incidental whitespace around the pattern so entries like
-                    // "py; \^setup\.py$ ;txt" don't carry a leading/trailing space into PCRE2.
-                    StrTrimA(regexpat, " \t");
-
-                    if (RegExFind(regexpat, chFilePath, false, NULL) >= 0) {
-                        return g_pLexArray[iLex];
-                    }
-                }
+            // Skip legacy '\regex' entries (post-cutover; ignored, not matched).
+            if (*p == L'\\') {
                 p = e;
-            } while (p != NULL);
+                continue;
+            }
+
+            // Classify: an entry containing *, ?, or . is a PathMatchSpec pattern.
+            // Bare alphanumeric tokens are plain extensions handled elsewhere.
+            bool isPattern = false;
+            for (const WCHAR *c = p; c < eTrim; ++c) {
+                if (*c == L'*' || *c == L'?' || *c == L'.') {
+                    isPattern = true;
+                    break;
+                }
+            }
+            if (isPattern) {
+                WCHAR pat[STYLE_EXTENSIONS_BUFFER];
+                size_t copyLen = (size_t)(eTrim - p);
+                if (copyLen >= COUNTOF(pat)) {
+                    copyLen = COUNTOF(pat) - 1;
+                }
+                CopyMemory(pat, p, copyLen * sizeof(WCHAR));
+                pat[copyLen] = L'\0';
+                if (PathMatchSpecW(lpszFileName, pat)) {
+                    return g_pLexArray[iLex];
+                }
+            }
+            p = e;
         }
     }
     return NULL;
@@ -2687,7 +2883,7 @@ bool Style_HasLexerForExt(const HPATHL hpath)
         }
     }
     if (!bFound && Path_IsNotEmpty(hpath)) {
-        bFound = Style_RegExMatchLexer(Path_FindFileName(hpath));
+        bFound = Style_WildcardMatchLexer(Path_FindFileName(hpath));
     }
     return bFound;
 }
@@ -2747,9 +2943,9 @@ bool Style_SetLexerFromFile(HWND hwnd, const HPATHL hpath)
 
     LPCWSTR lpszFileName = Path_FindFileName(hpath);
 
-    // check for filename regex match
+    // check for filename wildcard / literal-filename match
     if (!bFound && s_bAutoSelect && Path_IsNotEmpty(hpath)) {
-        pLexSniffed = Style_RegExMatchLexer(lpszFileName);
+        pLexSniffed = Style_WildcardMatchLexer(lpszFileName);
         if (pLexSniffed) {
             pLexNew = pLexSniffed;
             bFound = true;

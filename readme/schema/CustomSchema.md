@@ -165,7 +165,7 @@ When you open a file, Notepad3 runs a pipeline to pick the right schema. It stop
 
 1. **File variables** (`vim:` / `emacs:` modelines inside the file). If the file declares `mode: python;` or `-*- mode: cpp -*-`, the declared mode name is matched against schema names (case-insensitive prefix) and then against extension lists. Disabled by `Settings2.NoFileVariables=1`.
 2. **Shebang detection** for `.cgi` / `.fcgi` files or files flagged as CGI by mode. Recognised interpreters: `python`, `ruby`, `bash`/`sh`, `perl`, `tcl`, `node`/`js`, `php`. Disabled by `Settings2.NoCGIGuess=1`.
-3. **Regex match on the file name.** Any entry in a schema's extension list that starts with a backslash is treated as a PCRE2 regex applied to the bare filename — e.g. `\^CMakeLists$` matches the extensionless file `CMakeLists`. See the [Extension lists](#extension-lists) subsection below for full syntax, escaping rules, and worked examples.
+3. **Wildcard / filename match.** Any entry in a schema's extension list that contains `*`, `?`, or `.` is matched against the bare filename via the standard Win32 wildcard matcher — e.g. `Makefile*` matches `Makefile`, `Makefile.dev`, `cmakelists.txt` matches the literal filename. See the [Extension lists](#extension-lists) subsection below for syntax and worked examples.
 4. **Plain extension match.** First lexer whose extension list contains the file's extension wins. Extension comparison is case-insensitive; separator is `;` (semicolon or space both work in practice).
 5. **HTML/XML sniff** — if the first bytes start with `<`, classify as HTML or XML. Disabled by `Settings2.NoHTMLGuess=1`.
 6. **Shebang fallback** for extension-less files (same recognisers as step 2).
@@ -185,65 +185,90 @@ Each schema carries a hard-coded default extension list (compiled into `Notepad3
 
 ```ini
 [Python Script]
-FileNameExtensions=py;pyw;pyi;\^setup\.py$;\^test_.*\.py$
+FileNameExtensions=py;pyw;pyi;setup.py;test_*.py
 ```
 
-The override **replaces** the default; the two are not merged. The field accepts both plain file extensions and full-filename regex patterns in a single semicolon-separated list.
+The override **replaces** the default; the two are not merged. The field accepts both plain file extensions and filename wildcard patterns in a single semicolon-separated list.
 
-#### Syntax
+#### Entry classification
+
+Each entry is one of two kinds — Notepad3 picks based on what characters it contains:
+
+| Entry contains… | Treated as… | Matched against |
+|---|---|---|
+| only letters / digits (no `*`, `?`, `.`) | plain extension token | the file's extension (the part after the last `.`, case-insensitive) |
+| any of `*`, `?`, or `.` | filename wildcard pattern | the bare filename via Win32 `PathMatchSpecW` |
+
+Examples:
+
+| Entry | Kind | Matches |
+|---|---|---|
+| `py` | extension | `foo.py`, `foo.PY` |
+| `*.py` | wildcard | any file ending in `.py` (same as `py`, just spelled out) |
+| `Makefile*` | wildcard | `Makefile`, `Makefile.dev`, `Makefile_old` |
+| `CMakeLists.txt` | wildcard (literal) | exactly `CMakeLists.txt` |
+| `??.log` | wildcard | any two-character name + `.log` |
+| `Makefile` | extension | files with extension `Makefile` (rare; not the literal extensionless filename) |
+
+#### Syntax rules
 
 | Aspect | Rule |
 |---|---|
-| Separator | `;` (semicolon) is canonical. A single space also works as a separator and surrounding whitespace around `;` is tolerated. |
-| Case | Comparison is **case-insensitive** for both plain and regex entries. |
-| Plain entry | A bare extension token like `py` or `cpp`. Matched as a whole token against the file's extension; substring matches are excluded. The leading `.` of the file's extension is stripped before comparison, so `py` matches `foo.py`, `foo.PY`, and `foo.Py`. |
-| Regex entry | An entry whose first character is a **backslash** `\`. Everything after the leading `\` is the regex pattern. The `\` is the marker, not part of the pattern. |
-| Buffer limit | **512 characters** per schema (counting all entries combined). Longer values are silently truncated when read from the INI — no warning is shown. |
-
-#### Regex extension patterns
-
-- **Engine:** PCRE2 (the same engine the editor's Find/Replace dialog uses), so the full PCRE2 syntax is available — character classes, alternation, lookarounds, named groups, inline modifiers.
-- **Match target:** the **bare filename** including extension (e.g. `setup.py`, `CMakeLists.txt`). The directory portion of the path is stripped before matching, so patterns cannot anchor on parent directories.
-- **Anchors are NOT implicit.** A pattern like `\setup\.py` is treated as `setup\.py` and matches anywhere in the filename — it accepts `setup.py`, `mysetup.python`, and `setup.python.bak`. Add `^` and `$` explicitly when you mean the whole filename.
-- **`.` is a metachar.** Always escape literal dots as `\.`. Otherwise `\foo.py` will also match `fooXpy`, `foo-py`, etc.
-- **Multiple regex entries are allowed** in the same field, each prefixed with its own `\` and separated by `;`.
-- **Plain and regex entries can be freely mixed** in the same `FileNameExtensions` value.
-- **No per-pattern case-sensitivity flag** is exposed by the dialog. If you need a case-sensitive regex for one pattern, use the PCRE2 inline modifier `(?-i)` at the start of that pattern.
+| Separator | `;` (semicolon) is canonical. A single space also works, and whitespace around `;` is tolerated. |
+| Case | Both passes are **case-insensitive**. |
+| `*` in a wildcard | Matches zero or more of any character. |
+| `?` in a wildcard | Matches exactly one character. |
+| `.` in a wildcard | Matches a literal dot — there is no escape character. |
+| Buffer limit | **512 characters** per schema (counting all entries combined). Longer values are silently truncated when read from the INI; a debug-output warning is emitted. |
 
 #### Worked examples
 
 ```ini
-; CMakeLists has no extension — only a regex can catch it
+; Plain extensions (the common case)
+[Python Script]
+FileNameExtensions=py;pyw;pyi
+
+; Match the literal extensionless file CMakeLists, plus its .txt sibling
 [CMake]
-FileNameExtensions=cmake;ctest;\^CMakeLists$;\^CMakeLists\.txt$
+FileNameExtensions=cmake;ctest;cmakelists.txt;CMakeLists*
 
-; Dockerfile family — match Dockerfile, Dockerfile.dev, Dockerfile.prod, …
+; Dockerfile family — Dockerfile, Dockerfile.dev, Dockerfile.prod, …
 [Docker]
-FileNameExtensions=dockerfile;\^Dockerfile(\..+)?$
+FileNameExtensions=dockerfile;Dockerfile*
 
-; Hidden shell config files starting with a dot
+; Shell config files starting with a dot
 [Bash Script]
-FileNameExtensions=sh;bash;\^\.bashrc$;\^\.bash_profile$;\^\.profile$
+FileNameExtensions=sh;bash;.bashrc;.bash_profile;.profile
 
 ; Route Python test files to a separate schema
 [Python Test]
-FileNameExtensions=\^test_.*\.py$;\^.*_test\.py$
+FileNameExtensions=test_*.py;*_test.py
 
-; Nginx config files — fixed filenames plus the conf.d/*.conf convention
-[Nginx Config]
-FileNameExtensions=conf;\^nginx\.conf$;\^mime\.types$
+; Single-character pattern: any 1-char-name file ending in .x
+[Custom]
+FileNameExtensions=?.x
 ```
 
-Common pitfalls illustrated above:
-- `\^setup\.py$` matches `setup.py` but **not** `setup.py.bak` (because of the trailing `$`). It does match `Setup.py`, but only thanks to the global case-insensitive flag.
-- `\setup\.py` (no anchors) also matches `mysetup.py.bak` and `setup.python` — almost never what you want.
-- `\^foo.py$` (missing `\.`) matches `foo.py` *and* `fooXpy` — always escape the dot.
+Common pitfalls:
+
+- `Makefile` (no `*`, `?`, `.`) is treated as a **plain extension**, so it matches files whose extension is `Makefile` (i.e. `foo.Makefile`) — **not** the literal extensionless `Makefile`. To catch the latter, use `Makefile*`.
+- `Makefile*` is greedy — it also matches `Makefile_old` or `Makefilexxx`. If you need exactness, list each name explicitly (`Makefile;Makefile.dev`) or rely on the `.` form (`Makefile.*`) which still matches `Makefile.foo` but excludes `Makefilexxx`.
+- `setup.py` (entry contains `.`) is a wildcard literal — it only matches the literal filename `setup.py`, not `mysetup.py`.
 
 #### Precedence
 
-Within `Style_SetLexerFromFile()` the auto-detect pipeline tries the **regex match across all schemas first**, and only then falls back to the plain-extension match across all schemas. Within a single schema the two are independent: a regex hit and a plain-extension hit can both be present, but only the regex pass gets a chance to fire before the plain pass runs.
+Within `Style_SetLexerFromFile()` the auto-detect pipeline tries the **wildcard / filename pass across all schemas first**, and only then falls back to the plain-extension pass across all schemas. Within a single schema the two passes are independent: an entry's classification (plain vs wildcard) decides which pass it participates in.
 
-When two schemas claim the same plain extension, or both match a file with their regex entries, the schema that appears first in the internal schema array wins. There is currently no UI to reorder schemas.
+When two schemas claim the same plain extension, or both match a file with their wildcards, the schema that appears first in the internal schema array wins. There is currently no UI to reorder schemas.
+
+#### Legacy `\regex` syntax
+
+Earlier versions of Notepad3 used a PCRE2 regex syntax for filename matching, marked by a leading backslash (e.g. `\^Makefile$`). This has been **removed**. Existing INIs migrate automatically on load:
+
+- Patterns of the form `\^<name>$` where `<name>` is alphanumeric (with optional `_`, `-`, and `\.` escapes) are **translated** to a wildcard equivalent. Examples: `\^Makefile$` → `Makefile*`, `\^cmakelists\.txt$` → `cmakelists.txt`, `\^\.bashrc$` → `.bashrc`.
+- Anything more complex (real regex metacharacters like `.+`, `[abc]`, `?`, missing anchors, etc.) is **dropped** — translation isn't safe.
+
+In both cases the in-memory list is rewritten on the next save, so user INIs converge to wildcard-only over time. A debug-output line records the migration per schema. Hand-tuned entries that get dropped may need to be rewritten as wildcard patterns.
 
 #### Editing in *Customize Schemes*
 
@@ -466,7 +491,7 @@ For developers wanting to look up behaviour described above:
 |---|---|
 | Data structures (`EDITLEXER`, `EDITSTYLE`, `KEYWORDLIST`) | `src/StyleLexers/EditLexer.h` |
 | Schema array, loading, saving, layering | `src/Styles.c` — `g_pLexArray[]`, `_ReadFromIniCache()`, `Style_ToIniSection()`, `Style_CanonicalSectionToIniCache()`, `Style_ExportToFile()` |
-| Auto-detection pipeline | `src/Styles.c` — `Style_SetLexerFromFile()`, `Style_MatchLexer()`, `Style_RegExMatchLexer()`, `Style_SniffShebang()` |
+| Auto-detection pipeline | `src/Styles.c` — `Style_SetLexerFromFile()`, `Style_MatchLexer()`, `Style_WildcardMatchLexer()`, `Style_SniffShebang()` |
 | Customize Schemes dialog | `src/Styles.c` — `Style_CustomizeSchemesDlg()`, `Style_CustomizeSchemesDlgProc()` |
 | Select Scheme dialog | `src/Styles.c` — `Style_SelectLexerDlg()`, `Style_SelectLexerDlgProc()` |
 | Theme menu & switching | `src/Styles.c` — `_FillThemesMenuTable()`, `Style_InsertThemesMenu()`, `Style_DynamicThemesMenuCmd()`, `Style_ImportTheme()` |

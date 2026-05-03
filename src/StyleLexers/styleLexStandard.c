@@ -80,7 +80,7 @@ EDITLEXER lexTEXT =
 
 EDITLEXER lexANSI =
 {
-    SCLEX_NULL, "null", IDS_LEX_ANSI_ART, L"ANSI Art", L"nfo; diz; \\^Readme$", L"",
+    SCLEX_NULL, "null", IDS_LEX_ANSI_ART, L"ANSI Art", L"nfo; diz; Readme*", L"",
     &KeyWords_NULL,{
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"font:Lucida Console; thin; size:11; smoothing:aliased", L"" },
         { {STYLE_LINENUMBER}, IDS_LEX_STD_MARGIN, L"Margins and Line Numbers", L"font:Consolas; size:-2; fore:#008080", L"" },
