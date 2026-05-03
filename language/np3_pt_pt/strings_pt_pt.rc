@@ -343,13 +343,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-As extensões de ficheiro devem ser separadas por ';'\r\n\
-usar \\<regex>; para definir um padrão de correspondência ao nome do ficheiro:\r\n\
-   \\xyz$;   => nomes de ficheiro(nome+ext) com 'xyz' como últimos caracteres\r\n\r\n\
-Formato do estilo:\r\n\
-tipo de letra:Nome; tamanho:[+/-]nn.mm; negrito; itálico; sublinhado;\r\n\
-1º plano:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-Propriedades do estilo podem ser copiadas usando copiar/colar ou arrastar/largar\
+Filename extensions must be separated by ';'\r\n\
+entries containing '*', '?' or '.' match the full filename (wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
+Style format:\r\n\
+font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+Style properties can be copied using copy and paste or drag and drop\
 "
 
 END
