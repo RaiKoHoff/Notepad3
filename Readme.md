@@ -7,7 +7,7 @@
 [![Release](https://img.shields.io/github/v/release/rizonesoft/Notepad3?style=flat-square&label=Release&color=0e7490)](https://rizonesoft.com/downloads/notepad3/)
 [![Nightly](https://img.shields.io/github/v/release/rizonesoft/Notepad3?include_prereleases&style=flat-square&label=Nightly&color=6e40c9)](https://github.com/rizonesoft/Notepad3/releases)
 
-[Website](https://rizonesoft.com/downloads/notepad3/) · [Downloads](https://github.com/rizonesoft/Notepad3/releases) · [Documentation](https://rizonesoft.com/documents/notepad3/) · [Changelog](https://rizonesoft.com/downloads/notepad3/update) · [Sponsor](https://github.com/sponsors/rizonesoft)
+[Website](https://rizonesoft.com/downloads/notepad3/) · [Downloads](https://github.com/rizonesoft/Notepad3/releases) · [Documentation](https://rizonesoft.com/documents/notepad3/) · [FAQ](readme/faq/FAQ.md) · [Changelog](https://rizonesoft.com/downloads/notepad3/update) · [Sponsor](https://github.com/sponsors/rizonesoft)
 
 ---
 
@@ -155,6 +155,19 @@ Coverage at a glance:
 - **Shell integration** — `appid=`, `sysmru=`
 
 ⌨️ **Full reference:** [readme/cmdln/CmdLnOptions.md](readme/cmdln/CmdLnOptions.md) — every switch with arguments, examples, persistence notes, and Notepad2/Notepad2-mod compatibility.
+
+## Keyboard Shortcuts
+
+Every key combination Notepad3 understands — file, editing, view, search, customization — grouped by menu, with Notepad2 → Notepad3 reassignments flagged.
+
+⌨️ **Notepad3 shortcuts:** [readme/KeyboardShortcuts.md](readme/KeyboardShortcuts.md)
+🗂️ **MiniPath shortcuts:** [readme/minipath/KeyboardShortcuts.md](readme/minipath/KeyboardShortcuts.md)
+
+## FAQ
+
+Common questions inherited from Notepad2 / Notepad2-mod, updated for Notepad3 — installation, portable settings, regex (PCRE2), encoding, file change notification, `.LOG` and Emacs file variables, replacing Windows Notepad, and more.
+
+❓ **Frequently Asked Questions:** [readme/faq/FAQ.md](readme/faq/FAQ.md)
 
 ## Contributing
 
