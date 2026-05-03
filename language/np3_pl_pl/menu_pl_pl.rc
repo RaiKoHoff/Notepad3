@@ -91,7 +91,7 @@ BEGIN
             MENUITEM "Szablon Web &1\tCtrl+Shift+1",       CMD_WEBACTION1
             MENUITEM "Szablon Web &2\tCtrl+Shift+2",       CMD_WEBACTION2
             MENUITEM SEPARATOR
-            MENUITEM "Otwórz Eksplorator pliku",           IDM_FILE_EXPLORE_DIR
+            MENUITEM "Otwórz Eksplorator plików",           IDM_FILE_EXPLORE_DIR
         END
         MENUITEM SEPARATOR
         MENUITEM "Przywróć z pliku\tF5",                     IDM_FILE_REVERT
@@ -590,11 +590,11 @@ BEGIN
             MENUITEM "Wielka litera zdania",          CMD_CTX_SENTENCECASE
         END
         MENUITEM SEPARATOR
-        MENUITEM "Przełącz Current Fold",                     IDM_VIEW_TOGGLE_CURRENT_FOLD
+        MENUITEM "Zmień bieżącą zakładkę",                     IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR
         MENUITEM "Otwórz Web Action 1",                       CMD_WEBACTION1
         MENUITEM "Otwórz Web Action 2",                       CMD_WEBACTION2
-        MENUITEM "Otwórz Eksplorator pliku",                  IDM_FILE_EXPLORE_DIR
+        MENUITEM "Otwórz Eksplorator plików",                  IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"
     BEGIN
