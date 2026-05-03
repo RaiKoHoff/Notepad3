@@ -187,6 +187,8 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
         //SendMessage(GetDlgItem(hwnd, IDC_INFOBOXTEXT), EM_SETTABSTOPS, 3, (LPARAM)tabStopDist);
 
         // --- Dynamic dialog sizing: shrink for short text, grow proportionally (W & H) for long text ---
+        // Always inserts ~one line of breathing room between message text and buttons; reclaims that
+        // band when the checkbox is hidden and the template puts it between text and buttons.
         {
             HWND const hWndText = GetDlgItem(hwnd, IDC_INFOBOXTEXT);
 
@@ -195,6 +197,7 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
             MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rcText, 2);
             int const origTextWidth  = rcText.right - rcText.left;
             int const origTextHeight = rcText.bottom - rcText.top;
+            int const textBottomY    = rcText.top + origTextHeight;
 
             RECT rcDlg;
             GetWindowRect(hwnd, &rcDlg);
@@ -255,47 +258,99 @@ static INT_PTR CALLBACK _InfoBoxLngDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, 
             int deltaX = targetWidth  - origTextWidth;
             int deltaY = targetHeight - origTextHeight;
 
+            int extraGap = lineHeight; // one blank line between text and buttons
+
+            // Probe template positions of buttons and checkbox so we can detect
+            // INFOBOX4-style layouts where the checkbox sits between text and buttons,
+            // and reclaim that band when the checkbox is hidden.
+            int const buttonIDs[] = { IDOK, IDYES, IDNO, IDCANCEL, IDABORT, IDRETRY,
+                                      IDIGNORE, IDTRYAGAIN, IDCONTINUE, IDCLOSE };
+            int buttonTopTpl = INT_MAX;
+            for (int i = 0; i < COUNTOF(buttonIDs); ++i) {
+                HWND const h = GetDlgItem(hwnd, buttonIDs[i]);
+                if (h) {
+                    RECT r;
+                    GetWindowRect(h, &r);
+                    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&r, 2);
+                    if (r.top < buttonTopTpl) buttonTopTpl = r.top;
+                }
+            }
+
+            int checkboxTopTpl = INT_MAX, checkboxBottomTpl = INT_MAX;
+            HWND const hChkProbe = GetDlgItem(hwnd, IDC_INFOBOXCHECK);
+            if (hChkProbe) {
+                RECT r;
+                GetWindowRect(hChkProbe, &r);
+                MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&r, 2);
+                checkboxTopTpl    = r.top;
+                checkboxBottomTpl = r.bottom;
+            }
+
+            bool const checkboxInGapZone = (buttonTopTpl != INT_MAX) &&
+                                           (checkboxTopTpl    >  textBottomY) &&
+                                           (checkboxBottomTpl <= buttonTopTpl);
+            int vReclaim = 0;
+            if (lpMsgBox->bDisableCheckBox && checkboxInGapZone) {
+                vReclaim = (buttonTopTpl - textBottomY) - extraGap;
+                if (vReclaim < 0) vReclaim = 0;
+            }
+
             if (origDlgWidth + deltaX > maxDlgWidth) {
                 deltaX = maxDlgWidth - origDlgWidth;
             }
-            if (origDlgHeight + deltaY > maxDlgHeight) {
-                deltaY = maxDlgHeight - origDlgHeight;
+            int netExtra = extraGap - vReclaim;
+            if (origDlgHeight + deltaY + netExtra > maxDlgHeight) {
+                int overflow = (origDlgHeight + deltaY + netExtra) - maxDlgHeight;
+                int const gapShrink = min(overflow, extraGap);
+                extraGap -= gapShrink;
+                overflow -= gapShrink;
+                if (overflow > 0) {
+                    deltaY -= overflow;
+                }
+                netExtra = extraGap - vReclaim;
             }
 
-            if (deltaX != 0 || deltaY != 0) {
-                SetWindowPos(hWndText, NULL, 0, 0,
-                             origTextWidth  + deltaX,
-                             origTextHeight + deltaY,
-                             SWP_NOMOVE | SWP_NOZORDER);
+            // Resize text region.
+            SetWindowPos(hWndText, NULL, 0, 0,
+                         origTextWidth  + deltaX,
+                         origTextHeight + deltaY,
+                         SWP_NOMOVE | SWP_NOZORDER);
 
-                // Buttons: shift right by deltaX (right-anchored as a group) and down by deltaY.
-                int const buttonIDs[] = { IDOK, IDYES, IDNO, IDCANCEL, IDABORT, IDRETRY,
-                                          IDIGNORE, IDTRYAGAIN, IDCONTINUE, IDCLOSE };
-                for (int i = 0; i < COUNTOF(buttonIDs); ++i) {
-                    HWND hCtl = GetDlgItem(hwnd, buttonIDs[i]);
-                    if (hCtl) {
-                        RECT rc;
-                        GetWindowRect(hCtl, &rc);
-                        MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rc, 2);
-                        SetWindowPos(hCtl, NULL, rc.left + deltaX, rc.top + deltaY, 0, 0,
-                                     SWP_NOSIZE | SWP_NOZORDER);
-                    }
+            // Buttons: shift right by deltaX (right-anchored), and down by
+            // (deltaY + extraGap - vReclaim) for any control whose template top is
+            // at or below the text region (controls above the text bottom keep deltaY only).
+            for (int i = 0; i < COUNTOF(buttonIDs); ++i) {
+                HWND const hCtl = GetDlgItem(hwnd, buttonIDs[i]);
+                if (hCtl) {
+                    RECT rc;
+                    GetWindowRect(hCtl, &rc);
+                    MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rc, 2);
+                    int const yShift = (rc.top >= textBottomY)
+                                           ? (deltaY + extraGap - vReclaim)
+                                           : deltaY;
+                    SetWindowPos(hCtl, NULL, rc.left + deltaX, rc.top + yShift, 0, 0,
+                                 SWP_NOSIZE | SWP_NOZORDER);
                 }
-                // Checkbox: left-anchored, shift only by deltaY.
+            }
+            // Checkbox: left-anchored. Skip when hidden — vReclaim already collapsed its band.
+            if (!lpMsgBox->bDisableCheckBox) {
                 HWND const hChk = GetDlgItem(hwnd, IDC_INFOBOXCHECK);
                 if (hChk) {
                     RECT rc;
                     GetWindowRect(hChk, &rc);
                     MapWindowPoints(HWND_DESKTOP, hwnd, (LPPOINT)&rc, 2);
-                    SetWindowPos(hChk, NULL, rc.left, rc.top + deltaY, 0, 0,
+                    int const yShift = (rc.top >= textBottomY)
+                                           ? (deltaY + extraGap - vReclaim)
+                                           : deltaY;
+                    SetWindowPos(hChk, NULL, rc.left, rc.top + yShift, 0, 0,
                                  SWP_NOSIZE | SWP_NOZORDER);
                 }
-
-                SetWindowPos(hwnd, NULL, 0, 0,
-                             origDlgWidth  + deltaX,
-                             origDlgHeight + deltaY,
-                             SWP_NOMOVE | SWP_NOZORDER);
             }
+
+            SetWindowPos(hwnd, NULL, 0, 0,
+                         origDlgWidth  + deltaX,
+                         origDlgHeight + deltaY + netExtra,
+                         SWP_NOMOVE | SWP_NOZORDER);
         }
 
         SetDlgItemText(hwnd, IDC_INFOBOXTEXT, lpMsgBox->lpstrMessage);
