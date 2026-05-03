@@ -1,5 +1,9 @@
 # Notepad3 TODO
 
+## Ideas (deliberated)
+- [ ] PCRE2 backward search seems to be slow - ask Claude for analysis
+- [ ] Merge/Cleanup all old documentation (Build/Docs/*.txt, etc.) files
+
 ## High Priority
 
 - [x] **Scintilla/Lexilla Update** - ✅ Upgraded to 5.5.8/5.4.6 parity
