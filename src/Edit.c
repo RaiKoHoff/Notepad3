@@ -1181,6 +1181,10 @@ static bool ConvertToSciCPAndSetText(
     bool bReloadFile,
     EditFileIOStatus* const status)
 {
+    // Idempotent on failure: *ppData / *pcbData are left untouched if either Win32
+    // conversion call returns 0, so the caller can retry with a different code page
+    // (some IANA code pages — e.g. ISO-8859-10/CP 28600 — pass IsValidCodePage but
+    // fail MultiByteToWideChar at runtime when the NLS file isn't installed).
     size_t const cbData = *pcbData;
     LPWSTR const lpDataWide = AllocMem(cbData * 2 + 16, HEAP_ZERO_MEMORY);
 
@@ -1188,22 +1192,22 @@ static bool ConvertToSciCPAndSetText(
                                      lpDataWide, (SizeOfMem(lpDataWide) / sizeof(WCHAR)));
     if (cbDataWide == 0) {
         FreeMem(lpDataWide);
-        *ppData = NULL;
+        return false;
+    }
+
+    char* const newData = AllocMem(cbDataWide * 3 + 16, HEAP_ZERO_MEMORY);
+    ptrdiff_t const newCb = WideCharToMultiByteEx(Encoding_SciCP, 0, lpDataWide, cbDataWide,
+                                                  newData, SizeOfMem(newData), NULL, NULL);
+    FreeMem(lpDataWide);
+
+    if (newCb == 0) {
+        FreeMem(newData);
         return false;
     }
 
     FreeMem(*ppData);
-    *ppData = AllocMem(cbDataWide * 3 + 16, HEAP_ZERO_MEMORY);
-
-    *pcbData = WideCharToMultiByteEx(Encoding_SciCP, 0, lpDataWide, cbDataWide,
-                                      *ppData, SizeOfMem(*ppData), NULL, NULL);
-    FreeMem(lpDataWide);
-
-    if (*pcbData == 0) {
-        FreeMem(*ppData);
-        *ppData = NULL;
-        return false;
-    }
+    *ppData = newData;
+    *pcbData = (size_t)newCb;
 
     EditSetNewText(hwnd, *ppData, *pcbData, bClearUndoHistory, bReloadFile);
     EditDetectEOLMode(*ppData, *pcbData, status);
@@ -1466,10 +1470,21 @@ bool EditLoadFile(
                 status->iEncoding = CPI_UTF8SIGN;
                 EditDetectEOLMode(UTF8StringStart(lpData), cbData - 3, status);
             }
-            else {
+            else if (bValidUTF8) {
                 EditSetNewText(hwnd, lpData, cbData, bClearUndoHistory, bReloadFile);
                 status->iEncoding = CPI_UTF8;
                 EditDetectEOLMode(lpData, cbData, status);
+            }
+            else {
+                // Detector picked UTF-8 but the byte sequence does not pass strict
+                // UTF-8 validation — pushing it to Scintilla as UTF-8 would silently
+                // corrupt the document. Fall back to ANSI codepage conversion.
+                status->iEncoding = CPI_ANSI_DEFAULT;
+                UINT const uCodePage = Encoding_GetCodePage(CPI_ANSI_DEFAULT);
+                if (!ConvertToSciCPAndSetText(hwnd, uCodePage, &lpData, &cbData,
+                                              bClearUndoHistory, bReloadFile, status)) {
+                    EditSetNewText(hwnd, "", 0, bClearUndoHistory, bReloadFile);
+                }
             }
         }
         else { // ===  UNICODE NON UTF-8 ===
@@ -1531,9 +1546,21 @@ bool EditLoadFile(
             // systems where CPI_ANSI_DEFAULT lacks NCP_EXTERNAL_8BIT).
             if (!ConvertToSciCPAndSetText(hwnd, uCodePage, &lpData, &cbData,
                                           bClearUndoHistory, bReloadFile, status)) {
-                FreeMem(lpData);
-                bReadSuccess = false;
-                goto observe;
+                // Some IANA-listed code pages (e.g. ISO-8859-10 / CP 28600) appear in
+                // g_Encodings and pass IsValidCodePage but lack the NLS file on most
+                // Windows installs, so MultiByteToWideChar returns 0 at runtime. Retry
+                // with the system ANSI default before giving up — preserves the file
+                // load instead of showing a misleading "Error loading" dialog.
+                UINT const fallbackCP = Encoding_GetCodePage(CPI_ANSI_DEFAULT);
+                if ((fallbackCP != uCodePage) &&
+                    ConvertToSciCPAndSetText(hwnd, fallbackCP, &lpData, &cbData,
+                                             bClearUndoHistory, bReloadFile, status)) {
+                    status->iEncoding = CPI_ANSI_DEFAULT;
+                } else {
+                    FreeMem(lpData);
+                    bReadSuccess = false;
+                    goto observe;
+                }
             }
         } else {
             EditSetNewText(hwnd, lpData, cbData, bClearUndoHistory, bReloadFile);
