@@ -343,13 +343,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-Filename extensions must be separated by ';'\r\n\
-entries containing '*', '?' or '.' match the full filename (wildcard):\r\n\
+副檔名必須以 ; 隔開\r\n\
+包含「*」、「?」或「.」的條目符合完整檔案名稱（通配符）：\r\n\
    Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
-Style format:\r\n\
+樣式格式：\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-Style properties can be copied using copy and paste or drag and drop\
+樣式屬性可以複製貼上或拖放\r\n\r\n[預覽] 按鈕不會套用修改\
 "
 
 END
