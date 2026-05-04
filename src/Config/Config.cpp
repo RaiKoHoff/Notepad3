@@ -2848,7 +2848,7 @@ bool MRU_Load(LPMRULIST pmru, bool bFileProps)
             for (int i = 0; i < pmru->iSize; ++i) {
                 WCHAR tchName[32] = { L'\0' };
                 StringCchPrintf(tchName, COUNTOF(tchName), L"%.2i", i + 1);
-                WCHAR tchItem[2048] = { L'\0' };
+                WCHAR tchItem[MRU_FNDRPL_ITEM_LEN] = { L'\0' };
                 if (IniSectionGetString(RegKey_Section, tchName, L"", tchItem, COUNTOF(tchItem))) {
                     size_t const len = StringCchLen(tchItem, 0);
                     if ((len > 1) && (tchItem[0] == L'"') && (tchItem[len - 1] == L'"')) {
@@ -2890,7 +2890,7 @@ void MRU_Save(LPMRULIST pmru)
         if (OpenSettingsFile(__func__)) {
 
             WCHAR tchName[32] = { L'\0' };
-            WCHAR tchItem[2048] = { L'\0' };
+            WCHAR tchItem[MRU_FNDRPL_ITEM_LEN] = { L'\0' };
 
             const WCHAR* const RegKey_Section = pmru->szRegKey;
             IniSectionClear(pmru->szRegKey, false);

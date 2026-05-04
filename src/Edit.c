@@ -6241,7 +6241,7 @@ static LPCWSTR _EditGetFindStrg(HWND hwnd, const LPEDITFINDREPLACE lpefr, bool b
     }
 
     static HSTRINGW hfind = NULL;
-    // TODO: get rid of const FNDRPL_BUFFER size and StrgDestroy(hfind);
+    // TODO: StrgDestroy(hfind);
 
     if (!hfind) {
         hfind = StrgCreate(NULL);
@@ -6279,7 +6279,10 @@ static LPCWSTR _EditGetFindStrg(HWND hwnd, const LPEDITFINDREPLACE lpefr, bool b
     SetFindPattern(StrgGet(hfind));
 
     if (lpefr->bWildcardSearch) {
-        LPWSTR const buf = StrgWriteAccessBuf(hfind, FNDRPL_BUFFER);
+        // _EscapeWildcards can expand each char to two (e.g. '|' -> '\|', '*' -> '.*'),
+        // so ensure the buffer holds at least 2× the current content length.
+        size_t const expandCap = (StrgGetLength(hfind) * 2) + 2;
+        LPWSTR const buf = StrgWriteAccessBuf(hfind, max(expandCap, (size_t)FNDRPL_BUFFER));
         _EscapeWildcards(buf, StrgGetAllocLength(hfind), lpefr);
         StrgSanitize(hfind);
     }
@@ -6476,38 +6479,6 @@ static void  _DelayMarkAll(int delay)
 static bool s_SaveMarkOccurrences = false;
 static bool s_SaveMarkMatchVisible = false;
 
-//=============================================================================
-//
-//  EditBoxForPasteFixes()
-//
-static LRESULT CALLBACK EditBoxForPasteFixes(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
-                                             UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
-{
-    WCHAR* const s_wchBuffer = (WCHAR*)dwRefData;
-
-    if (s_wchBuffer) {
-        switch (uMsg) {
-        case WM_PASTE: {
-            EditGetClipboardW(s_wchBuffer, FNDRPL_BUFFER);
-            SendMessage(hwnd, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)s_wchBuffer);
-        }
-        return TRUE;
-
-        //case WM_LBUTTONDOWN:
-        //  SendMessage(hwnd, EM_REPLACESEL, (WPARAM)TRUE, (LPARAM)L"X");
-        //  return TRUE;
-
-        case WM_NCDESTROY:
-            RemoveWindowSubclass(hwnd, EditBoxForPasteFixes, uIdSubclass);
-            break;
-
-        default:
-            break;
-        }
-    }
-    return DefSubclassProc(hwnd, uMsg, wParam, lParam);
-}
-
 
 //=============================================================================
 //
@@ -6643,7 +6614,6 @@ static INT_PTR CALLBACK EditFindReplaceDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
         COMBOBOXINFO cbInfoF = { sizeof(COMBOBOXINFO) };
         GetComboBoxInfo(GetDlgItem(hwnd, IDC_FINDTEXT), &cbInfoF);
         if (cbInfoF.hwndItem) {
-            SetWindowSubclass(cbInfoF.hwndItem, EditBoxForPasteFixes, 0, (DWORD_PTR) &(s_wchBufOut[0]));
             SHAutoComplete(cbInfoF.hwndItem, SHACF_FILESYS_ONLY | SHACF_AUTOAPPEND_FORCE_OFF | SHACF_AUTOSUGGEST_FORCE_OFF);
         }
 
@@ -6661,7 +6631,6 @@ static INT_PTR CALLBACK EditFindReplaceDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
             COMBOBOXINFO cbInfoR = { sizeof(COMBOBOXINFO) };
             GetComboBoxInfo(GetDlgItem(hwnd, IDC_REPLACETEXT), &cbInfoR);
             if (cbInfoR.hwndItem) {
-                SetWindowSubclass(cbInfoR.hwndItem, EditBoxForPasteFixes, 0, (DWORD_PTR) &(s_wchBufOut[0]));
                 SHAutoComplete(cbInfoR.hwndItem, SHACF_FILESYS_ONLY | SHACF_AUTOAPPEND_FORCE_OFF | SHACF_AUTOSUGGEST_FORCE_OFF);
             }
         }
