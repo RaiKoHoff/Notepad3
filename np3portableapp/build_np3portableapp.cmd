@@ -189,7 +189,6 @@ echo.
 echo --- Step 3: Copy Docs ---
 
 copy "%NP3_DISTRIB_DIR%\Changes.txt" "%NP3_PORTAPP_DIR%\App\Notepad3\Docs\Changes.txt" /Y /V
-copy "%SCRIPT_DIR%..\License.txt" "%NP3_PORTAPP_DIR%\App\Notepad3\Docs\License.txt" /Y /V
 copy "%NP3_DOC_DIR%\*.txt" "%NP3_PORTAPP_DIR%\App\Notepad3\Docs\*.txt" /Y /V
 copy "%NP3_DOC_DIR%\crypto\*.txt" "%NP3_PORTAPP_DIR%\App\Notepad3\Docs\crypto\*.txt" /Y /V
 copy "%NP3_DOC_DIR%\uthash\*.txt" "%NP3_PORTAPP_DIR%\App\Notepad3\Docs\uthash\*.txt" /Y /V

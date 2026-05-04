@@ -95,8 +95,8 @@ IF EXIST "%TEMP_NAME%"     RD /S /Q "%TEMP_NAME%"
 IF NOT EXIST "%TEMP_NAME%" MD "%TEMP_NAME%"
 IF NOT EXIST "Packages"    MD "Packages"
 
-FOR %%A IN ("..\License.txt" "Notepad3_ptb.ini" "minipath.ini"^
-    "..\%1\Notepad3.exe" "..\%1\minipath.exe" "..\%1\np3encrypt.exe") DO COPY /Y /V "%%A" "%TEMP_NAME%\"
+FOR %%A IN ("Notepad3_ptb.ini" "minipath.ini" "..\%1\Notepad3.exe" "..\%1\minipath.exe"^ 
+    "..\%1\np3encrypt.exe") DO COPY /Y /V "%%A" "%TEMP_NAME%\"
 IF EXIST "%TEMP_NAME%\Notepad3_ptb.ini" RENAME "%TEMP_NAME%\Notepad3_ptb.ini" "Notepad3.ini"
 
 SET "LNG=%TEMP_NAME%\lng"
@@ -120,7 +120,7 @@ IF NOT EXIST "%FAVORITES%" MD "%FAVORITES%"
 
 PUSHD "%TEMP_NAME%"
 "%SEVENZIP%" a -t7z -m0=lzma2 -ms=on -mx=9^
- "%ZIP_NAME%.7z" "License.txt" "Notepad3.exe" "Notepad3.ini"^
+ "%ZIP_NAME%.7z" "Notepad3.exe" "Notepad3.ini"^
  "Favorites" "minipath.exe" "minipath.ini" "np3encrypt.exe" "grepWin" "lng" "Themes" "Docs">NUL
 IF %ERRORLEVEL% NEQ 0 CALL :SUBMSG "ERROR" "Compilation failed!"
 
