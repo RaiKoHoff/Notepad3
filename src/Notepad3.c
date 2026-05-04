@@ -1149,6 +1149,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
     LoadSettings();
 
+    InitIniFileSaveMutex();
+
     PrivateSetCurrentProcessExplicitAppUserModelID(Settings2.AppUserModelID);
 
     (void)CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
@@ -3385,6 +3387,7 @@ LRESULT MsgEndSession(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
         // call SaveAllSettings() when Globals.hwndToolbar is still valid
         SaveAllSettings(false);
+        CloseIniFileSaveMutex();
 
         // Remove tray icon in any case
         ShowNotifyIcon(hwnd, false);
@@ -11303,6 +11306,7 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
         }
         if (!(Flags.bDoRelaunchElevated || s_IsThisAnElevatedRelaunch)) {
             MRU_AddPath(Globals.pFileMRU, Paths.CurrentFile, Flags.RelativeFileMRU, Flags.PortableMyDocs, fioStatus.iEncoding, iCaretPos, iAnchorPos, pszBookMarks);
+            pszBookMarks = Globals.pFileMRU->pszBookMarks[0]; // MRU_AddPath freed the old pointer; slot 0 has the fresh copy
             AddFilePathToRecentDocs(Paths.CurrentFile);
         }
 
@@ -11593,6 +11597,7 @@ static void _MRU_UpdateSession()
         Globals.pFileMRU->iEncoding[idx] = Encoding_GetCurrent();
         Globals.pFileMRU->iCaretPos[idx] = bSkipCaretMRU ? -1 : SciCall_GetCurrentPos();
         Globals.pFileMRU->iSelAnchPos[idx] = bSkipCaretMRU ? -1 : (Sci_IsMultiOrRectangleSelection() ? -1 : SciCall_GetAnchor());
+        Globals.pFileMRU->bDirty[idx] = true;
         WCHAR wchBookMarks[MRU_BMRK_SIZE] = { L'\0' };
         EditGetBookmarkList(Globals.hwndEdit, wchBookMarks, COUNTOF(wchBookMarks));
         if (Globals.pFileMRU->pszBookMarks[idx]) {
