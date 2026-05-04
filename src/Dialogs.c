@@ -544,7 +544,8 @@ LONG InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...)
         break;
     }
 
-    WCHAR wchMessage[LARGE_BUFFER];
+    enum { INFOBOX_MSG_BUFFER = 4096 }; // accommodates long help/error strings; LARGE_BUFFER (512) was truncating
+    WCHAR wchMessage[INFOBOX_MSG_BUFFER];
     if (!GetLngString(uidMsg, wchMessage, COUNTOF(wchMessage))) {
         return MAKELONG(0, iMode);
     }
@@ -915,15 +916,19 @@ void RestoreWndFromTray(HWND hWnd)
 
 //=============================================================================
 //
-//  DisplayCmdLineHelp()
+//  DisplayCmdLineHelp() / DisplayHelpDlgLng()
 //
-static INT_PTR CALLBACK CmdLineHelpProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
+typedef struct tagHELPDLG_PARAM {
+    LPCWSTR pszCaption;
+    LPCWSTR pszBody;
+} HELPDLG_PARAM, *LPHELPDLG_PARAM;
 
+static INT_PTR CALLBACK _HelpDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
+{
     switch (umsg) {
     case WM_INITDIALOG: {
         SetWindowLongPtr(hwnd, DWLP_USER, (LONG_PTR)lParam);
+        LPHELPDLG_PARAM const p = (LPHELPDLG_PARAM)lParam;
 
         SetDialogIconNP3(hwnd);
         InitWindowCommon(hwnd, true);
@@ -934,9 +939,10 @@ static INT_PTR CALLBACK CmdLineHelpProc(HWND hwnd, UINT umsg, WPARAM wParam, LPA
         }
 #endif
 
-        WCHAR szText[4096] = { L'\0' };
-        GetLngString(IDS_MUI_CMDLINEHELP, szText, COUNTOF(szText));
-        SetDlgItemText(hwnd, IDC_CMDLINEHELP, szText);
+        if (p && p->pszCaption) {
+            SetWindowText(hwnd, p->pszCaption);
+        }
+        SetDlgItemText(hwnd, IDC_CMDLINEHELP, (p && p->pszBody) ? p->pszBody : L"");
         CenterDlgInParent(hwnd, false);
     }
     return TRUE;
@@ -995,7 +1001,39 @@ CASE_WM_CTLCOLOR_SET:
 
 INT_PTR DisplayCmdLineHelp(HWND hwnd)
 {
-    return ThemedDialogBoxParam(Globals.hLngResContainer, MAKEINTRESOURCE(IDD_MUI_CMDLINEHELP), hwnd, CmdLineHelpProc, (LPARAM)L"");
+    WCHAR szBody[4096] = { L'\0' };
+    GetLngString(IDS_MUI_CMDLINEHELP, szBody, COUNTOF(szBody));
+    HELPDLG_PARAM param = { NULL, szBody };
+    return ThemedDialogBoxParam(Globals.hLngResContainer, MAKEINTRESOURCE(IDD_MUI_CMDLINEHELP), hwnd, _HelpDlgProc, (LPARAM)&param);
+}
+
+INT_PTR DisplayHelpDlgLng(HWND hwnd, UINT uidContent)
+{
+    WCHAR szBuf[4096] = { L'\0' };
+    if (!GetLngString(uidContent, szBuf, COUNTOF(szBuf))) {
+        return 0;
+    }
+    LPCWSTR pszCaption = NULL;
+    LPCWSTR pszBodyRaw = szBuf;
+    LPWSTR const sep = wcsstr(szBuf, L"\n\n");
+    if (sep) {
+        *sep = L'\0';
+        pszCaption = szBuf;
+        pszBodyRaw = sep + 2;
+    }
+    // EDIT controls (ES_MULTILINE) need CRLF; resource strings use bare \n.
+    WCHAR szBody[8192];
+    size_t out = 0;
+    for (size_t i = 0; pszBodyRaw[i] && (out + 2) < COUNTOF(szBody); ++i) {
+        WCHAR const c = pszBodyRaw[i];
+        if (c == L'\n' && (i == 0 || pszBodyRaw[i - 1] != L'\r')) {
+            szBody[out++] = L'\r';
+        }
+        szBody[out++] = c;
+    }
+    szBody[out] = L'\0';
+    HELPDLG_PARAM param = { pszCaption, szBody };
+    return ThemedDialogBoxParam(Globals.hLngResContainer, MAKEINTRESOURCE(IDD_MUI_CMDLINEHELP), hwnd, _HelpDlgProc, (LPARAM)&param);
 }
 
 
