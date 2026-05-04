@@ -252,6 +252,48 @@ bool ReleaseFileLock(HANDLE hFile, OVERLAPPED& rOvrLpd)
 }
 
 // ============================================================================
+//
+//  Cross-instance INI save serialization
+//
+static HANDLE s_hMtxIniFileSave = NULL;
+
+static unsigned long _HashIniPath(LPCWSTR path)
+{
+    unsigned long hash = 5381;
+    for (; *path; ++path) {
+        WCHAR ch = *path;
+        if (ch >= L'A' && ch <= L'Z') { ch += 32; }
+        if (ch == L'/') { ch = L'\\'; }
+        hash = ((hash << 5) + hash) ^ (unsigned long)ch;
+    }
+    return hash;
+}
+
+extern "C" void InitIniFileSaveMutex(void)
+{
+    if (Path_IsEmpty(Paths.IniFile)) {
+        return;
+    }
+    if (IS_VALID_HANDLE(s_hMtxIniFileSave)) {
+        CloseHandle(s_hMtxIniFileSave);
+        s_hMtxIniFileSave = NULL;
+    }
+    WCHAR szMutexName[80];
+    unsigned long const hash = _HashIniPath(Path_Get(Paths.IniFile));
+    StringCchPrintfW(szMutexName, COUNTOF(szMutexName),
+                     L"Local\\Notepad3_INI_%08lX", hash);
+    s_hMtxIniFileSave = CreateMutexW(NULL, FALSE, szMutexName);
+}
+
+extern "C" void CloseIniFileSaveMutex(void)
+{
+    if (IS_VALID_HANDLE(s_hMtxIniFileSave)) {
+        CloseHandle(s_hMtxIniFileSave);
+        s_hMtxIniFileSave = NULL;
+    }
+}
+
+// ============================================================================
 
 static CSimpleIni s_TMPINI(s_bIsUTF8, s_bUseMultiKey, s_bUseMultiLine);
 
@@ -2437,6 +2479,15 @@ bool SaveAllSettings(bool bForceSaveSettings)
         return false;
     }
 
+    // Cross-instance serialization: acquire mutex so only one instance
+    // performs the load-modify-save cycle at a time.
+    DWORD dwMtxWait = WAIT_OBJECT_0;
+    if (IS_VALID_HANDLE(s_hMtxIniFileSave)) {
+        dwMtxWait = WaitForSingleObject(s_hMtxIniFileSave, 10000);
+    }
+    // Force fresh reload from disk to pick up changes from other instances
+    ResetIniFileCache();
+
     WCHAR tchMsg[80];
     GetLngString(IDS_MUI_SAVINGSETTINGS, tchMsg, COUNTOF(tchMsg));
 
@@ -2488,6 +2539,13 @@ bool SaveAllSettings(bool bForceSaveSettings)
     ok = (ok ? CloseSettingsFile(__func__, true) : true);
 
     Globals.bIniFileFromScratch = false; // INI has content now
+
+    // Release cross-instance save mutex (INI is flushed to disk)
+    if (IS_VALID_HANDLE(s_hMtxIniFileSave)) {
+        if (dwMtxWait == WAIT_OBJECT_0 || dwMtxWait == WAIT_ABANDONED) {
+            ReleaseMutex(s_hMtxIniFileSave);
+        }
+    }
 
     // maybe separate INI files for Style-Themes
     if (Globals.uCurrentThemeIndex > 0) {

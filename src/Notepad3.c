@@ -1149,6 +1149,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
     }
     LoadSettings();
 
+    InitIniFileSaveMutex();
+
     PrivateSetCurrentProcessExplicitAppUserModelID(Settings2.AppUserModelID);
 
     (void)CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
@@ -3385,6 +3387,7 @@ LRESULT MsgEndSession(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
         // call SaveAllSettings() when Globals.hwndToolbar is still valid
         SaveAllSettings(false);
+        CloseIniFileSaveMutex();
 
         // Remove tray icon in any case
         ShowNotifyIcon(hwnd, false);
