@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Değişikler şuraya kaydedilsin mi:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Değişikler şuraya kaydedilsin mi:\n%s?"
     IDS_MUI_ASK_REVERT      "Dosya son kaydedildiği duruma döndürülsün mü?"
     IDS_MUI_ASK_RECODE      "Yenide kodlama içindosyanın diskten yeniden yüklenmesi gerekir. Kaydedilmemiş değişiklikler kaybolacak!"
     IDS_MUI_ASK_CREATE      """%s"" bulunamadı\nBu dosyanın oluşturulmasını ister misiniz?"

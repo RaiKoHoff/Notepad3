@@ -11657,10 +11657,22 @@ bool FileSave(FileSaveFlags fSaveFlags)
 
     if (fSaveFlags & FSF_Ask) {
         // File or "Untitled" ...
-        WCHAR wchFileName[MAX_PATH_EXPLICIT] = { L'\0' };
+        WCHAR wchFileName[XHUGE_BUFFER] = { L'\0' };
 
         GetLngString(IDS_MUI_UNTITLED, wchFileName, COUNTOF(wchFileName));
-        Path_GetDisplayName(wchFileName, COUNTOF(wchFileName), Paths.CurrentFile, NULL, false);
+        if (Path_IsNotEmpty(Paths.CurrentFile)) {
+            // Format as "<filename>\n=>\n<dir>" for readability
+            WCHAR wchFileOnly[MAX_PATH_EXPLICIT] = { L'\0' };
+            Path_GetDisplayName(wchFileOnly, COUNTOF(wchFileOnly), Paths.CurrentFile, NULL, true);
+
+            HPATHL hpthDir = Path_Copy(Paths.CurrentFile);
+            Path_RemoveFileSpec(hpthDir);
+            WCHAR wchDirDisplay[MAX_PATH_EXPLICIT] = { L'\0' };
+            Path_GetDisplayName(wchDirDisplay, COUNTOF(wchDirDisplay), hpthDir, NULL, false);
+            Path_Release(hpthDir);
+
+            StringCchPrintfW(wchFileName, COUNTOF(wchFileName), L"\n%s\n\n➤ [%s]", wchFileOnly, wchDirDisplay);
+        }
 
         bool const  bDiscardOptOut = Settings2.DiscardOnClosingUntitledPasteBoard && Path_IsEmpty(Paths.CurrentFile) && IsPasteBoardActive();
         UINT const  uMsgType = MB_YESNOCANCEL | MB_ICONWARNING | (bDiscardOptOut ? MB_DEFBUTTON2 : 0L);

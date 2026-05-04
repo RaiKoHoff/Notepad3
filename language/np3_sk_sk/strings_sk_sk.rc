@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Uložiť zmeny do:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Uložiť zmeny do:\n%s?"
     IDS_MUI_ASK_REVERT      "Navrátiť súbor do naposledy uloženého stavu?"
     IDS_MUI_ASK_RECODE      "Záznam vyžaduje načítanie súboru z disku, neuložené zmeny sa stratia!"
     IDS_MUI_ASK_CREATE      """%s"" nebol nájdený\nChcete tento súbor vytvoriť?"

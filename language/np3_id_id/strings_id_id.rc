@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Simpan perubahan ke:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Simpan perubahan ke:\n%s?"
     IDS_MUI_ASK_REVERT      "Kembalikan semula berkas ke kondisi tersimpan?"
     IDS_MUI_ASK_RECODE      "Pengkodean ulang akan memuat ulang berkas, perubahan yang tidak disimpan akan hilang!"
     IDS_MUI_ASK_CREATE      """%s"" tidak ditemukan\nApakah Anda ingin membuat berkas ini?"
