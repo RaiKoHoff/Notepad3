@@ -38,11 +38,11 @@
   - Issue: [#4268](https://github.com/rizonesoft/Notepad3/issues/4268)
   - CJK full-width replacement cached incorrectly
 - [x] **(Q2) BUG: Initial window position not working** - Position settings ignored
-  - [ ] **To be analyzed - works as designed ???** - ⚠ Validation ❗
+  - [x] **To be analyzed - works as designed ???** - ⚠ Validation ❗
   - Issue: [#4725](https://github.com/rizonesoft/Notepad3/issues/4725)
 - [x] **(Q3) BUG: Regex replace issue** - Verify if still present - ✅ FIXED
-- [#] Issue: [#3531](https://github.com/rizonesoft/Notepad3/issues/3531) - ✅ FIXED
-  - [ ] Old bug from v5.21 - needs verification - ⚠ Validation ❗
+- [x] Issue: [#3531](https://github.com/rizonesoft/Notepad3/issues/3531) - ✅ FIXED
+  - [x]  ✅ FIXED - Was no Bug but bad RegEx pattern design (expectation vs. what regex really does)
 - [ ] **(Q2) BUG: Minipath options don't save** - FullRowSelect/TrackSelect broken
   - Issue: [#4116](https://github.com/rizonesoft/Notepad3/issues/4116)
 - [x] **(Q1) BUG: Monitoring log not saved** - ✅ FIXED
@@ -50,7 +50,7 @@
   - Fix: Added `MonitoringLog` to Settings struct with INI load/save in Config.cpp
 - [ ] **(Q3) BUG: LAN file freeze** - Freezes when network host offline
   - Issue: [#5050](https://github.com/rizonesoft/Notepad3/issues/5050)
-- [ ] **(Q1) BUG: Find/Replace patterns not updating** - Dropdown not refreshed immediately
+- [x] **(Q1) BUG: Find/Replace patterns not updating** - Dropdown not refreshed immediately - ✅ FIXED
   - Issue: [#5134](https://github.com/rizonesoft/Notepad3/issues/5134)
 - [ ] **(Q3) BUG: Multiple file positions not saved** - Only last file's bookmarks/caret preserved
   - Issue: [#5151](https://github.com/rizonesoft/Notepad3/issues/5151)
@@ -146,7 +146,7 @@
   - Racket: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Could use Lisp/Scheme lexer
   - OpenCL: [#5374](https://github.com/rizonesoft/Notepad3/issues/5374) - C-like with extra keywords
   - Verilog HDL: [#4108](https://github.com/rizonesoft/Notepad3/issues/4108) - Lexilla `LexVerilog.cxx`
-  - JSON5: [#5411](https://github.com/rizonesoft/Notepad3/issues/5411) - Extend JSON lexer
+  - [x] JSON5: [#5411](https://github.com/rizonesoft/Notepad3/issues/5411) - Extend JSON lexer - ⚠ Validation ❗
   - SourcePawn: [#5430](https://github.com/rizonesoft/Notepad3/issues/5430) - SourceMod scripting
   - Groovy: [#5093](https://github.com/rizonesoft/Notepad3/issues/5093)
   - Swift, Zig, Scala, F#, WASM, Vim, OCaml, Smali, GraphViz, Rebol
@@ -173,9 +173,10 @@
 - [ ] **(Q3) Windows Spell Checker** - Spellcheck via Windows API
   - Issue: [#5157](https://github.com/rizonesoft/Notepad3/issues/5157)
 - [ ] **(Q3) Enhanced Auto-Complete** - Language-aware auto-complete triggers
-- [ ] **(Q3) Auto-Pair Brackets** - Auto-close `()`, `[]`, `{}`, `""`, `''`
-  - Issue: [#4149](https://github.com/rizonesoft/Notepad3/issues/4149)
-  - Issue: [#5285](https://github.com/rizonesoft/Notepad3/issues/5285) - Smart auto-dedent on closing bracket
+- [x] **(Q3) Auto-Pair Brackets** - Auto-close `()`, `[]`, `{}`, `""`, `''`
+  - [x] Issue: [#4149](https://github.com/rizonesoft/Notepad3/issues/4149)
+  - [ ] Issue: [#5285](https://github.com/rizonesoft/Notepad3/issues/5285) - Smart auto-dedent on closing bracket
+    - this will be out of scope, if not supported by lexers itself
 - [ ] **(Q3) Custom Keyboard Shortcuts** - User-configurable shortcut keys
   - Issue: [#595](https://github.com/rizonesoft/Notepad3/issues/595)
 

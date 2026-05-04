@@ -6515,6 +6515,24 @@ static bool _EnableFRDlgCtrls(HWND hwnd) {
 
 //=============================================================================
 //
+//  _AddPatternToComboMRU()
+//  Insert pszItem at the top of a CBS_DROPDOWN combo's list without touching
+//  its edit field (no CBN_EDITCHANGE side-effects).
+//
+static void _AddPatternToComboMRU(HWND hwnd, int nIDDlgItem, LPCWSTR pszItem)
+{
+    if (StrIsEmpty(pszItem)) { return; }
+    HWND const hwndCtl = GetDlgItem(hwnd, nIDDlgItem);
+    int const  idx     = (int)SendMessage(hwndCtl, CB_FINDSTRINGEXACT, (WPARAM)(-1), (LPARAM)pszItem);
+    if (idx != CB_ERR) {
+        SendMessage(hwndCtl, CB_DELETESTRING, (WPARAM)idx, 0);
+    }
+    SendMessage(hwndCtl, CB_INSERTSTRING, 0, (LPARAM)pszItem);
+}
+
+
+//=============================================================================
+//
 //  EditFindReplaceDlgProc()
 //
 extern int    g_flagMatchText;
@@ -7255,9 +7273,12 @@ static INT_PTR CALLBACK EditFindReplaceDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
                     MRU_Add(Globals.pMRUfind, StrgGet(s_pEfrData->chFindPattern), 0, -1, -1, NULL);
                     SetFindPattern(StrgGet(s_pEfrData->chFindPattern));
                 }
-                //~if (StrgIsNotEmpty(s_pEfrData->chReplaceTemplate)) {
-                    MRU_Add(Globals.pMRUreplace, StrgGet(s_pEfrData->chReplaceTemplate), 0, -1, -1, NULL);
-                //~}
+                MRU_Add(Globals.pMRUreplace, StrgGet(s_pEfrData->chReplaceTemplate), 0, -1, -1, NULL);
+                // Immediately reflect used patterns in dropdown (without touching the edit field)
+                _AddPatternToComboMRU(hwnd, IDC_FINDTEXT, StrgGet(s_pEfrData->chFindPattern));
+                if (s_bIsReplaceDlg) {
+                    _AddPatternToComboMRU(hwnd, IDC_REPLACETEXT, StrgGet(s_pEfrData->chReplaceTemplate));
+                }
             }
 
             if (!s_bSwitchedFindReplace) {
