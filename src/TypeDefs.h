@@ -209,18 +209,19 @@ typedef enum CFG_VERSION {
 typedef enum BUFFER_SIZES {
 
     MICRO_BUFFER = 32,
-    MINI_BUFFER = 64,
+    MINI_BUFFER  = 64,
     SMALL_BUFFER = 128,
     MIDSZ_BUFFER = 256,
     LARGE_BUFFER = 512,
-    HUGE_BUFFER = 1024,
+    HUGE_BUFFER  = 1024,
     XHUGE_BUFFER = 2048,
+    XXHUGE_BUFFER = 4096,
 
     EDGELINE_NUM_LIMIT = 256,
     ANSI_CHAR_BUFFER = 258,
     STYLE_EXTENSIONS_BUFFER = 512,
     EXTENSIONS_FILTER_BUFFER = (STYLE_EXTENSIONS_BUFFER << 1),
-    FNDRPL_BUFFER = 4096, // TODO: eliminate limit
+    FNDRPL_BUFFER = 4096,
     LONG_LINES_MARKER_LIMIT = 8192,
     CMDLN_LENGTH_LIMIT = 8192
 
@@ -326,6 +327,8 @@ typedef const EDITFINDREPLACE* const CLPCEDITFINDREPLACE;
 #define MRU_NOCASE       1
 #define MRU_UTF8         2
 #define MRU_BMRK_SIZE  512
+// INI line buffer for find/replace MRU items: pattern + surrounding quotes + NUL + spare
+#define MRU_FNDRPL_ITEM_LEN  (FNDRPL_BUFFER + 4)
 
 typedef struct MRULIST {
 

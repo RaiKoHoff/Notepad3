@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Tallennetaanko muutokset tiedostoon:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Tallennetaanko muutokset tiedostoon:\n%s?"
     IDS_MUI_ASK_REVERT      "Palautetaanko tiedosto viimeksi tallennettuun tilaan?"
     IDS_MUI_ASK_RECODE      "Uudelleenkoodaus edellyttää tiedoston lataamista uudelleen levyltä, tallentamattomat muutokset menetetään!"
     IDS_MUI_ASK_CREATE      """%s"" ei löytynyt\nHaluatko luoda tämän tiedoston?"

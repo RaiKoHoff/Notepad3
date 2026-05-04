@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Zapisać zmiany w:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Zapisać zmiany w:\n%s?"
     IDS_MUI_ASK_REVERT      "Przywrócić plik do poprzedniego stanu? Zmiany zostaną utracone!"
     IDS_MUI_ASK_RECODE      "Ponowne kodowanie wymaga ponownego załadowania pliku z dysku, niezapisane zmiany zostaną utracone!"
     IDS_MUI_ASK_CREATE      """%s"" nie znaleziono\nCzy chcesz utworzyć ten plik?"

@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Sauvegarder les modification vers :\n""%s"" ?"
+    IDS_MUI_ASK_SAVE        "Sauvegarder les modification vers :\n%s ?"
     IDS_MUI_ASK_REVERT      "Rétablir le fichier dans le dernier état sauvegardé ?"
     IDS_MUI_ASK_RECODE      "Le ré-encodage nécessite le rechargement du fichier à partir du disque, les modifications non sauvegardées seront perdues !"
     IDS_MUI_ASK_CREATE      """%s"" introuvable\nVoulez-vous créer ce fichier ?"

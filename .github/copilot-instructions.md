@@ -8,13 +8,26 @@ Scripts under `Build\` (PowerShell under `Build\scripts\`):
 
 - `Build\Build_x64.cmd [Release|Debug]` — single platform (also `_Win32`, `_ARM64`, `_x64_AVX2`)
 - `Build\BuildAll.cmd` — all four platforms
-- `msbuild Notepad3.sln /m /p:Configuration=Release /p:Platform=x64` — CI equivalent
 - `Build\Clean.cmd` — clean outputs
 - `nuget restore` once before first build
 - `Version.ps1` regenerates `src\VersionEx.h` (`Major.YY.Mdd.Build`, build number in `Versions\build.txt`)
 - Tests: `test\TestFileVersion.cmd`, `test\TestAhkNotepad3.cmd` (AutoHotkey). CI in `.github/workflows/build.yml` (windows-2022, Release × all four platforms).
 
 Default config is Release.
+
+### Invoking MSBuild from PowerShell
+
+`msbuild` is **not** on the PATH in PowerShell. Do **not** call it directly — it will fail with "not recognized". Locate it via `vswhere.exe` first:
+
+```powershell
+$msbuild = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" `
+    -latest -requires Microsoft.Component.MSBuild `
+    -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+& $msbuild Notepad3.sln /m /p:Configuration=Release /p:Platform=x64 /nologo /v:minimal
+Write-Host "Exit code: $LASTEXITCODE"
+```
+
+Check `$LASTEXITCODE` (0 = success) and scan the last output lines for `-> Notepad3.exe` or `error C` entries. The verbose output is long — use `Select-String` or tail filtering rather than reading it all.
 
 ## Core Modules (`src\`)
 

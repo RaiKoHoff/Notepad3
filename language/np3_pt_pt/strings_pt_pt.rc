@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Guardar alterações para:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Guardar alterações para:\n%s?"
     IDS_MUI_ASK_REVERT      "Reverter o ficheiro para o estado da última vez que foi guardado?"
     IDS_MUI_ASK_RECODE      "A recodificação requer recarregar o ficheiro do disco, serão perdidas as alterações não guardadas!"
     IDS_MUI_ASK_CREATE      """%s"" não encontrado\nDeseja criar este ficheiro?"

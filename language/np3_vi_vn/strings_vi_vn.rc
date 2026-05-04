@@ -217,7 +217,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Bạn có muốn lưu các thay đổi không:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Bạn có muốn lưu các thay đổi không:\n%s?"
     IDS_MUI_ASK_REVERT      "Bạn có muốn khôi phục tệp về trạng thái lưu lần cuối không?"
     IDS_MUI_ASK_RECODE      "Để ghi, bạn phải tải lại tệp từ đĩa. Các thay đổi chưa lưu sẽ bị mất!"
     IDS_MUI_ASK_CREATE      "Không thể tìm thấy tệp ""%s""\nBạn có muốn tạo tệp này không?"
