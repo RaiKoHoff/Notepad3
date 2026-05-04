@@ -48,6 +48,7 @@ void RestoreWndFromTaskbar(HWND hWnd);
 
 
 INT_PTR DisplayCmdLineHelp(HWND hwnd);
+INT_PTR DisplayHelpDlgLng(HWND hwnd, UINT uidContent);
 INT_PTR CALLBACK AboutDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam);
 INT_PTR RunDlg(HWND hwnd,LPCWSTR lpstrDefault);
 bool OpenWithDlg(HWND hwnd,LPCWSTR lpstrFile);

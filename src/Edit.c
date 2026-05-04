@@ -7509,13 +7509,13 @@ static INT_PTR CALLBACK EditFindReplaceDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
                 break;
             case IDC_BACKSLASHHELP:
                 // Display help messages in the find/replace windows
-                InfoBoxLng(MB_ICONINFORMATION, NULL, IDS_MUI_BACKSLASHHELP);
+                DisplayHelpDlgLng(hwnd, IDS_MUI_BACKSLASHHELP);
                 break;
             case IDC_REGEXPHELP:
-                InfoBoxLng(MB_ICONINFORMATION, NULL, IDS_MUI_REGEXPHELP);
+                DisplayHelpDlgLng(hwnd, IDS_MUI_REGEXPHELP);
                 break;
             case IDC_WILDCARDHELP:
-                InfoBoxLng(MB_ICONINFORMATION, NULL, IDS_MUI_WILDCARDHELP);
+                DisplayHelpDlgLng(hwnd, IDS_MUI_WILDCARDHELP);
                 break;
             default:
                 break;
