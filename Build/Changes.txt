@@ -36,23 +36,39 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.502.(build_#) (2026-05-02)
+Current BETA Version 7.26.504.(build_#) (2026-05-04)
 ========================================================
 
 --------------------------------------------------------
 NEW:
 --------------------------------------------------------
 [.xxx.x]- .
+[.504.1]- Add homebrew JSON5 lexer (#5796).
 
 --------------------------------------------------------
 CHANGES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.504.1]- Moving all *.txt files to Docs folder (for Setup, PAF and Portable) (#5811).
+[.504.1]- InfBoxLng for saving files (#5806).
+[.504.1]- Github actions: no build on doc change only (#5798).
+[.504.1]- Extend and cleanup documentation (#5797).
+[.504.1]- Update to Scintilla v5.6.2 , Lexilla v5.4.9 (#5796).
+[.504.1]- Breaking change: drop Regex file extension pattern in favor of usual wildcard (#5793).
 
 --------------------------------------------------------
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.504.1]- hardening of INI file handling for multi instances workflows (#5810).
+[.504.1]- MRU file history, bookmark, caret pos, selection maintenance (#5810).
+[.504.1]- Find/replace pattern history (#5808).
+[.504.1]- Buffer handling consistency (#5806).
+[.504.1]- Using help dialog of natural size with vertical scroll-bar (#5805).
+[.504.1]- Misleading code-page detection not install in system throws error on file loading (#5802).
+[.504.1]- Multi-line InfoBox issue (#5800).
+[.504.1]- File extension wildcard lexer matching (#5799).
+[.504.1]- Dynamic sizing of InfoboxLng (#5794).
 [.502.1]- ".LOG" feature + enhancements around file-vars + docs (#5791).
 [.502.1]- InfoBoxLng proportional dynamic sizing (#5790).
 [.502.1]- About requester show ARM compilation, missing file path on open non-existent file (#5790).
@@ -61,18 +77,19 @@ FIXES:
 REMOVED:
 --------------------------------------------------------
 [.xxx.x]- .
-[.501.1]- Chore: revert experimental CSS styling for HTML Lexer (#5787).
+[.504.1]- Remove Readme* from ANSI-Art extension (-> README.md) (#5800).
+[.501.1]- Revert experimental CSS styling for HTML Lexer (#5787).
 
 --------------------------------------------------------
 CHANGES Versions in Tools or Libraries:
 --------------------------------------------------------
+[.504.1]- Update Scintilla (SCI) Library version 5.6.2 (2026-04-29) (#5796).
+[.504.1]- Update Lexilla (LEX) Library version 5.4.9 (2026-04-29) (#5796).
 [.418.1]- Update TinyExpr++ (TIN) version 1.1.0 (2026-01-16) (#5707).
-[.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26) (#5683).
-[.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26) (#5683).
 [.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24) (#5635).
-[.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08).
-[.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21).
-[1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13).
+[.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08) (#5562).
+[.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21) (#5559).
+[1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13) (#4359).
 
 --------------------------------------------------------
 TRANSLATIONS (MUI):
@@ -223,9 +240,9 @@ CHANGES Versions in Tools or Libraries:
 [.417.1]- Update Scintilla (SCI) Library version 5.6.1 (2026-03-26) (#5683).
 [.417.1]- Update Lexilla (LEX) Library version 5.4.8 (2026-03-26) (#5683).
 [.411.1]- Update grepWin (GRE) version 2.1.12.1434 (2025-09-24) (#5635).
-[.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08).
-[.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21).
-[1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13).
+[.305.1]- Update UCHARDET (UCH) encoding detector version 0.0.8 (2022-12-08) (#5562).
+[.303.1]- Update PCR2 (PCR) Regex engine version 10.47 (2025-10-21) (#5559).
+[1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13) (#4359).
 
 --------------------------------------------------------
 TRANSLATIONS (MUI):
