@@ -343,13 +343,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-Filename extensions must be separated by ';'\r\n\
-entries containing '*', '?' or '.' match the full filename (wildcard):\r\n\
+Filändelser måste separeras med ';'\r\n\
+Poster som innehåller '*', '?' eller '.' matchar det fullständiga filnamnet (jokertecken):\r\n\
    Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
-Style format:\r\n\
-font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-Style properties can be copied using copy and paste or drag and drop\
+Stilformat:\r\n\
+font:Namn; storlek:[+/-]nn.mm; fet; kursiv; understrykning;\r\n\
+förgrund:#ffffff; bakgrund:#bbbbbb; eolfilled; indic_gradient\r\n\
+Stilegenskaper kan kopieras genom kopiera-klistra in eller drag-släpp\
 "
 
 END

@@ -55,6 +55,7 @@ Available languages:
 | Greek/Greece | `el-GR` |
 | English/United Kingdom | `en-GB` |
 | Spanish/Spain | `es-ES` |
+| Finnish/Finland | `fi-FI` |
 | French/France | `fr-FR` |
 | Hindi/India | `hi-IN` |
 | Hungarian/Hungary | `hu-HU` |

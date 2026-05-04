@@ -50,7 +50,7 @@ Easy-to-miss touchpoints — derivable but only if you know to look:
 
 ## Localization (`language\`)
 
-27+ locales under `np3_LANG_COUNTRY\`. Language packs build as separate DLLs.
+26 locales under `np3_LANG_COUNTRY\`. Language packs build as separate DLLs.
 
 **Invariant:** every `IDS_MUI_*` defined in `common_res.h` must exist in **all** `strings_*.rc` files. A missing entry breaks the corresponding language DLL build. For bulk insertions across locales, use a `.venv/Scripts/python.exe` script — `sed`/`perl` `\n` escaping is unreliable in Cygwin.
 
