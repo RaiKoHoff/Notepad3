@@ -2616,17 +2616,24 @@ bool MRU_Add(LPMRULIST pmru, LPCWSTR pszNew, cpi_enc_t iEnc, DocPos iPos, DocPos
         int i = 0;
         for (; i < pmru->iSize; ++i) {
             if (_MRU_Compare(pmru, pmru->pszItems[i], pszNew) == 0) {
-                LocalFree(pmru->pszItems[i]); // StrDup()
-                pmru->pszItems[i] = NULL;
                 break;
             }
         }
         i = min_i(i, pmru->iSize - 1);
+        // Detach the outgoing entry at slot i (deferred free — pszBookMarks parameter
+        // may alias pmru->pszBookMarks[i], so we must not free until after StrDup).
+        LPWSTR pszOldItem      = pmru->pszItems[i];
+        pmru->pszItems[i]      = NULL;
+        LPWSTR pszOldBookMarks = pmru->pszBookMarks[i];
+        pmru->pszBookMarks[i]  = NULL;
+
         for (; i > 0; i--) {
             pmru->pszItems[i] = pmru->pszItems[i - 1];
             pmru->iEncoding[i] = pmru->iEncoding[i - 1];
             pmru->iCaretPos[i] = pmru->iCaretPos[i - 1];
             pmru->iSelAnchPos[i] = pmru->iSelAnchPos[i - 1];
+            pmru->pszBookMarks[i] = pmru->pszBookMarks[i - 1];
+            pmru->bDirty[i] = pmru->bDirty[i - 1];
         }
         pmru->pszItems[0] = StrDup(pszNew); // LocalAlloc()
 
@@ -2634,6 +2641,12 @@ bool MRU_Add(LPMRULIST pmru, LPCWSTR pszNew, cpi_enc_t iEnc, DocPos iPos, DocPos
         pmru->iCaretPos[0] = (Settings.PreserveCaretPos ? iPos : -1);
         pmru->iSelAnchPos[0] = (Settings.PreserveCaretPos ? iSelAnc : -1);
         pmru->pszBookMarks[0] = (pszBookMarks ? StrDup(pszBookMarks) : NULL);  // LocalAlloc()
+        pmru->bDirty[0] = true;
+
+        // Now safe to free old pointers (StrDup above made independent copies)
+        if (pszOldItem) { LocalFree(pszOldItem); }
+        if (pszOldBookMarks) { LocalFree(pszOldBookMarks); }
+
         return true;
     }
     return false;
@@ -2677,18 +2690,23 @@ bool MRU_AddPath(LPMRULIST pmru, const HPATHL hpth, bool bRelativePath, bool bUn
     if (pmru) {
         int i = 0;
         bool const bAlreadyInList = MRU_FindPath(pmru, hpth, &i);
-        if (bAlreadyInList) {
-            LocalFree(pmru->pszItems[i]);  // StrDup()
-            pmru->pszItems[i] = NULL;
-        } else {
+        if (!bAlreadyInList) {
             i = (i < pmru->iSize) ? i : (pmru->iSize - 1);
         }
+        // Detach the outgoing entry at slot i (deferred free — pszBookMarks parameter
+        // may alias pmru->pszBookMarks[i], so we must not free until after StrDupW).
+        LPWSTR pszOldItem      = pmru->pszItems[i];
+        pmru->pszItems[i]      = NULL;
+        LPWSTR pszOldBookMarks = pmru->pszBookMarks[i];
+        pmru->pszBookMarks[i]  = NULL;
+
         for (; i > 0; i--) {
             pmru->pszItems[i] = pmru->pszItems[i - 1];
             pmru->iEncoding[i] = pmru->iEncoding[i - 1];
             pmru->iCaretPos[i] = pmru->iCaretPos[i - 1];
             pmru->iSelAnchPos[i] = pmru->iSelAnchPos[i - 1];
             pmru->pszBookMarks[i] = pmru->pszBookMarks[i - 1];
+            pmru->bDirty[i] = pmru->bDirty[i - 1];
         }
 
         HPATHL hpth_cpy = Path_Copy(hpth);
@@ -2701,8 +2719,13 @@ bool MRU_AddPath(LPMRULIST pmru, const HPATHL hpth, bool bRelativePath, bool bUn
         pmru->iCaretPos[0] = (Settings.PreserveCaretPos ? iPos : -1);
         pmru->iSelAnchPos[0] = (Settings.PreserveCaretPos ? iSelAnc : -1);
         pmru->pszBookMarks[0] = (pszBookMarks ? StrDupW(pszBookMarks) : NULL);  // LocalAlloc()
+        pmru->bDirty[0] = true;
 
         Path_Release(hpth_cpy);
+
+        // Now safe to free old pointers (StrDupW above made independent copies)
+        if (pszOldItem) { LocalFree(pszOldItem); }
+        if (pszOldBookMarks) { LocalFree(pszOldBookMarks); }
 
         return bAlreadyInList;
     }
@@ -2802,6 +2825,7 @@ bool MRU_Empty(LPMRULIST pmru, bool bExceptLeast, bool bDelete)
                     pmru->iEncoding[i] = 0;
                     pmru->iCaretPos[i] = -1;
                     pmru->iSelAnchPos[i] = -1;
+                    pmru->bDirty[i] = false;
                     if (pmru->pszBookMarks[i]) {
                         LocalFree(pmru->pszBookMarks[i]); // StrDup()
                         pmru->pszBookMarks[i] = NULL;
@@ -2940,8 +2964,27 @@ bool MRU_MergeSave(LPMRULIST pmru, bool bAddFiles, bool bRelativePath, bool bUne
                     if (pmru->pszItems[i]) {
                         Path_Reset(hpth, pmru->pszItems[i]);
                         Path_AbsoluteFromApp(hpth, true);
-                        MRU_AddPath(pmruBase, hpth, bRelativePath, bUnexpandMyDocs,
-                                    pmru->iEncoding[i], pmru->iCaretPos[i], pmru->iSelAnchPos[i], pmru->pszBookMarks[i]);
+
+                        int  idxInBase  = 0;
+                        bool bInBase    = MRU_FindPath(pmruBase, hpth, &idxInBase);
+
+                        if (!bInBase || pmru->bDirty[i]) {
+                            // New entry not in INI, or entry whose metadata was updated
+                            // during this session (visited file): use in-memory props.
+                            MRU_AddPath(pmruBase, hpth, bRelativePath, bUnexpandMyDocs,
+                                        pmru->iEncoding[i], pmru->iCaretPos[i],
+                                        pmru->iSelAnchPos[i], pmru->pszBookMarks[i]);
+                        } else {
+                            // File is in INI and was NOT visited this session:
+                            // its INI props may have been updated by another instance.
+                            // Preserve the INI values so only ordering is updated.
+                            cpi_enc_t const iBaseEnc   = pmruBase->iEncoding[idxInBase];
+                            DocPos    const iBasePos   = pmruBase->iCaretPos[idxInBase];
+                            DocPos    const iBaseAnc   = pmruBase->iSelAnchPos[idxInBase];
+                            LPCWSTR   const pBaseMarks = pmruBase->pszBookMarks[idxInBase];
+                            MRU_AddPath(pmruBase, hpth, bRelativePath, bUnexpandMyDocs,
+                                        iBaseEnc, iBasePos, iBaseAnc, pBaseMarks);
+                        }
                     }
                 }
                 Path_Release(hpth);
@@ -2955,6 +2998,7 @@ bool MRU_MergeSave(LPMRULIST pmru, bool bAddFiles, bool bRelativePath, bool bUne
             }
 
             MRU_Save(pmruBase);
+            MRU_Destroy(pmruBase);
             pmruBase = NULL;
 
             CloseSettingsFile(__func__, true);

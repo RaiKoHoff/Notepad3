@@ -1,8 +1,8 @@
 # Notepad3 TODO
 
-## Ideas (deliberated)
-- [ ] PCRE2 backward search seems to be slow - ask Claude for analysis
+## Ideas / New Features (deliberated)
 - [ ] Merge/Cleanup all old documentation (Build/Docs/*.txt, etc.) files
+- [ ] PCRE2 backward search seems to be slow - ask Claude for analysis
 
 ## High Priority
 
@@ -40,9 +40,6 @@
 - [x] **(Q2) BUG: Initial window position not working** - Position settings ignored
   - [x] **To be analyzed - works as designed ???** - ⚠ Validation ❗
   - Issue: [#4725](https://github.com/rizonesoft/Notepad3/issues/4725)
-- [x] **(Q3) BUG: Regex replace issue** - Verify if still present - ✅ FIXED
-- [x] Issue: [#3531](https://github.com/rizonesoft/Notepad3/issues/3531) - ✅ FIXED
-  - [x]  ✅ FIXED - Was no Bug but bad RegEx pattern design (expectation vs. what regex really does)
 - [ ] **(Q2) BUG: Minipath options don't save** - FullRowSelect/TrackSelect broken
   - Issue: [#4116](https://github.com/rizonesoft/Notepad3/issues/4116)
 - [x] **(Q1) BUG: Monitoring log not saved** - ✅ FIXED
@@ -56,16 +53,13 @@
   - Issue: [#5151](https://github.com/rizonesoft/Notepad3/issues/5151)
 - [ ] **(Q3) BUG: grepWinNP3 crash** - Right-click search results crashes
   - Issue: [#5158](https://github.com/rizonesoft/Notepad3/issues/5158)
-- [ ] **(Q2) BUG: PHP comment toggle** - Ctrl+Q not working in Web Source Code
+- [x] **(Q2) BUG: PHP comment toggle** - Ctrl+Q not working in Web Source Code - ✅ FIXED
   - Issue: [#5163](https://github.com/rizonesoft/Notepad3/issues/5163)
 - [ ] **(Q2) BUG: AltGr shortcut conflict** - Can't type `}` `@` on non-US keyboards
   - Issue: [#5220](https://github.com/rizonesoft/Notepad3/issues/5220)
 - [x] **(Q1) BUG: Mouse scroll settings not updated** - ✅ FIXED
   - Issue: [#5223](https://github.com/rizonesoft/Notepad3/issues/5223)
   - Fix: Forward `WM_SETTINGCHANGE` to Scintilla to refresh cached scroll parameters
-- [ ] **(Q2) BUG: Highlight current line broken** - Settings not respected (regression)
-  - Issue: [#5270](https://github.com/rizonesoft/Notepad3/issues/5270)
-  - **This is a discussion, about limited line highlite rule language in schema definition **
 - [x] **(Q2) BUG: File lock held too long on save** - Blocks FileSystemWatcher - ✅ FIXED
   - [ ] **Needs validation**
   - Issue: [#5301](https://github.com/rizonesoft/Notepad3/issues/5301)
@@ -180,7 +174,14 @@
 - [ ] **(Q3) Custom Keyboard Shortcuts** - User-configurable shortcut keys
   - Issue: [#595](https://github.com/rizonesoft/Notepad3/issues/595)
 
-## Feature Ideas
+## Open Discussions 
+
+- [ ] **(Q2) BUG: Highlight current line broken** - Settings not respected (regression)
+  - Issue: [#5270](https://github.com/rizonesoft/Notepad3/issues/5270)
+  - **This is a discussion, about limited line highlite rule language in schema definition **
+- [x] **(Q3) BUG: Regex replace issue** - Verify if still present - ✅ FIXED
+  - Issue: [#3531](https://github.com/rizonesoft/Notepad3/issues/3531)
+  - Was no Bug but bad RegEx pattern design (expectation vs. what regex really does)
 
 ### Text Processing
 - [ ] **(Q1) Strip Leading Blanks** - Trim leading whitespace (NP3 only has trailing)

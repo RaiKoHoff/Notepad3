@@ -340,6 +340,7 @@ typedef struct MRULIST {
     DocPos    iCaretPos[MRU_MAXITEMS];
     DocPos    iSelAnchPos[MRU_MAXITEMS];
     LPWSTR    pszBookMarks[MRU_MAXITEMS];
+    bool      bDirty[MRU_MAXITEMS];
 
 } MRULIST, *PMRULIST, *LPMRULIST;
 
