@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Korotettu"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Leikepöytä"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Nimetön"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Vain luku)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Virhe ladattaessa ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Virhe tallennettaessa ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "Polkua ""%s"" ei ole enää olemassa.\nLuodaanko polku ja tallennetaan tiedosto?"
     IDS_MUI_ERR_DLG_FORMAT  "Virhe '%s', syy:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Tiedostoselaimen laajennusta ei löytynyt\nMiniPath-tiedostoselaimen laajennuksen voi ladata osoitteesta https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Tiedostonhakulaajennusta ei löytynyt\nGrepWinNP3-tiedostonhakulaajennuksen voi ladata osoitteesta https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Tiedostonhakulaajennusta ei löytynyt\ngrepWin Portable-tiedostonhakulaajennuksen voi ladata osoitteesta https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Tiedostonhakulaajennusta ei löytynyt\nAsenna grepWinPortablen uusin versio PortableApps-alustalle."
     IDS_MUI_ERR_MRUDLG      "Valittuun tiedostoon ei ole pääsyä!\nTahdotko poistaa sen luettelosta?"
     IDS_MUI_ERR_CREATELINK  "Virhe työpöytälinkin luomisessa"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "URL määriteltyä polkua ei löydy!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Avaa tiedosto klikkaamalla"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Avaa linkki selaimessa klikkaamalla"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Alkuperäisen tiedoston muokkausaikaleiman säilyttäminen käytössä\nVaihtoehto säilyy tämän istunnon ajan!"
     IDS_MUI_OUT_OFF_OCCMRK   "Esiintymämerkit loppumassa (kirjanmerkki/korostus)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Tallennetaanko muutokset tiedostoon:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Tallennetaanko muutokset tiedostoon:\n%s?"
     IDS_MUI_ASK_REVERT      "Palautetaanko tiedosto viimeksi tallennettuun tilaan?"
     IDS_MUI_ASK_RECODE      "Uudelleenkoodaus edellyttää tiedoston lataamista uudelleen levyltä, tallentamattomat muutokset menetetään!"
     IDS_MUI_ASK_CREATE      """%s"" ei löytynyt\nHaluatko luoda tämän tiedoston?"
@@ -331,8 +336,7 @@ Vaihtoehdot:\r\n\
 /v\tTulosta tiedosto välittömästi ja lopeta\r\n\
 /vd\tTulosta tiedosto (avaa tulostindialogi)\r\n\
 /y\tEtsi ympäristöPOLKU, jos kyseessä on suhteellinen tiedostonimi\r\n\
-/z\tOhita seuraava (käytettävissä rekisteripohjaiseen Notepad-\r\n\
-\tkorvaukseen)\r\n\r\n\
+/z\tOhita seuraava (käytettävissä rekisteripohjaiseen Notepad-\r\n\tkorvaukseen)\r\n\r\n\
 Esimerkkejä:\r\n\
 Notepad3 /utf8sig /crlf d:\\temp\\Test.txt\r\n\
  \t... Avaa uusi tiedosto: ""Test.txt"" Koodaus=UTF-8-BOM, EoL=CRLF\r\n\
@@ -342,11 +346,11 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Tiedostonimipäätteet on erotettava toisistaan merkillä ';'\r\n\
-Käytä \\<regex>; määrittääksesi tiedostonimen täsmäytysmallin:\r\n\
-   \\xyz$;   => tiedostonimet(kantanimi+pääte) ja 'xyz' viimeisinä merkkeinä\r\n\r\n\
+Merkinnät, jotka sisältävät '*', '?' tai '.' täsmää koko tiedostonimeen (jokerimerkki):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Tyylin muoto:\r\n\
 fontti:Nimi; koko:[+/-]nn.mm; lihavoitu; kursiivi; alleviivaus;\r\n\
-teksti:#ffffff; tausta:#bbbbbb; lopputäyttö; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
 Tyyliominaisuuksia voi kopioida käyttämällä ""Kopioi/liitä"" tai ""Vedä/pudota""\
 "
 

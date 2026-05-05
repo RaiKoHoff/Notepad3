@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Adminisztrátor"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Vágólap"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Névtelen"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Csak olvasható)"
@@ -117,7 +117,7 @@ BEGIN
     IDS_MUI_FILTER_ALL      "Minden fájl (*.*)|*.*|"
     IDS_MUI_FILTER_EXE      "Végrehajtható fájlok (*.exe;*.com;*.bat;*.cmd;*.lnk;*.pif)|*.exe;*.com;*.bat;*.cmd;*.lnk;*.pif|All files (*.*)|*.*|"
     IDS_MUI_FILTER_INI      "Beállításfájlok (*.ini)|*.ini|All files (*.*)|*.*|"
-    IDS_MUI_FILTER_BITMAP   "Bitmap files (*.bmp)|*.bmp|All files (*.*)|*.*|"
+    IDS_MUI_FILTER_BITMAP   "Bittérképfájlok (*.bmp)|*.bmp|Minden fájl (*.*)|*.*|"
     IDS_MUI_OPENWITH        "Válassza ki a mappát, ahol a kedvenc alkamazásaira mutató parancsikonok vannak"
     IDS_MUI_FAVORITES       "Válassza ki a mappát, ahol a kedvenc fájljaira mutató parancsikonok vannak"
     IDS_MUI_BACKSLASHHELP   "Backslash átalakítások\n\n\\a\tFigyelmeztetés (BEL, Ascii 7)\n\\b\tBackspace (BS, Ascii 8)\n\\f\tLapdobás (FF, Ascii 12)\n\\n\tÚj sor (LF, Ascii 10)\n\\r\tKocsi vissza (CR, Ascii 13)\n\\t\tVízszintes Tab (HT, Ascii 9)\n\\v\tFüggőleges Tab (VT, Ascii 11)\n\\0oo\tOktális érték\n\\u####\tHexadecimális érték\n\\xhh\tHexadecimal Value\n\\\\\tBackslash"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Hiba ""%s"" betöltésekor"
     IDS_MUI_ERR_SAVEFILE    "Hiba ""%s"" mentésekor"
+    IDS_MUI_ERR_PATHNOTFOUND "Az útvonal ehhez: ""%s"" már nem létezik.\nLétrehozzam újra az útvonalat és mentsem a fájlt?"
     IDS_MUI_ERR_DLG_FORMAT  "Hiba '%s', oka:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Fájlböngésző plugin nem található\nA MiniPath fájlböngésző plugin letölthető a https://rizonesoft.com címről"
-    IDS_MUI_ERR_GREPWIN     "Fájlkereső plugin nem található\nA grepWinNP3 fájlkereső plugin letölthető a https://rizonesoft.com címről"
+    IDS_MUI_ERR_GREPWIN     "Fájlkereső plugin nem található\nA grepWin Portable fájlkereső plugin letölthető a https://github.com/stefankueng/grepWin/releases címről"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Fájlkereső plugin nem található\nKérem telepítse a grepWinPortable legújabb verzióját a PortableApps platformról."
     IDS_MUI_ERR_MRUDLG      "A kijelölt fájlhoz nincs hozzáférésünk!\nEl szeretné távolítani a listából?"
     IDS_MUI_ERR_CREATELINK  "Hiba az asztali parancsikon létrehozásakor"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -179,7 +182,7 @@ BEGIN
     IDS_MUI_ASK_CLEAR_UNDO  "Ez a művelet törli a visszavonási előzményeket. Folytatja?"
     IDS_MUI_READONLY_SAVE   """%s"" csak olvastható. Legyen mentés egy másik fájlba?"
     IDS_MUI_FILECHANGENOTIFY
-                            "Az aktuális fájlt egy külső program megváltoztatta\nKérem válaszon:\n\nKihagyás -\t\tVáltoztatások figyelmen kívül hagyása\nÚjratöltés -\tA fájl újratöltése\nFigyelés -\t\tFájl figyelése"
+                            "Az aktuális fájlt egy külső program megváltoztatta\nKérem válasszon:\n\nKihagyás -\t\tVáltoztatások figyelmen kívül hagyása\nÚjratöltés -\tA fájl újratöltése\nFigyelés -\t\tFájl figyelése"
     IDS_MUI_FILECHANGENOTIFY2 "Az aktuális fájl törölve lett. Elmentsük?"
     IDS_MUI_FILELOCK_ERROR  "Nem tudok exklúzív zárolást szerezni erre a fájlra: ""%s""!"
     IDS_MUI_STICKYWINPOS    "A ragadós ablakpozíciók be van kapcsolva. Az új Notepad3 ablakok a jelenlegi ablakhelyzetét használják majd"
@@ -205,6 +208,8 @@ BEGIN
                              "Az URL-ben megadott útvonal nem létezik!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Kattintás a fájl megnyitásához"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Kattintás a böngészőben való megnyitáshoz"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Az eredeti fájl módosítási idejeének megőrzése opció be van kapcsolva\nA beállítás így marad erre a munkamenetre!"
     IDS_MUI_OUT_OFF_OCCMRK   "Elfogytak a találatjelölők (Könyvjelző/Kiemelés)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Mentsük e módosításokat:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Mentsük e módosításokat:\n%s?"
     IDS_MUI_ASK_REVERT      "Viszaállítsuk a fájlt az utolsó mentett állapotra? A változtatások elvesznek!"
     IDS_MUI_ASK_RECODE      "A felvételhez a fájl újra be kell olvasni lemezről, így a nem mentett változtatások el fognak veszni!"
     IDS_MUI_ASK_CREATE      """%s"" nem található\nSzeretné létrehozni a fájlt?"
@@ -341,11 +346,11 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Fájlnév kiterjesztéseket ';'-vel kell elválasztani\r\n\
-használja a \\<regex>; fájlnév minta megadásához:\r\n\
-   \\xyz$;   => fájlnevek (névtő és kiterjesztés) ahol 'xyz' a vége\r\n\r\n\
+A '*', '?' vagy '.' karaktereket tartalmazó bejegyzések megegyeznek a teljes fájlnévvel (helyettesítő karakter):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Stílus formátum:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\
 A stílusjellemzőket másolás+beillesztéssel és egérrel húzással is lehet másolni\
 "
 

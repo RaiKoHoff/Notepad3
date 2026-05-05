@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "Fichier du Registre"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Script Inno Setup"
     IDS_LEX_RUBY            "Script Ruby"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "Verilog HDL"
     IDS_LEX_SYSVERILOG      "SystemVerilog HDVL"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -338,7 +340,7 @@ BEGIN
     IDS_LEX_STR_63255       "Format Body"
     IDS_LEX_STR_63256       "Texte d'élément HTML"
     IDS_LEX_STR_63257       "Texte d'élément XML"
-    IDS_LEX_STR_63258       "Typedefs/Classees"
+    IDS_LEX_STR_63258       "Typedefs/Classes"
     IDS_LEX_STR_63259       "Doc commentaire"
     IDS_LEX_STR_Keyword2nd  "Mot-clé 2ème"
     IDS_LEX_STR_Error       "Erreur"
@@ -368,7 +370,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_LEX_STR_63280       "Définition de Macro"
+    IDS_LEX_STR_63280       "Définition de macro"
     IDS_LEX_STR_Param       "Paramètres"
     IDS_LEX_STR_63282       "Expansion en ligne"
     IDS_LEX_STR_63283       "Commentaire Pascal"
@@ -515,6 +517,10 @@ BEGIN
     IDS_LEX_STR_SysTasks    "Tâches Système"
     IDS_LEX_STR_AfterLabel  "Etiquette Suite"
     IDS_LEX_STR_Table       "Table"
+    IDS_LEX_STR_StarCmd     "Commande Star"
+    IDS_LEX_STR_SlashCmd    "Commande Slash"
+    IDS_LEX_STR_Processor   "Processeur"
+    IDS_LEX_STR_Argument    "Argument"
 END
 
 STRINGTABLE

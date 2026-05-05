@@ -28,7 +28,11 @@
 #define VERSION_FILEVERSION          VERSION_MAJOR.VERSION_MINOR.VERSION_REV.VERSION_BUILD
 #define VERSION_FILEVERSION_NUM      VERSION_MAJOR,VERSION_MINOR,VERSION_REV,VERSION_BUILD
 
-#if defined(_WIN64)
+#if defined(_M_ARM64)
+#define VERSION_FILEVERSION_LONG     APPNAME (ARM64)  VERSION_FILEVERSION  VERSION_PATCH
+#elif defined(_M_ARM)
+#define VERSION_FILEVERSION_LONG     APPNAME (ARM)  VERSION_FILEVERSION  VERSION_PATCH
+#elif defined(_WIN64)
 #define VERSION_FILEVERSION_LONG     APPNAME (x64)  VERSION_FILEVERSION  VERSION_PATCH
 #else
 #define VERSION_FILEVERSION_LONG     APPNAME (x86)  VERSION_FILEVERSION  VERSION_PATCH
@@ -59,7 +63,7 @@
 
 #define VERSION_SCIVERSION             _SCI_BUILD _W(_STRG(_V(SCINTILLA_VER)))
 #define VERSION_LXIVERSION             _LXI_BUILD _W(_STRG(_V(LEXILLA_VER)))
-#define VERSION_ONIGURUMA              L"Oniguruma " _W(_STRG(_V(ONIGURUMA_REGEX_VER)))
+#define VERSION_PCRE2                  L"PCRE2 " _W(_STRG(_V(PCRE2_VER)))
 #define VERSION_UCHARDET               L"UChardet " _W(_STRG(_V(UCHARDET_VER)))
 #define VERSION_TINYEXPR               L"TinyExpr " _W(_STRG(_V(TINYEXPR_VER)))
 #define VERSION_UTHASH                 L"UTHash " _W(_STRG(_V(UTHASH_VER)))
@@ -86,7 +90,11 @@ inline LPCWSTR _Win10BuildToReleaseId(const DWORD build)
 
     if (build >= 22000) { // Win11
 
-        if (build >= 26200)
+        if (build >= 28000)
+        {
+            lpcReleaseID = L"26H1";
+        }
+        else if (build >= 26200)
         {
             lpcReleaseID = L"25H2";
         }
@@ -161,9 +169,29 @@ inline LPCWSTR _Win10BuildToReleaseId(const DWORD build)
 #undef VER_CPL
 
 #if defined(_MSC_VER)
-    #if (_MSC_VER == 1944)
+    #if (_MSC_VER == 1950)
+        #if (_MSC_FULL_VER >= 195035730)
+            #define VER_CPL     MS Visual C++ 2026 v18.5.2
+        #elif (_MSC_FULL_VER >= 195035729)
+            #define VER_CPL     MS Visual C++ 2026 v18.5.(0-1)
+        #elif (_MSC_FULL_VER >= 195035728)
+            #define VER_CPL     MS Visual C++ 2026 v18.4.(2-3)
+        #elif (_MSC_FULL_VER >= 195035727)
+            #define VER_CPL     MS Visual C++ 2026 v18.4.1
+        #elif (_MSC_FULL_VER >= 195035726)
+            #define VER_CPL     MS Visual C++ 2026 v18.4.0
+        #elif (_MSC_FULL_VER >= 195035725)
+            #define VER_CPL     MS Visual C++ 2026 v18.3.2
+        #elif (_MSC_FULL_VER >= 195035724)
+            #define VER_CPL     MS Visual C++ 2026 v18.3.(0-1)
+        #elif (_MSC_FULL_VER >= 195035719)
+            #define VER_CPL     MS Visual C++ 2026 v18.(1-2)
+        #elif (_MSC_FULL_VER >= 195035717)
+            #define VER_CPL     MS Visual C++ 2026 v18.0.0
+        #endif
+    #elif (_MSC_VER == 1944)
         #if (_MSC_FULL_VER >= 194435222)
-            #define VER_CPL     MS Visual C++ 2022 v17.14.(22-23)
+            #define VER_CPL     MS Visual C++ 2022 v17.14.(22-26)
         #elif (_MSC_FULL_VER >= 194435221)
             #define VER_CPL     MS Visual C++ 2022 v17.14.21
         #elif (_MSC_FULL_VER >= 194435220)

@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "增量複製(&Y)\tCtrl+E",                      IDM_EDIT_COPYADD
         MENUITEM "貼上(&P)\tCtrl+V",                          IDM_EDIT_PASTE
         MENUITEM "與剪貼簿置換(&W)\tCtrl+K",                  IDM_EDIT_SWAP
-        MENUITEM "刪除(&D)\tDel",                             IDM_EDIT_CLEAR
-        MENUITEM "清空剪貼簿(&E)",                            IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "全選(&A)\tCtrl+A",                          IDM_EDIT_SELECTALL
+        MENUITEM "刪除(&D)\tDel",                             IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "清空剪貼簿(&E)",                            IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "切換監視剪貼簿(&M)",  IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "單詞(&O)"
         BEGIN
@@ -483,6 +485,7 @@ BEGIN
         MENUITEM "檔案修改通知(&C)...\tAlt+F5",                 IDM_SET_CHANGENOTIFY
         ///MENUITEM "自動儲存和備份設定...",            IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "關閉訊息提示音(&M)",                          IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "解析為 UNC 路徑(&U)",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "Esc 鍵功能(&E)"
         BEGIN
             MENUITEM "無(&N)",                                IDM_SET_NOESCFUNC
@@ -492,6 +495,11 @@ BEGIN
         MENUITEM "執行工具前先儲存(&V)",                       IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "計算微小表達式(&x)",                         IDM_SET_EVALTINYEXPRONSEL
         MENUITEM "啟用多重游標選定",                IDM_SET_MULTIPLE_SELECTION
+        POPUP "預設資料夾(&D)"
+        BEGIN
+            MENUITEM "設定為目前檔案的資料夾(&C)",  IDM_SET_DEFAULTDIR
+            MENUITEM "重置為預設(&R)",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "記憶(&R)"
         BEGIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "打開超連結",                         CMD_OPEN_HYPERLINK
+        MENUITEM "複製超連結",           CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "復原",                                  IDM_EDIT_UNDO
         MENUITEM "取消復原",                                  IDM_EDIT_REDO
@@ -570,6 +579,16 @@ BEGIN
         MENUITEM "刪除",                                  IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "全選",                                  IDM_EDIT_SELECTALL
+        MENUITEM SEPARATOR
+        POPUP "轉換大小寫"
+        BEGIN
+            MENUITEM "轉為大寫",              CMD_CTX_UPPERCASE
+            MENUITEM "轉為小寫",              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "反轉大小寫",            CMD_CTX_INVERTCASE
+            MENUITEM "標題大寫",             CMD_CTX_TITLECASE
+            MENUITEM "句首大寫",          CMD_CTX_SENTENCECASE
+        END
         MENUITEM SEPARATOR
         MENUITEM "摺疊/展開",                             IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR

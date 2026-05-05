@@ -14,10 +14,10 @@
 *                                                                             *
 *******************************************************************************/
 
+#include <sdkddkver.h>
 #if !defined(_WIN32_WINNT)
-#define _WIN32_WINNT 0x601
+#define _WIN32_WINNT _WIN32_WINNT_WIN10
 #endif
-#define _WIN32_IE 0x601
 #define OEMRESOURCE  // use OBM_ resource constants
 #define VC_EXTRALEAN 1
 #define WIN32_LEAN_AND_MEAN 1
@@ -26,7 +26,9 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <commdlg.h>
+#include <shobjidl.h>
 #include <strsafe.h>
+#include <pathcch.h>
 #include "minipath.h"
 #include "dlapi.h"
 #include "config.h"
@@ -45,60 +47,62 @@ extern WCHAR   g_UsedLngLocaleName[LOCALE_NAME_MAX_LENGTH];
 
 //=============================================================================
 //
-// BFFCallBack()
-//
-int CALLBACK BFFCallBack(HWND hwnd,UINT umsg,LPARAM lParam,LPARAM lpData)
-{
-    if (umsg == BFFM_INITIALIZED) {
-        SendMessage(hwnd,BFFM_SETSELECTION,TRUE,lpData);
-    }
-
-    UNUSED(lParam);
-
-    return(0);
-}
-
-
-//=============================================================================
-//
 // GetDirectory()
 //
 BOOL GetDirectory(HWND hwndParent,int iTitle,LPWSTR pszFolder,LPCWSTR pszBase,BOOL bNewDialogStyle)
 {
+    UNUSED(bNewDialogStyle);
 
-    BROWSEINFO bi;
-    LPITEMIDLIST pidl;
     WCHAR szTitle[256] = { L'\0' };
     WCHAR szBase[MAX_PATH] = { L'\0' };
-    BOOL fOk = FALSE;
 
-    lstrcpy(szTitle, L"");
     GetLngString(iTitle,szTitle,COUNTOF(szTitle));
 
     if (!pszBase || !*pszBase) {
         GetCurrentDirectory(MAX_PATH,szBase);
     } else {
-        lstrcpy(szBase,pszBase);
+        StringCchCopy(szBase, COUNTOF(szBase), pszBase);
     }
 
-    bi.hwndOwner = hwndParent;
-    bi.pidlRoot = NULL;
-    bi.pszDisplayName = pszFolder;
-    bi.lpszTitle = szTitle;
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-    bi.lpfn = &BFFCallBack;
-    bi.lParam = (LPARAM)szBase;
-    bi.iImage = 0;
-
-    pidl = SHBrowseForFolder(&bi);
-    if (pidl) {
-        SHGetPathFromIDList(pidl,pszFolder);
-        CoTaskMemFree(pidl);
-        fOk = TRUE;
+    IFileOpenDialog *pfd = NULL;
+    HRESULT hr = CoCreateInstance(
+        &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IFileOpenDialog, (void **)&pfd);
+    if (FAILED(hr)) {
+        return FALSE;
     }
 
-    UNUSED(bNewDialogStyle);
+    DWORD dwOptions = 0;
+    pfd->lpVtbl->GetOptions(pfd, &dwOptions);
+    pfd->lpVtbl->SetOptions(pfd, dwOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
 
+    pfd->lpVtbl->SetTitle(pfd, szTitle);
+
+    IShellItem *psiDir = NULL;
+    if (SUCCEEDED(SHCreateItemFromParsingName(szBase, NULL,
+            &IID_IShellItem, (void **)&psiDir))) {
+        pfd->lpVtbl->SetFolder(pfd, psiDir);
+        psiDir->lpVtbl->Release(psiDir);
+    }
+
+    BOOL fOk = FALSE;
+    hr = pfd->lpVtbl->Show(pfd, hwndParent);
+    if (SUCCEEDED(hr)) {
+        IShellItem *psiResult = NULL;
+        hr = pfd->lpVtbl->GetResult(pfd, &psiResult);
+        if (SUCCEEDED(hr)) {
+            LPWSTR pszPath = NULL;
+            hr = psiResult->lpVtbl->GetDisplayName(psiResult, SIGDN_FILESYSPATH, &pszPath);
+            if (SUCCEEDED(hr) && pszPath) {
+                StringCchCopy(pszFolder, MAX_PATH, pszPath);
+                CoTaskMemFree(pszPath);
+                fOk = TRUE;
+            }
+            psiResult->lpVtbl->Release(psiResult);
+        }
+    }
+
+    pfd->lpVtbl->Release(pfd);
     return fOk;
 }
 
@@ -107,39 +111,59 @@ BOOL GetDirectory(HWND hwndParent,int iTitle,LPWSTR pszFolder,LPCWSTR pszBase,BO
 //
 // GetDirectory2()
 //
-BOOL GetDirectory2(HWND hwndParent,int iTitle,LPWSTR pszFolder,int iBase)
+BOOL GetDirectory2(HWND hwndParent,int iTitle,LPWSTR pszFolder,const KNOWNFOLDERID *pFolderId)
 {
-
-    BROWSEINFO bi;
-    LPITEMIDLIST pidl,pidlRoot;
     WCHAR szTitle[256] = { L'\0' };
-    BOOL fOk = FALSE;
-
-    lstrcpy(szTitle,L"");
     GetLngString(iTitle,szTitle,COUNTOF(szTitle));
 
-    if (NOERROR != SHGetSpecialFolderLocation(hwndParent,iBase,&pidlRoot)) {
-        CoTaskMemFree(pidlRoot);
+    // Get the path for the known folder
+    WCHAR szBasePath[MAX_PATH] = { L'\0' };
+    PWSTR pszKnownPath = NULL;
+    if (FAILED(SHGetKnownFolderPath(pFolderId, 0, NULL, &pszKnownPath))) {
+        return FALSE;
+    }
+    StringCchCopy(szBasePath, COUNTOF(szBasePath), pszKnownPath);
+    CoTaskMemFree(pszKnownPath);
+
+    IFileOpenDialog *pfd = NULL;
+    HRESULT hr = CoCreateInstance(
+        &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IFileOpenDialog, (void **)&pfd);
+    if (FAILED(hr)) {
         return FALSE;
     }
 
-    bi.hwndOwner = hwndParent;
-    bi.pidlRoot = pidlRoot;
-    bi.pszDisplayName = pszFolder;
-    bi.lpszTitle = szTitle;
-    bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-    bi.lpfn = NULL;
-    bi.lParam = (LPARAM)0;
-    bi.iImage = 0;
+    DWORD dwOptions = 0;
+    pfd->lpVtbl->GetOptions(pfd, &dwOptions);
+    pfd->lpVtbl->SetOptions(pfd, dwOptions | FOS_PICKFOLDERS | FOS_FORCEFILESYSTEM);
 
-    pidl = SHBrowseForFolder(&bi);
-    if (pidl) {
-        SHGetPathFromIDList(pidl,pszFolder);
-        CoTaskMemFree(pidl);
-        fOk = TRUE;
+    pfd->lpVtbl->SetTitle(pfd, szTitle);
+
+    IShellItem *psiDir = NULL;
+    if (SUCCEEDED(SHCreateItemFromParsingName(szBasePath, NULL,
+            &IID_IShellItem, (void **)&psiDir))) {
+        pfd->lpVtbl->SetFolder(pfd, psiDir);
+        psiDir->lpVtbl->Release(psiDir);
     }
-    CoTaskMemFree(pidlRoot);
 
+    BOOL fOk = FALSE;
+    hr = pfd->lpVtbl->Show(pfd, hwndParent);
+    if (SUCCEEDED(hr)) {
+        IShellItem *psiResult = NULL;
+        hr = pfd->lpVtbl->GetResult(pfd, &psiResult);
+        if (SUCCEEDED(hr)) {
+            LPWSTR pszPath = NULL;
+            hr = psiResult->lpVtbl->GetDisplayName(psiResult, SIGDN_FILESYSPATH, &pszPath);
+            if (SUCCEEDED(hr) && pszPath) {
+                StringCchCopy(pszFolder, MAX_PATH, pszPath);
+                CoTaskMemFree(pszPath);
+                fOk = TRUE;
+            }
+            psiResult->lpVtbl->Release(psiResult);
+        }
+    }
+
+    pfd->lpVtbl->Release(pfd);
     return fOk;
 }
 
@@ -195,8 +219,6 @@ INT_PTR CALLBACK RunDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
             WCHAR szFile[MAX_PATH * 2];
             WCHAR szTitle[32];
             WCHAR szFilter[256];
-            OPENFILENAME ofn;
-            ZeroMemory(&ofn,sizeof(OPENFILENAME));
 
             GetDlgItemText(hwnd,IDC_COMMANDLINE,szArgs,COUNTOF(szArgs));
             ExpandEnvironmentStringsEx(szArgs,COUNTOF(szArgs));
@@ -206,23 +228,61 @@ INT_PTR CALLBACK RunDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
             GetLngString(IDS_FILTER_EXE,szFilter,COUNTOF(szFilter));
             PrepareFilterStr(szFilter);
 
-            ofn.lStructSize = sizeof(OPENFILENAME);
-            ofn.hwndOwner = hwnd;
-            ofn.lpstrFilter = szFilter;
-            ofn.lpstrFile = szFile;
-            ofn.nMaxFile = COUNTOF(szFile);
-            ofn.lpstrTitle = szTitle;
-            ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_DONTADDTORECENT
-                        | OFN_PATHMUSTEXIST | OFN_SHAREAWARE | OFN_NODEREFERENCELINKS;
+            IFileOpenDialog *pfd = NULL;
+            HRESULT hr = CoCreateInstance(
+                &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IFileOpenDialog, (void **)&pfd);
+            if (SUCCEEDED(hr)) {
+                DWORD dwOptions = 0;
+                pfd->lpVtbl->GetOptions(pfd, &dwOptions);
+                pfd->lpVtbl->SetOptions(pfd, dwOptions
+                    | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR | FOS_DONTADDTORECENT
+                    | FOS_PATHMUSTEXIST | FOS_SHAREAWARE | FOS_NODEREFERENCELINKS
+                    | FOS_FORCEFILESYSTEM);
 
-            if (GetOpenFileName(&ofn)) {
-                QuotateFilenameStr(szFile);
+                pfd->lpVtbl->SetTitle(pfd, szTitle);
 
-                if (StrIsNotEmpty(szArg2)) {
-                    lstrcat(szFile,L" ");
-                    lstrcat(szFile,szArg2);
+                // Convert double-null filter to COMDLG_FILTERSPEC
+                COMDLG_FILTERSPEC filterSpec[8];
+                int filterCount = 0;
+                LPCWSTR p = szFilter;
+                while (*p && filterCount < COUNTOF(filterSpec)) {
+                    filterSpec[filterCount].pszName = p;
+                    p += wcslen(p) + 1;
+                    if (*p == L'\0') break;
+                    filterSpec[filterCount].pszSpec = p;
+                    p += wcslen(p) + 1;
+                    ++filterCount;
                 }
-                SetDlgItemText(hwnd,IDC_COMMANDLINE,szFile);
+                if (filterCount > 0) {
+                    pfd->lpVtbl->SetFileTypes(pfd, (UINT)filterCount, filterSpec);
+                }
+
+                if (szFile[0]) {
+                    pfd->lpVtbl->SetFileName(pfd, szFile);
+                }
+
+                hr = pfd->lpVtbl->Show(pfd, hwnd);
+                if (SUCCEEDED(hr)) {
+                    IShellItem *psiResult = NULL;
+                    hr = pfd->lpVtbl->GetResult(pfd, &psiResult);
+                    if (SUCCEEDED(hr)) {
+                        LPWSTR pszPath = NULL;
+                        hr = psiResult->lpVtbl->GetDisplayName(psiResult, SIGDN_FILESYSPATH, &pszPath);
+                        if (SUCCEEDED(hr) && pszPath) {
+                            StringCchCopy(szFile, COUNTOF(szFile), pszPath);
+                            CoTaskMemFree(pszPath);
+                            QuotateFilenameStr(szFile);
+                            if (StrIsNotEmpty(szArg2)) {
+                                StringCchCat(szFile, COUNTOF(szFile), L" ");
+                                StringCchCat(szFile, COUNTOF(szFile), szArg2);
+                            }
+                            SetDlgItemText(hwnd,IDC_COMMANDLINE,szFile);
+                        }
+                        psiResult->lpVtbl->Release(psiResult);
+                    }
+                }
+                pfd->lpVtbl->Release(pfd);
             }
 
             PostMessage(hwnd,WM_NEXTDLGCTL,1,0);
@@ -339,17 +399,19 @@ INT_PTR CALLBACK GotoDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
         cxClient = rc.right - rc.left;
         cyClient = rc.bottom - rc.top;
 
-        AdjustWindowRectEx(&rc,GetWindowLong(hwnd,GWL_STYLE)|WS_THICKFRAME,FALSE,0);
+        // Apply WS_THICKFRAME BEFORE computing borders so styles match
+        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
+        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+
+        UINT const dpi = GetDpiForWindow(hwnd);
+        AdjustWindowRectExForDpi(&rc,GetWindowLong(hwnd,GWL_STYLE),FALSE,GetWindowLong(hwnd,GWL_EXSTYLE),dpi);
         mmiPtMinX = rc.right-rc.left;
         mmiPtMaxY = rc.bottom-rc.top;
 
-        if (Settings.cxGotoDlg < (rc.right-rc.left)) {
-            Settings.cxGotoDlg = rc.right-rc.left;
+        if (Settings.cxGotoDlg < mmiPtMinX) {
+            Settings.cxGotoDlg = mmiPtMinX;
         }
-        SetWindowPos(hwnd,NULL,rc.left,rc.top, Settings.cxGotoDlg,rc.bottom-rc.top,SWP_NOZORDER);
-
-        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
-        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+        SetWindowPos(hwnd,NULL,0,0,Settings.cxGotoDlg,mmiPtMaxY,SWP_NOZORDER|SWP_NOMOVE);
 
         if (g_hDlgIconSmall) {
             SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)g_hDlgIconSmall);
@@ -362,7 +424,7 @@ INT_PTR CALLBACK GotoDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
         SetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP),GWL_STYLE,
                          GetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP),GWL_STYLE)|SBS_SIZEGRIP|WS_CLIPSIBLINGS);
 
-        int cGrip = GetSystemMetrics(SM_CXHTHUMB);
+        int cGrip = GetSystemMetricsForDpi(SM_CXHTHUMB,dpi);
         SetWindowPos(GetDlgItem(hwnd,IDC_RESIZEGRIP),NULL,cxClient-cGrip,
                      cyClient-cGrip,cGrip,cGrip,SWP_NOZORDER);
 
@@ -1066,7 +1128,7 @@ INT_PTR CALLBACK ProgPageProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
         MakeBitmapButton(hwnd,IDC_BROWSE_Q,g_hInstance,IDB_OPEN);
         MakeBitmapButton(hwnd,IDC_BROWSE_F,g_hInstance,IDB_OPEN);
 
-        lstrcpy(tch, Settings.szQuickview);
+        StringCchCopy(tch, COUNTOF(tch), Settings.szQuickview);
         PathQuoteSpaces(tch);
         if (StrIsNotEmpty(Settings.szQuickviewParams)) {
             StrCatBuff(tch,L" ",COUNTOF(tch));
@@ -1099,9 +1161,6 @@ INT_PTR CALLBACK ProgPageProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
             WCHAR szParams[MAX_PATH];
             WCHAR szTitle[32];
             WCHAR szFilter[256];
-            OPENFILENAME ofn;
-
-            ZeroMemory(&ofn,sizeof(OPENFILENAME));
 
             GetDlgItemText(hwnd,IDC_QUICKVIEW,tchBuf,COUNTOF(tchBuf));
             ExtractFirstArgument(tchBuf,szFile,szParams);
@@ -1110,23 +1169,61 @@ INT_PTR CALLBACK ProgPageProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
             GetLngString(IDS_FILTER_EXE,szFilter,COUNTOF(szFilter));
             PrepareFilterStr(szFilter);
 
-            ofn.lStructSize = sizeof(OPENFILENAME);
-            ofn.hwndOwner = hwnd;
-            ofn.lpstrFilter = szFilter;
-            ofn.lpstrFile = szFile;
-            ofn.nMaxFile = COUNTOF(szFile);
-            ofn.lpstrTitle = szTitle;
-            ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_DONTADDTORECENT
-                        | OFN_PATHMUSTEXIST | OFN_SHAREAWARE | OFN_NODEREFERENCELINKS;
+            IFileOpenDialog *pfd = NULL;
+            HRESULT hr = CoCreateInstance(
+                &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IFileOpenDialog, (void **)&pfd);
+            if (SUCCEEDED(hr)) {
+                DWORD dwOptions = 0;
+                pfd->lpVtbl->GetOptions(pfd, &dwOptions);
+                pfd->lpVtbl->SetOptions(pfd, dwOptions
+                    | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR | FOS_DONTADDTORECENT
+                    | FOS_PATHMUSTEXIST | FOS_SHAREAWARE | FOS_NODEREFERENCELINKS
+                    | FOS_FORCEFILESYSTEM);
 
-            if (GetOpenFileName(&ofn)) {
-                StrCpyN(tchBuf,szFile,COUNTOF(tchBuf));
-                PathQuoteSpaces(tchBuf);
-                if (StrIsNotEmpty(szParams)) {
-                    StrCatBuff(tchBuf,L" ",COUNTOF(tchBuf));
-                    StrCatBuff(tchBuf,szParams,COUNTOF(tchBuf));
+                pfd->lpVtbl->SetTitle(pfd, szTitle);
+
+                // Convert double-null filter to COMDLG_FILTERSPEC
+                COMDLG_FILTERSPEC filterSpec[8];
+                int filterCount = 0;
+                LPCWSTR p = szFilter;
+                while (*p && filterCount < COUNTOF(filterSpec)) {
+                    filterSpec[filterCount].pszName = p;
+                    p += wcslen(p) + 1;
+                    if (*p == L'\0') break;
+                    filterSpec[filterCount].pszSpec = p;
+                    p += wcslen(p) + 1;
+                    ++filterCount;
                 }
-                SetDlgItemText(hwnd,IDC_QUICKVIEW,tchBuf);
+                if (filterCount > 0) {
+                    pfd->lpVtbl->SetFileTypes(pfd, (UINT)filterCount, filterSpec);
+                }
+
+                if (szFile[0]) {
+                    pfd->lpVtbl->SetFileName(pfd, szFile);
+                }
+
+                hr = pfd->lpVtbl->Show(pfd, hwnd);
+                if (SUCCEEDED(hr)) {
+                    IShellItem *psiResult = NULL;
+                    hr = pfd->lpVtbl->GetResult(pfd, &psiResult);
+                    if (SUCCEEDED(hr)) {
+                        LPWSTR pszPath = NULL;
+                        hr = psiResult->lpVtbl->GetDisplayName(psiResult, SIGDN_FILESYSPATH, &pszPath);
+                        if (SUCCEEDED(hr) && pszPath) {
+                            StrCpyN(tchBuf, pszPath, COUNTOF(tchBuf));
+                            CoTaskMemFree(pszPath);
+                            PathQuoteSpaces(tchBuf);
+                            if (StrIsNotEmpty(szParams)) {
+                                StrCatBuff(tchBuf,L" ",COUNTOF(tchBuf));
+                                StrCatBuff(tchBuf,szParams,COUNTOF(tchBuf));
+                            }
+                            SetDlgItemText(hwnd,IDC_QUICKVIEW,tchBuf);
+                        }
+                        psiResult->lpVtbl->Release(psiResult);
+                    }
+                }
+                pfd->lpVtbl->Release(pfd);
             }
 
             PostMessage(hwnd,WM_NEXTDLGCTL,1,0);
@@ -1162,15 +1259,15 @@ INT_PTR CALLBACK ProgPageProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
             if (!GetDlgItemText(hwnd,IDC_QUICKVIEW,tch,MAX_PATH)) {
 
                 GetSystemDirectory(Settings.szQuickview,MAX_PATH);
-                PathAddBackslash(Settings.szQuickview);
-                lstrcat(Settings.szQuickview,L"Viewers\\Quikview.exe");
+                PathCchAddBackslash(Settings.szQuickview, COUNTOF(Settings.szQuickview));
+                StringCchCat(Settings.szQuickview, COUNTOF(Settings.szQuickview), L"Viewers\\Quikview.exe");
                 PathQuoteSpaces(Settings.szQuickview);
-                lstrcpy(Settings.szQuickviewParams,L"");
+                StringCchCopy(Settings.szQuickviewParams, COUNTOF(Settings.szQuickviewParams), L"");
             } else {
                 ExtractFirstArgument(tch, Settings.szQuickview, Settings.szQuickviewParams);
             }
 
-            lstrcpy(tch, Settings.tchFavoritesDir);
+            StringCchCopy(tch, COUNTOF(tch), Settings.tchFavoritesDir);
             if (!GetDlgItemText(hwnd, IDC_FAVORITES, Settings.tchFavoritesDir, MAX_PATH)) {
                 GetDefaultFavoritesDir(Settings.tchFavoritesDir, COUNTOF(Settings.tchFavoritesDir));
             } else {
@@ -1411,7 +1508,7 @@ INT_PTR CALLBACK GetFilterDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lPara
             if (GetDlgItemText(hwnd,IDC_FILTER, Settings.tchFilter,COUNTOF(Settings.tchFilter)-1)) {
                 Settings.bNegFilter = IsDlgButtonChecked(hwnd,IDC_NEGFILTER)?TRUE:FALSE;
             } else {
-                lstrcpy(Settings.tchFilter,L"*.*");
+                StringCchCopy(Settings.tchFilter, COUNTOF(Settings.tchFilter), L"*.*");
                 Settings.bNegFilter = FALSE;
             }
             EndDialog(hwnd,IDOK);
@@ -1445,7 +1542,7 @@ BOOL GetFilterDlg(HWND hwnd)
     WCHAR tchOldFilter[DL_FILTER_BUFSIZE];
     BOOL bOldNegFilter;
 
-    lstrcpy(tchOldFilter, Settings.tchFilter);
+    StringCchCopy(tchOldFilter, COUNTOF(tchOldFilter), Settings.tchFilter);
     bOldNegFilter = Settings.bNegFilter;
 
     if (IDOK == ThemedDialogBox(g_hLngResContainer,MAKEINTRESOURCE(IDD_FILTER),hwnd,GetFilterDlgProc)) {
@@ -1552,7 +1649,7 @@ BOOL RenameFileDlg(HWND hwnd)
 
     dli.mask = DLI_FILENAME;
     if (DirList_GetItem(hwndDirList,-1,&dli) != -1) {
-        lstrcpy(fod.szSource,GetFilenameStr(dli.szFileName));
+        StringCchCopy(fod.szSource, COUNTOF(fod.szSource), GetFilenameStr(dli.szFileName));
     }
 
     else {
@@ -1568,15 +1665,15 @@ BOOL RenameFileDlg(HWND hwnd)
         shfos.fFlags = FOF_ALLOWUNDO;
 
         // Generate fully qualified destination
-        lstrcpy(szFullDestination,dli.szFileName);
+        StringCchCopy(szFullDestination, COUNTOF(szFullDestination), dli.szFileName);
         *GetFilenameStr(szFullDestination) = 0;
-        lstrcat(szFullDestination,fod.szDestination);
+        StringCchCat(szFullDestination, COUNTOF(szFullDestination), fod.szDestination);
 
         // Double null terminated strings are essential!!!
         ZeroMemory(tchSource,sizeof(WCHAR)*COUNTOF(tchSource));
         ZeroMemory(tchDestination,sizeof(WCHAR)*COUNTOF(tchDestination));
-        lstrcpy(tchSource,dli.szFileName);
-        lstrcpy(tchDestination,szFullDestination);
+        StringCchCopy(tchSource, COUNTOF(tchSource), dli.szFileName);
+        StringCchCopy(tchDestination, COUNTOF(tchDestination), szFullDestination);
 
         if (SHFileOperation(&shfos) == 0) { // success, select renamed item
             SHFILEINFO shfi = { 0 };
@@ -1626,17 +1723,19 @@ INT_PTR CALLBACK CopyMoveDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam
         cxClient = rc.right - rc.left;
         cyClient = rc.bottom - rc.top;
 
-        AdjustWindowRectEx(&rc,GetWindowLong(hwnd,GWL_STYLE)|WS_THICKFRAME,FALSE,0);
+        // Apply WS_THICKFRAME BEFORE computing borders so styles match
+        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
+        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+
+        UINT const dpi = GetDpiForWindow(hwnd);
+        AdjustWindowRectExForDpi(&rc,GetWindowLong(hwnd,GWL_STYLE),FALSE,GetWindowLong(hwnd,GWL_EXSTYLE),dpi);
         mmiPtMinX = rc.right-rc.left;
         mmiPtMaxY = rc.bottom-rc.top;
 
-        if (Settings.cxCopyMoveDlg < (rc.right-rc.left)) {
-            Settings.cxCopyMoveDlg = rc.right-rc.left;
+        if (Settings.cxCopyMoveDlg < mmiPtMinX) {
+            Settings.cxCopyMoveDlg = mmiPtMinX;
         }
-        SetWindowPos(hwnd,NULL,rc.left,rc.top, Settings.cxCopyMoveDlg,rc.bottom-rc.top,SWP_NOZORDER);
-
-        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
-        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+        SetWindowPos(hwnd,NULL,0,0,Settings.cxCopyMoveDlg,mmiPtMaxY,SWP_NOZORDER|SWP_NOMOVE);
 
         if (g_hDlgIconSmall) {
             SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)g_hDlgIconSmall);
@@ -1649,7 +1748,7 @@ INT_PTR CALLBACK CopyMoveDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam
         SetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP2),GWL_STYLE,
                          GetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP2),GWL_STYLE)|SBS_SIZEGRIP|WS_CLIPSIBLINGS);
 
-        cGrip = GetSystemMetrics(SM_CXHTHUMB);
+        cGrip = GetSystemMetricsForDpi(SM_CXHTHUMB,dpi);
         SetWindowPos(GetDlgItem(hwnd,IDC_RESIZEGRIP2),NULL,cxClient-cGrip,
                      cyClient-cGrip,cGrip,cGrip,SWP_NOZORDER);
 
@@ -1829,7 +1928,7 @@ BOOL CopyMoveDlg(HWND hwnd,UINT *wFunc)
 
     dli.mask = DLI_FILENAME;
     if (DirList_GetItem(hwndDirList, -1, &dli) != -1) {
-        lstrcpy(fod.szSource, GetFilenameStr(dli.szFileName));
+        StringCchCopy(fod.szSource, COUNTOF(fod.szSource), GetFilenameStr(dli.szFileName));
     } else {
         return FALSE;
     }
@@ -1852,20 +1951,20 @@ BOOL CopyMoveDlg(HWND hwnd,UINT *wFunc)
         // Double null terminated strings are essential!!!
         ZeroMemory(tchSource,sizeof(WCHAR)*COUNTOF(tchSource));
         ZeroMemory(tchDestination,sizeof(WCHAR)*COUNTOF(tchDestination));
-        lstrcpy(tchSource,dli.szFileName);
-        lstrcpy(tchDestination,fod.szDestination);
+        StringCchCopy(tchSource, COUNTOF(tchSource), dli.szFileName);
+        StringCchCopy(tchDestination, COUNTOF(tchDestination), fod.szDestination);
 
         // tchDestination is always assumed to be a directory
         // if it doesn't exist, the file name of tchSource is added
         if (PathIsRelative(tchDestination)) {
             WCHAR wszDir[MAX_PATH];
             GetCurrentDirectory(COUNTOF(wszDir),wszDir);
-            PathAppend(wszDir,tchDestination);
-            lstrcpy(tchDestination,wszDir);
+            PathCchAppend(wszDir,COUNTOF(wszDir),tchDestination);
+            StringCchCopy(tchDestination, COUNTOF(tchDestination), wszDir);
         }
 
         if (!PathIsDirectory(tchDestination)) {
-            PathAppend(tchDestination,PathFindFileName(dli.szFileName));
+            PathCchAppend(tchDestination,COUNTOF(tchDestination),PathFindFileName(dli.szFileName));
         }
 
         if (SHFileOperation(&shfos) == 0) { // success
@@ -1912,20 +2011,22 @@ INT_PTR CALLBACK OpenWithDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam
         cxClient = rc.right - rc.left;
         cyClient = rc.bottom - rc.top;
 
-        AdjustWindowRectEx(&rc,GetWindowLong(hwnd,GWL_STYLE)|WS_THICKFRAME,FALSE,0);
+        // Apply WS_THICKFRAME BEFORE computing borders so styles match
+        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
+        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+
+        UINT const dpi = GetDpiForWindow(hwnd);
+        AdjustWindowRectExForDpi(&rc,GetWindowLong(hwnd,GWL_STYLE),FALSE,GetWindowLong(hwnd,GWL_EXSTYLE),dpi);
         mmiPtMinX = rc.right-rc.left;
         mmiPtMaxY = rc.bottom-rc.top;
 
-        if (Settings.cxOpenWithDlg < (rc.right-rc.left)) {
-            Settings.cxOpenWithDlg = rc.right-rc.left;
+        if (Settings.cxOpenWithDlg < mmiPtMinX) {
+            Settings.cxOpenWithDlg = mmiPtMinX;
         }
-        if (Settings.cyOpenWithDlg < (rc.bottom-rc.top)) {
-            Settings.cyOpenWithDlg = rc.bottom-rc.top;
+        if (Settings.cyOpenWithDlg < mmiPtMaxY) {
+            Settings.cyOpenWithDlg = mmiPtMaxY;
         }
-        SetWindowPos(hwnd,NULL,rc.left,rc.top, Settings.cxOpenWithDlg, Settings.cyOpenWithDlg,SWP_NOZORDER);
-
-        SetWindowLongPtr(hwnd,GWL_STYLE,GetWindowLongPtr(hwnd,GWL_STYLE)|WS_THICKFRAME);
-        SetWindowPos(hwnd,NULL,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_FRAMECHANGED);
+        SetWindowPos(hwnd,NULL,0,0,Settings.cxOpenWithDlg,Settings.cyOpenWithDlg,SWP_NOZORDER|SWP_NOMOVE);
 
         if (g_hDlgIconSmall) {
             SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)g_hDlgIconSmall);
@@ -1938,7 +2039,7 @@ INT_PTR CALLBACK OpenWithDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam
         SetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP3),GWL_STYLE,
                          GetWindowLongPtr(GetDlgItem(hwnd,IDC_RESIZEGRIP3),GWL_STYLE)|SBS_SIZEGRIP|WS_CLIPSIBLINGS);
 
-        cGrip = GetSystemMetrics(SM_CXHTHUMB);
+        cGrip = GetSystemMetricsForDpi(SM_CXHTHUMB,dpi);
         SetWindowPos(GetDlgItem(hwnd,IDC_RESIZEGRIP3),NULL,cxClient-cGrip,
                      cyClient-cGrip,cGrip,cGrip,SWP_NOZORDER);
 
@@ -2127,9 +2228,9 @@ BOOL OpenWithDlg(HWND hwnd,LPDLITEM lpdliParam)
 
             WCHAR szSource[MAX_PATH+4];
             ZeroMemory(szSource,sizeof(WCHAR)*COUNTOF(szSource));
-            lstrcpy(szSource,lpdliParam->szFileName);
+            StringCchCopy(szSource, COUNTOF(szSource), lpdliParam->szFileName);
 
-            PathAppend(szDestination,PathFindFileName(szSource));
+            PathCchAppend(szDestination,COUNTOF(szDestination),PathFindFileName(szSource));
 
             ZeroMemory(&shfos,sizeof(SHFILEOPSTRUCT));
             shfos.hwnd = hwnd;
@@ -2168,7 +2269,7 @@ BOOL OpenWithDlg(HWND hwnd,LPDLITEM lpdliParam)
             // resolve links and get short path name
             if (!(PathIsLnkFile(lpdliParam->szFileName) &&
                     PathGetLnkPath(lpdliParam->szFileName, szParam, COUNTOF(szParam)))) {
-                lstrcpy(szParam,lpdliParam->szFileName);
+                StringCchCopy(szParam, COUNTOF(szParam), lpdliParam->szFileName);
             }
 
             GetShortPathNameW(szParam , szParam, COUNTOF(szParam));
@@ -2254,7 +2355,7 @@ BOOL NewDirDlg(HWND hwnd,LPWSTR pszNewDir)
     FILEOPDLGDATA fod;
 
     if (IDOK == ThemedDialogBoxParam(g_hLngResContainer,MAKEINTRESOURCE(IDD_NEWDIR),hwnd,NewDirDlgProc,(LPARAM)&fod)) {
-        lstrcpy(pszNewDir,fod.szDestination);
+        StringCchCopy(pszNewDir, MAX_PATH, fod.szDestination);
 
         return TRUE;
     }
@@ -2541,38 +2642,71 @@ INT_PTR CALLBACK FindTargetDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lPar
             WCHAR szTitle[32];
             WCHAR szFilter[256];
 
-            OPENFILENAME ofn;
-            ZeroMemory(&ofn,sizeof(OPENFILENAME));
-
             GetDlgItemText(hwnd,IDC_TARGETPATH,tchBuf,COUNTOF(tchBuf));
             ExtractFirstArgument(tchBuf,szFile,szParams);
             PathAbsoluteFromApp(szFile,szFile,COUNTOF(szFile),TRUE);
 
-            // Strings laden
             GetLngString(IDS_SEARCHEXE,szTitle,COUNTOF(szTitle));
             GetLngString(IDS_FILTER_EXE,szFilter,COUNTOF(szFilter));
             PrepareFilterStr(szFilter);
 
-            // ofn ausfüllen
-            ofn.lStructSize = sizeof(OPENFILENAME);
-            ofn.hwndOwner   = hwnd;
-            ofn.lpstrFilter = szFilter;
-            ofn.lpstrFile   = szFile;
-            ofn.nMaxFile    = COUNTOF(szFile);
-            ofn.lpstrTitle  = szTitle;
-            ofn.Flags       = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR |
-                              OFN_PATHMUSTEXIST | OFN_SHAREAWARE | OFN_NODEREFERENCELINKS;
+            IFileOpenDialog *pfd = NULL;
+            HRESULT hr = CoCreateInstance(
+                &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                &IID_IFileOpenDialog, (void **)&pfd);
+            if (SUCCEEDED(hr)) {
+                DWORD dwOptions = 0;
+                pfd->lpVtbl->GetOptions(pfd, &dwOptions);
+                pfd->lpVtbl->SetOptions(pfd, dwOptions
+                    | FOS_FILEMUSTEXIST | FOS_NOCHANGEDIR | FOS_DONTADDTORECENT
+                    | FOS_PATHMUSTEXIST | FOS_SHAREAWARE | FOS_NODEREFERENCELINKS
+                    | FOS_FORCEFILESYSTEM);
 
-            // execute file open dlg
-            if (GetOpenFileName(&ofn)) {
-                StrCpyN(tchBuf,szFile,COUNTOF(tchBuf));
-                PathRelativeToApp(tchBuf,tchBuf,COUNTOF(tchBuf),TRUE,TRUE,flagPortableMyDocs);
-                PathQuoteSpaces(tchBuf);
-                if (StrIsNotEmpty(szParams)) {
-                    StrCatBuff(tchBuf,L" ",COUNTOF(tchBuf));
-                    StrCatBuff(tchBuf,szParams,COUNTOF(tchBuf));
+                pfd->lpVtbl->SetTitle(pfd, szTitle);
+
+                // Convert double-null filter to COMDLG_FILTERSPEC
+                COMDLG_FILTERSPEC filterSpec[8];
+                int filterCount = 0;
+                LPCWSTR p = szFilter;
+                while (*p && filterCount < COUNTOF(filterSpec)) {
+                    filterSpec[filterCount].pszName = p;
+                    p += wcslen(p) + 1;
+                    if (*p == L'\0') break;
+                    filterSpec[filterCount].pszSpec = p;
+                    p += wcslen(p) + 1;
+                    ++filterCount;
                 }
-                SetDlgItemText(hwnd,IDC_TARGETPATH,tchBuf);
+                if (filterCount > 0) {
+                    pfd->lpVtbl->SetFileTypes(pfd, (UINT)filterCount, filterSpec);
+                }
+
+                if (szFile[0]) {
+                    pfd->lpVtbl->SetFileName(pfd, szFile);
+                }
+
+                hr = pfd->lpVtbl->Show(pfd, hwnd);
+                if (SUCCEEDED(hr)) {
+                    IShellItem *psiResult = NULL;
+                    hr = pfd->lpVtbl->GetResult(pfd, &psiResult);
+                    if (SUCCEEDED(hr)) {
+                        LPWSTR pszPath = NULL;
+                        hr = psiResult->lpVtbl->GetDisplayName(psiResult, SIGDN_FILESYSPATH, &pszPath);
+                        if (SUCCEEDED(hr) && pszPath) {
+                            StrCpyN(tchBuf, pszPath, COUNTOF(tchBuf));
+                            CoTaskMemFree(pszPath);
+                            PathRelativeToApp(tchBuf,tchBuf,COUNTOF(tchBuf),TRUE,TRUE,flagPortableMyDocs);
+                            PathQuoteSpaces(tchBuf);
+                            if (StrIsNotEmpty(szParams)) {
+                                StrCatBuff(tchBuf,L" ",COUNTOF(tchBuf));
+                                StrCatBuff(tchBuf,szParams,COUNTOF(tchBuf));
+                            }
+                            SetDlgItemText(hwnd,IDC_TARGETPATH,tchBuf);
+                        }
+                        psiResult->lpVtbl->Release(psiResult);
+                    }
+                }
+
+                pfd->lpVtbl->Release(pfd);
             }
 
             // set focus to edit control
@@ -2680,8 +2814,8 @@ INT_PTR CALLBACK FindTargetDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lPar
                         GetDlgItemText(hwnd, IDC_TARGETPATH, tch, COUNTOF(tch));
                         ExtractFirstArgument(tch, szTargetApplication, szTargetApplicationParams);
                     } else {
-                        lstrcpy(szTargetApplication, L"");
-                        lstrcpy(szTargetApplicationParams, L"");
+                        StringCchCopy(szTargetApplication, COUNTOF(szTargetApplication), L"");
+                        StringCchCopy(szTargetApplicationParams, COUNTOF(szTargetApplicationParams), L"");
                     }
                     IniSectionSetString(TargetApp_Section, L"TargetApplicationPath", szTargetApplication);
                     IniSectionSetString(TargetApp_Section, L"TargetApplicationParams", szTargetApplicationParams);
@@ -2706,7 +2840,7 @@ INT_PTR CALLBACK FindTargetDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lPar
                         StringCchCopy(szTargetApplicationWndClass, COUNTOF(szTargetApplicationWndClass), szTargetWndClass);
                         IniSectionSetString(TargetApp_Section, L"TargetApplicationWndClass", szTargetApplicationWndClass);
                     } else {
-                        lstrcpy(szTargetApplicationWndClass, L"");
+                        StringCchCopy(szTargetApplicationWndClass, COUNTOF(szTargetApplicationWndClass), L"");
                         IniSectionSetString(TargetApp_Section, L"TargetApplicationWndClass", szTargetApplicationWndClass);
                     }
 
@@ -2714,21 +2848,21 @@ INT_PTR CALLBACK FindTargetDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lPar
                     if (i) {
                         GetDlgItemText(hwnd, IDC_DDEMSG, szDDEMsg, COUNTOF(szDDEMsg));
                     } else {
-                        lstrcpy(szDDEMsg, L"");
+                        StringCchCopy(szDDEMsg, COUNTOF(szDDEMsg), L"");
                     }
                     IniSectionSetString(TargetApp_Section, L"DDEMessage", szDDEMsg);
 
                     if (i) {
                         GetDlgItemText(hwnd, IDC_DDEAPP, szDDEApp, COUNTOF(szDDEApp));
                     } else {
-                        lstrcpy(szDDEApp, L"");
+                        StringCchCopy(szDDEApp, COUNTOF(szDDEApp), L"");
                     }
                     IniSectionSetString(TargetApp_Section, L"DDEApplication", szDDEApp);
 
                     if (i) {
                         GetDlgItemText(hwnd, IDC_DDETOPIC, szDDETopic, COUNTOF(szDDETopic));
                     } else {
-                        lstrcpy(szDDETopic, L"");
+                        StringCchCopy(szDDETopic, COUNTOF(szDDETopic), L"");
                     }
                     IniSectionSetString(TargetApp_Section, L"DDETopic", szDDETopic);
 
@@ -2777,11 +2911,11 @@ int ErrorMessage(int iLevel, UINT uIdMsg, ...) {
 
     WCHAR* c = StrChr(szTitle, L'\n');
     if (c) {
-        lstrcpy(szText, (c + 1));
+        StringCchCopy(szText, COUNTOF(szText), (c + 1));
         *c = '\0';
     } else {
-        lstrcpy(szText, szTitle);
-        lstrcpy(szTitle, L"");
+        StringCchCopy(szText, COUNTOF(szText), szTitle);
+        StringCchCopy(szTitle, COUNTOF(szTitle), L"");
     }
 
     iIcon = (iLevel > 1) ? MB_ICONEXCLAMATION : MB_ICONINFORMATION;
@@ -2822,7 +2956,7 @@ DWORD MsgBoxLastError(LPCWSTR lpszMessage, DWORD dwErrID)
 
     if (lpMsgBuf) {
         // Display the error message and exit the process
-        size_t const len = lstrlen((LPCWSTR)lpMsgBuf) + lstrlen(lpszMessage) + 80;
+        size_t const len = wcslen((LPCWSTR)lpMsgBuf) + wcslen(lpszMessage) + 80;
 
         LPWSTR lpDisplayBuf = LocalAlloc(LPTR, len * sizeof(WCHAR));
 

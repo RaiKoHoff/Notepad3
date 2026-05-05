@@ -29,11 +29,9 @@
 #define NOMINMAX
 #endif
 #undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0601  /*_WIN32_WINNT_WIN7*/
-//~#define _WIN32_WINNT 0x0A00  /*_WIN32_WINNT_WINTHRESHOLD, _WIN32_WINNT_WIN10*/
+#define _WIN32_WINNT 0x0A00
 #undef WINVER
-#define WINVER 0x0601  /*_WIN32_WINNT_WIN7*/
-//~#define WINVER 0x0A00  /*_WIN32_WINNT_WINTHRESHOLD, _WIN32_WINNT_WIN10*/
+#define WINVER 0x0A00
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 #include <commctrl.h>
@@ -631,13 +629,14 @@ HCURSOR LoadReverseArrowCursor(UINT dpi) noexcept {
 	COLORREF strokeColour = RGB(0, 0, 1);
 	status = ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Accessibility", 0, KEY_QUERY_VALUE, &hKey);
 	if (status == ERROR_SUCCESS) {
+		constexpr DWORD customColour = 6;
 		if (std::optional<DWORD> cursorType = RegGetDWORD(hKey, L"CursorType")) {
 			switch (*cursorType) {
 			case 1: // black
 			case 4: // black
 				std::swap(fillColour, strokeColour);
 				break;
-			case 6: // custom
+			case customColour: // custom
 				if (std::optional<DWORD> cursorColor = RegGetDWORD(hKey, L"CursorColor")) {
 					fillColour = *cursorColor;
 				}
@@ -699,6 +698,15 @@ void Menu::Show(Point pt, const Window &w) {
 	Destroy();
 }
 
+namespace {
+
+bool assertionPopUps = true;
+
+constexpr int defaultFontSize = 8;
+constexpr size_t lengthDiagnostic = 2000;
+
+}
+
 ColourRGBA ColourFromSys(int nIndex) noexcept {
 	const DWORD colourValue = ::GetSysColor(nIndex);
 	return ColourRGBA::FromRGB(colourValue);
@@ -717,7 +725,7 @@ const char *Platform::DefaultFont() {
 }
 
 int Platform::DefaultFontSize() {
-	return 8;
+	return defaultFontSize;
 }
 
 unsigned int Platform::DoubleClickTime() {
@@ -732,7 +740,7 @@ void Platform::DebugDisplay(const char *s) noexcept {
 
 #ifdef TRACE
 void Platform::DebugPrintf(const char *format, ...) noexcept {
-	char buffer[2000];
+	char buffer[lengthDiagnostic];
 	va_list pArguments;
 	va_start(pArguments, format);
 	vsnprintf(buffer, std::size(buffer), format, pArguments);
@@ -744,12 +752,6 @@ void Platform::DebugPrintf(const char *, ...) noexcept {
 }
 #endif
 
-namespace {
-
-bool assertionPopUps = true;
-
-}
-
 bool Platform::ShowAssertionPopUps(bool assertionPopUps_) noexcept {
 	const bool ret = assertionPopUps;
 	assertionPopUps = assertionPopUps_;
@@ -757,7 +759,7 @@ bool Platform::ShowAssertionPopUps(bool assertionPopUps_) noexcept {
 }
 
 void Platform::Assert(const char *c, const char *file, int line) noexcept {
-	char buffer[2000] {};
+	char buffer[lengthDiagnostic] {};
 	snprintf(buffer, std::size(buffer), "Assertion [%s] failed at %s %d%s", c, file, line, assertionPopUps ? "" : "\r\n");
 	if (assertionPopUps) {
 		const int idButton = ::MessageBoxA({}, buffer, "Assertion failure",

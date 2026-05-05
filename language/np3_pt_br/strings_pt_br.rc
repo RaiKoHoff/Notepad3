@@ -100,11 +100,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Elevado"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Área de Transferência"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Sem Título"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Somente Leitura)"
-    IDS_MUI_FILELOCKED      "<Exclusive>"
+    IDS_MUI_FILELOCKED      "<Exclusivo>"
     IDS_MUI_LOADFILE        "Carregando ""%s""..."
     IDS_MUI_SAVEFILE        "Salvando ""%s""..."
     IDS_MUI_PRINTFILE       "Imprimindo página %i..."
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Erro carregando ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Erro salvando ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "O caminho para ""%s"" não existe mais.\nRecriar caminho e salvar o arquivo?"
     IDS_MUI_ERR_DLG_FORMAT  "Erro '%s', causa:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Nenhum plugin de gerenciador de arquivos foi encontrado\nO plugin de gerenciador de arquivos MiniPath pode ser baixado de https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Nenhum plugin de localizador em arquivos foi encontrado\nO plugin de localizador em arquivos grepWinNP3 pode ser baixado de https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Nenhum plugin de localizador em arquivos foi encontrado\nO plugin de localizador em arquivos grepWin Portable pode ser baixado de https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Nenhum plugin de busca de arquivos foi encontrado.\nInstale a versão mais recente do grepWinPortable na plataforma PortableApps.."
     IDS_MUI_ERR_MRUDLG      "Sem acesso ao arquivo selecionado!\nVocê quer remover ele da lista?"
     IDS_MUI_ERR_CREATELINK  "Erro criando o link para Área de Trabalho"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "Caminho especificado pelo URL não encontrado!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Clique para abrir o arquivo"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Clique para abrir o link no navegador"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Preservação do Timestamp original de Modificação de Arquivo habilitado\nEsta opção ficará ativa durante esta sessão!"
     IDS_MUI_OUT_OFF_OCCMRK   "Ficando sem marcadores de ocorrência (Marcador/Destacado)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Salvar alterações para:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Salvar alterações para:\n%s?"
     IDS_MUI_ASK_REVERT      "Reverter arquivo à último estado gravado?"
     IDS_MUI_ASK_RECODE      "Gravação requer recarregar arquivo do disco, mudanças não salvas serão perdidas!"
     IDS_MUI_ASK_CREATE      """%s"" não encontrado\nVocê gostaria de criar este arquivo?"
@@ -341,11 +346,11 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Extensões de nomes de arquivos desem ser separadas por ';'\r\n\
-use \\<regex>; para definir um nome de arquivo que corresponda ao padrão:\r\n\
-   \\xyz$;   => filenames(basename+ext) com 'xyz' como últimos caracteres\r\n\r\n\
+Entradas contendo '*', '?' ou '.' correspondem ao nome completo do arquivo (caractere curinga):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Formato de estilo:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\
 Propriedades do estilo podem ser copiadas usando copiar/colar ou arrastar/soltar\
 "
 

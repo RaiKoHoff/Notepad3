@@ -13,9 +13,6 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="templates">
-      <UniqueIdentifier>{e817f780-f742-48b4-bc9c-2ab762ced6bc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\StyleLexers">
       <UniqueIdentifier>{82f9cc2d-9173-4af4-8967-5fd2e5f8aef7}</UniqueIdentifier>
     </Filter>
@@ -43,8 +40,14 @@
     <Filter Include="Source Files\uchardet\tables">
       <UniqueIdentifier>{898b2e68-0b75-4ad3-acc4-20bc18163aec}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\tinyexpr">
+    <Filter Include="Source Files\tinyexprcpp">
       <UniqueIdentifier>{60486982-91be-42d2-b154-86c2706ca60f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\timsort">
+      <UniqueIdentifier>{9a2064fb-b044-4ce5-91de-99fa06cc5222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\templates">
+      <UniqueIdentifier>{e817f780-f742-48b4-bc9c-2ab762ced6bc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,8 +72,14 @@
     <ClCompile Include="Notepad3.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Notepad3Util.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Encoding.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StyleLexers\styleLexAbaqus.c">
+      <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
     <ClCompile Include="StyleLexers\styleLexASM.c">
       <Filter>Source Files\StyleLexers</Filter>
@@ -130,6 +139,9 @@
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
     <ClCompile Include="StyleLexers\styleLexJSON.c">
+      <Filter>Source Files\StyleLexers</Filter>
+    </ClCompile>
+    <ClCompile Include="StyleLexers\styleLexJSON5.c">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
     <ClCompile Include="StyleLexers\styleLexLUA.c">
@@ -303,6 +315,9 @@
     <ClCompile Include="uchardet\uchardet\src\LangModels\LangNederlandsModel.cpp">
       <Filter>Source Files\uchardet\LangModels</Filter>
     </ClCompile>
+    <ClCompile Include="uchardet\uchardet\src\LangModels\LangNorwegianModel.cpp">
+      <Filter>Source Files\uchardet\LangModels</Filter>
+    </ClCompile>
     <ClCompile Include="uchardet\uchardet\src\LangModels\LangPolishModel.cpp">
       <Filter>Source Files\uchardet\LangModels</Filter>
     </ClCompile>
@@ -361,9 +376,6 @@
       <Filter>Source Files\uchardet</Filter>
     </ClCompile>
     <ClCompile Include="uchardet\uchardet\src\nsGB2312Prober.cpp">
-      <Filter>Source Files\uchardet</Filter>
-    </ClCompile>
-    <ClCompile Include="uchardet\uchardet\src\nsGB18030Prober.cpp">
       <Filter>Source Files\uchardet</Filter>
     </ClCompile>
     <ClCompile Include="uchardet\uchardet\src\nsHebrewProber.cpp">
@@ -426,11 +438,20 @@
     <ClCompile Include="PathLib.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="tinyexpr\tinyexpr.c">
-      <Filter>Source Files\tinyexpr</Filter>
+    <ClCompile Include="tinyexprcpp\tinyexpr.cpp">
+      <Filter>Source Files\tinyexprcpp</Filter>
+    </ClCompile>
+    <ClCompile Include="tinyexprcpp\tinyexpr_cif.cpp">
+      <Filter>Source Files\tinyexprcpp</Filter>
     </ClCompile>
     <ClCompile Include="StyleLexers\styleLexVerilog.c">
       <Filter>Source Files\StyleLexers</Filter>
+    </ClCompile>
+    <ClCompile Include="timsort\timsort.c">
+      <Filter>Source Files\timsort</Filter>
+    </ClCompile>
+    <ClCompile Include="timsort\timsort_r.c">
+      <Filter>Source Files\timsort</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -456,6 +477,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Notepad3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Notepad3Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VersionEx.h">
@@ -542,9 +566,6 @@
     <ClInclude Include="uchardet\uchardet\src\nsGB2312Prober.h">
       <Filter>Source Files\uchardet</Filter>
     </ClInclude>
-    <ClInclude Include="uchardet\uchardet\src\nsGB18030Prober.h">
-      <Filter>Source Files\uchardet</Filter>
-    </ClInclude>
     <ClInclude Include="uchardet\uchardet\src\nsHebrewProber.h">
       <Filter>Source Files\uchardet</Filter>
     </ClInclude>
@@ -611,8 +632,17 @@
     <ClInclude Include="PathLib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tinyexpr\tinyexpr.h">
-      <Filter>Source Files\tinyexpr</Filter>
+    <ClInclude Include="tinyexprcpp\tinyexpr.h">
+      <Filter>Source Files\tinyexprcpp</Filter>
+    </ClInclude>
+    <ClInclude Include="tinyexprcpp\tinyexpr_cif.h">
+      <Filter>Source Files\tinyexprcpp</Filter>
+    </ClInclude>
+    <ClInclude Include="timsort\timsort.h">
+      <Filter>Source Files\timsort</Filter>
+    </ClInclude>
+    <ClInclude Include="timsort\timsort-impl.h">
+      <Filter>Source Files\timsort</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -647,10 +677,10 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="..\Versions\Notepad3.exe.manifest.tpl">
-      <Filter>templates</Filter>
+      <Filter>Source Files\templates</Filter>
     </None>
     <None Include="..\Versions\VersionEx.h.tpl">
-      <Filter>templates</Filter>
+      <Filter>Source Files\templates</Filter>
     </None>
     <None Include="..\Build\Notepad3.ini">
       <Filter>Config</Filter>
@@ -659,19 +689,19 @@
     <None Include="..\res\StdDarkModeScheme.ini">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="uchardet\uchardet\src\tables\EUCKRFreq.tab">
+    <None Include="uchardet\uchardet\src\Big5Freq.tab">
       <Filter>Source Files\uchardet\tables</Filter>
     </None>
-    <None Include="uchardet\uchardet\src\tables\EUCTWFreq.tab">
+    <None Include="uchardet\uchardet\src\EUCKRFreq.tab">
       <Filter>Source Files\uchardet\tables</Filter>
     </None>
-    <None Include="uchardet\uchardet\src\tables\GB2312Freq.tab">
+    <None Include="uchardet\uchardet\src\EUCTWFreq.tab">
       <Filter>Source Files\uchardet\tables</Filter>
     </None>
-    <None Include="uchardet\uchardet\src\tables\GB18030Freq.tab">
+    <None Include="uchardet\uchardet\src\GB2312Freq.tab">
       <Filter>Source Files\uchardet\tables</Filter>
     </None>
-    <None Include="uchardet\uchardet\src\tables\JISFreq.tab">
+    <None Include="uchardet\uchardet\src\JISFreq.tab">
       <Filter>Source Files\uchardet\tables</Filter>
     </None>
   </ItemGroup>
@@ -716,7 +746,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\Versions\build.txt">
-      <Filter>templates</Filter>
+      <Filter>Source Files\templates</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>

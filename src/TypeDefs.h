@@ -13,23 +13,16 @@
 *                                                                             *
 *******************************************************************************/
 
+#include <sdkddkver.h>
+
 #ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x0601  /*_WIN32_WINNT_WIN7*/
+#define _WIN32_WINNT _WIN32_WINNT_WIN10
 #endif
 #ifndef WINVER
-#define WINVER 0x0601  /*_WIN32_WINNT_WIN7*/
+#define WINVER _WIN32_WINNT_WIN10
 #endif
 #ifndef NTDDI_VERSION
-#define NTDDI_VERSION 0x06010000  /*NTDDI_WIN7*/
-#endif
-
-#if 0
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0A00 /*_WIN32_WINNT_WIN7*/
-#undef WINVER
-#define WINVER 0x0A00 /*_WIN32_WINNT_WIN7*/
-#undef NTDDI_VERSION
-#define NTDDI_VERSION 0x0A000000 /*NTDDI_WIN7*/
+#define NTDDI_VERSION NTDDI_WIN10_RS5
 #endif
 
 
@@ -41,11 +34,18 @@
 #define NOMINMAX
 #endif
 
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN 1
+#endif
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 #include <windows.h>
 #include <CommCtrl.h>
+
+#pragma comment(lib, "imm32.lib")
+#pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "muiload.lib")
 
 #define STRSAFE_NO_CB_FUNCTIONS
 #define STRSAFE_NO_DEPRECATE      // don't allow deprecated functions
@@ -64,6 +64,14 @@
 
 // no Analyze warning "prefer: enum class"
 #pragma warning(disable : 26812)
+
+// --- Platform Architecture Detection ---
+// Use NP3_BUILD_ARM64 for ARM64-specific code paths
+#if defined(_M_ARM64)
+#define NP3_BUILD_ARM64 1
+#else
+#define NP3_BUILD_ARM64 0
+#endif
 
 /**************************************************/
 /*             Declared in WINNT.H                */
@@ -174,6 +182,7 @@ typedef COLORREF COLORALPHAREF;
 typedef enum COLOR_LAYER { BACKGROUND_LAYER = 0, FOREGROUND_LAYER = 1 } COLOR_LAYER;  // Style_GetColor()
 typedef enum HYPERLINK_OPS { OPEN_WITH_BROWSER = 1, OPEN_IN_NOTEPAD3 = (1<<1), OPEN_NEW_NOTEPAD3 = (1<<2), COPY_HYPERLINK = (1<<3), SELECT_HYPERLINK = (1<<4) } HYPERLINK_OPS;  // Hyperlink Operations
 typedef enum FILE_WATCHING_MODE { FWM_NO_INIT = -1, FWM_DONT_CARE = 0, FWM_INDICATORSILENT = 1, FWM_MSGBOX = 2, FWM_AUTORELOAD = 3, FWM_EXCLUSIVELOCK = 4 } FILE_WATCHING_MODE;
+typedef enum FILE_WATCHING_METHOD { FWMTH_BOTH = 0, FWMTH_POLL = 1, FWMTH_PUSH = 2 } FILE_WATCHING_METHOD;
 typedef enum FOCUSVIEW_MARKER_MODE { FVMM_MARGIN = 1, FVMM_LN_BACKGR = 2, FVMM_FOLD = 4 } FOCUSVIEW_MARKER_MODE;
 typedef enum DEFAULT_FONT_STYLES { DFS_GLOBAL = 0,
     DFS_CURR_LEXER = 1,
@@ -200,19 +209,19 @@ typedef enum CFG_VERSION {
 typedef enum BUFFER_SIZES {
 
     MICRO_BUFFER = 32,
-    MINI_BUFFER = 64,
+    MINI_BUFFER  = 64,
     SMALL_BUFFER = 128,
     MIDSZ_BUFFER = 256,
     LARGE_BUFFER = 512,
-    HUGE_BUFFER = 1024,
+    HUGE_BUFFER  = 1024,
     XHUGE_BUFFER = 2048,
-    XXXL_BUFFER = 4096,
+    XXHUGE_BUFFER = 4096,
 
     EDGELINE_NUM_LIMIT = 256,
     ANSI_CHAR_BUFFER = 258,
-    STYLE_EXTENTIONS_BUFFER = 512,
-    EXTENTIONS_FILTER_BUFFER = (STYLE_EXTENTIONS_BUFFER << 1),
-    FNDRPL_BUFFER = 4096, // TODO: eliminate limit
+    STYLE_EXTENSIONS_BUFFER = 512,
+    EXTENSIONS_FILTER_BUFFER = (STYLE_EXTENSIONS_BUFFER << 1),
+    FNDRPL_BUFFER = 4096,
     LONG_LINES_MARKER_LIMIT = 8192,
     CMDLN_LENGTH_LIMIT = 8192
 
@@ -248,6 +257,13 @@ typedef enum STATUS_SECTOR_T {
 #define COLORREF_MAX (DWORD_MAX)
 
 #define GLOBAL_INITIAL_FONTSIZE 11.0f
+
+// NP3 zoom constants (percentage-based, 100 = normal)
+#define NP3_MIN_ZOOM_PERCENT   10
+#define NP3_MAX_ZOOM_PERCENT  1000
+#define NP3_DEFAULT_ZOOM       100
+// Base font size in Scintilla FontSizeMultiplier units (points * 100) for zoom conversion
+#define NP3_ZOOM_BASE_FONT_SIZE ((int)(GLOBAL_INITIAL_FONTSIZE * 100))
 
 // --------------------------------------------------------------------------
 
@@ -311,6 +327,8 @@ typedef const EDITFINDREPLACE* const CLPCEDITFINDREPLACE;
 #define MRU_NOCASE       1
 #define MRU_UTF8         2
 #define MRU_BMRK_SIZE  512
+// INI line buffer for find/replace MRU items: pattern + surrounding quotes + NUL + spare
+#define MRU_FNDRPL_ITEM_LEN  (FNDRPL_BUFFER + 4)
 
 typedef struct MRULIST {
 
@@ -322,6 +340,7 @@ typedef struct MRULIST {
     DocPos    iCaretPos[MRU_MAXITEMS];
     DocPos    iSelAnchPos[MRU_MAXITEMS];
     LPWSTR    pszBookMarks[MRU_MAXITEMS];
+    bool      bDirty[MRU_MAXITEMS];
 
 } MRULIST, *PMRULIST, *LPMRULIST;
 
@@ -463,6 +482,36 @@ typedef struct CONSTANTS_T {
     const WCHAR* const Styles_Section;
     const WCHAR* const SectionSuppressedMessages;
 
+    // Keys under [Suppressed Messages] — pass to InfoBoxLng() / IniFile{Get,Set,Delete}Long().
+    // Add a field here when introducing a new suppressible dialog; never inline a literal at the call site.
+    struct {
+        const WCHAR* const AllowClearUndoHistory;
+        const WCHAR* const InfoInstanceExist;
+        const WCHAR* const MsgConv1;
+        const WCHAR* const MsgConv2;
+        const WCHAR* const MsgConv3;
+        const WCHAR* const MsgDiscardUntitled;
+        const WCHAR* const MsgFileSizeWarning;
+        const WCHAR* const MsgFileUnknownExt;
+        const WCHAR* const MsgFindWrap1;
+        const WCHAR* const MsgFindWrap2;
+        const WCHAR* const MsgInvalidRegex;
+        const WCHAR* const MsgNoOrWrongPassphrase;
+        const WCHAR* const MsgNotFound;
+        const WCHAR* const MsgPrefLanguageNotAvailable;
+        const WCHAR* const MsgReplaceCount;
+        const WCHAR* const MsgResetScheme;
+        const WCHAR* const MsgSaveSettingsInfo;
+        const WCHAR* const MsgStickyWinPos;
+        const WCHAR* const MsgUTF32Unsupported;
+        const WCHAR* const NoAdminTool;
+        const WCHAR* const NotSuitableToolbarDim;
+        const WCHAR* const OutOfOccurrenceMarkers;
+        const WCHAR* const PreserveFileModTime;
+        const WCHAR* const QuietKeepReadonlyLock;
+        const WCHAR* const ReloadExSavedCfg;
+    } SuppressKey;
+
 } CONSTANTS_T, *PCONSTANTS_T;
 
 extern CONSTANTS_T const Constants;
@@ -523,6 +572,7 @@ typedef struct GLOBALS_T {
 
     int       iWhiteSpaceSize;
     int       iCaretOutLineFrameSize;
+    int       iZoomPercent;
 
     bool      bMinimizedToTray;
     bool      bZeroBasedColumnIndex;
@@ -604,6 +654,7 @@ typedef struct SETTINGS_T {
     bool TabsAsSpaces;
     bool TabIndents;
     bool BackspaceUnindents;
+    bool TabBackspaceAlwaysIndents;
     int  TabWidth;
     int  IndentWidth;
     bool WarnInconsistentIndents;
@@ -626,11 +677,11 @@ typedef struct SETTINGS_T {
     cpi_enc_t DefaultEncoding; // default new file encoding
     bool UseDefaultForFileEncoding;
     bool LoadASCIIasUTF8;
-    bool UseReliableCEDonly;
     bool LoadNFOasOEM;
     bool NoEncodingTags;
     bool SkipUnicodeDetection;
     bool SkipANSICodePageDetection;
+    int  AnalyzeReliableConfidenceLevel;
     int  DefaultEOLMode;
     bool WarnInconsistEOLs;
     bool FixLineEndings;
@@ -643,6 +694,7 @@ typedef struct SETTINGS_T {
     bool EvalTinyExprOnSelection;
     FILE_WATCHING_MODE FileWatchingMode;
     bool ResetFileWatching;
+    bool MonitoringLog;  // View -> Monitoring Log setting - fixes #5037
     int  EscFunction;
     bool AlwaysOnTop;
     bool MinimizeToTray;
@@ -680,6 +732,7 @@ typedef struct SETTINGS_T {
     int  AutoSaveInterval;
     bool SearchByClipboardIfEmpty;
     bool ReplaceByClipboardTag;
+    bool ResolveToUNCPaths;
     int  DarkModeHiglightContrast;
 
     AutoSaveBackupOptions AutoSaveOptions;
@@ -692,6 +745,7 @@ typedef struct SETTINGS_T {
     EDITFINDREPLACE EFR_Data;
     HPATHL OpenWithDir;
     HPATHL FavoritesDir;
+    HPATHL DefaultDirectoryOverride;
     WCHAR ToolbarButtons[MIDSZ_BUFFER];
     WCHAR MultiEdgeLines[MIDSZ_BUFFER];
     WCHAR CurrentThemeName[SMALL_BUFFER];
@@ -753,9 +807,11 @@ extern FLAGS_T DefaultFlags;
 typedef struct SETTINGS2_T {
 
     int     FileLoadWarningMB;
+    int     FileVarScanBytes;
     int     OpacityLevel;
     int     FindReplaceOpacityLevel;
     LONG64  FileCheckInterval;
+    int     FileWatchingMethod;
     LONG64  UndoTransactionTimeout;
     int     IMEInteraction;
     int     SciFontQuality;
@@ -770,15 +826,17 @@ typedef struct SETTINGS2_T {
     bool    NoCutLineOnEmptySelection;
     bool    SubWrappedLineSelectOnMarginClick;
     bool    LexerSQLNumberSignAsComment;
+    bool    AtomicFileSave;
+    bool    DiscardOnClosingUntitledPasteBoard;
     int     ExitOnESCSkipLevel;
     int     ZoomTooltipTimeout;
     int     WrapAroundTooltipTimeout;
     int     LargeIconScalePrecent;
     int     DarkModeHiglightContrast;
+    int     UchardetLanguageFilter;
 
-    float   AnalyzeReliableConfidenceLevel;
     float   LocaleAnsiCodePageAnalysisBonus;
-           
+
 #ifdef D_NP3_WIN10_DARK_MODE
     COLORREF DarkModeBkgColor;
     COLORREF DarkModeBtnFaceColor;
@@ -820,6 +878,13 @@ typedef struct SETTINGS2_T {
 
     WCHAR HyperlinkFileProtocolVerb[MICRO_BUFFER];
 
+    WCHAR CopyMultiSelectionSeparator[MICRO_BUFFER];
+
+    WCHAR PasteBoardSeparator[MICRO_BUFFER];
+    int   PasteBoardDebounceMs;
+    bool  PasteBoardAddTimestamp;
+    int   PasteBoardInitialShowMs;
+
     const WCHAR* CodeFontPrefPrioList[MICRO_BUFFER];
     const WCHAR* TextFontPrefPrioList[MICRO_BUFFER];
 
@@ -830,16 +895,6 @@ typedef struct SETTINGS2_T {
 extern SETTINGS2_T Settings2;
 extern WCHAR Default_PreferredLanguageLocaleName[];
 
-
-//=============================================================================
-
-typedef enum SpecialUndoRedoToken {
-    // undoredo token >= 0
-    URTok_TokenStart    =  0L,
-    URTok_NoTransaction = -1L,
-    URTok_NoRecording   = -2L
-
-} SpecialUndoRedoToken;
 
 //=============================================================================
 
@@ -867,6 +922,7 @@ typedef struct BackgroundWorker {
 typedef struct FCOBSRVDATA_T {
 
     volatile LONG64   iFileChangeNotifyTime; // multi-threaded
+    volatile LONG     iObservationGeneration; // seqlock: incremented before+after fdCurFile writes
 
     WIN32_FIND_DATA   fdCurFile;
     HANDLE            hEventFileChanged;
@@ -877,7 +933,7 @@ typedef struct FCOBSRVDATA_T {
 
 } FCOBSRVDATA_T, *PFCOBSRVDATA_T;
 
-#define INIT_FCOBSRV_T { 0LL, { 0 }, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, { NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, NULL } }
+#define INIT_FCOBSRV_T { 0LL, 0L, { 0 }, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, { NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, NULL } }
 
 #define MIN_FC_POLL_INTERVAL (200LL)
 #define MAX_FC_POLL_INTERVAL ((24LL * 60 * 60 * 1000) << 1) // max: 48h
@@ -889,6 +945,7 @@ typedef struct FILEWATCHING_T {
     FILE_WATCHING_MODE FileWatchingMode;  // <-> Settings.FileWatchingMode;
     LONG64             FileCheckInterval; // <-> clampll(Settings2.FileCheckInterval, MIN_FC_POLL_INTERVAL, MAX_FC_POLL_INTERVAL);
     bool               MonitoringLog;
+    int                LogRotateRetryCount;
 
 } FILEWATCHING_T, *PFILEWATCHING_T;
 
@@ -933,6 +990,7 @@ typedef struct EditFileIOStatus {
     bool bCancelDataLoss;
     bool bUnknownExt;
     bool bEncryptedRaw;
+    bool bMaybeBinary;
 
     // inconsistent line endings
     bool bInconsistentEOLs;
@@ -944,7 +1002,7 @@ typedef struct EditFileIOStatus {
 
 } EditFileIOStatus;
 
-#define INIT_FILEIO_STATUS { CPI_ANSI_DEFAULT, SC_EOL_CRLF, false, false, false, false, false, I_MIX_LN, {0,0,0}, {0,0,0,0,0} }
+#define INIT_FILEIO_STATUS { CPI_ANSI_DEFAULT, SC_EOL_CRLF, false, false, false, false, false, false, I_MIX_LN, {0,0,0}, {0,0,0,0,0} }
 
 //=============================================================================
 

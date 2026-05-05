@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "Cop&iar Adicionar\tCtrl+E",              IDM_EDIT_COPYADD
         MENUITEM "Co&lar\tCtrl+V",                         IDM_EDIT_PASTE
         MENUITEM "Trocar\tCtrl+K",                         IDM_EDIT_SWAP
-        MENUITEM "&Eliminar\tDel",                         IDM_EDIT_CLEAR
-        MENUITEM "Limpar ár&ea de transferência",          IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "&Seleccionar tudo\tCtrl+A",              IDM_EDIT_SELECTALL
+        MENUITEM "&Eliminar\tDel",                         IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "Limpar ár&ea de transferência",          IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "Alternar &monitorização da área de transferência",  IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "Pala&vras"
         BEGIN
@@ -197,14 +199,14 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "Moldar coluna...\tCtrl+Shift+W",         IDM_EDIT_COLUMNWRAP
             MENUITEM SEPARATOR
-            MENUITEM "&Unite Duplicate Lines\tCtrl+Alt+D",     IDM_EDIT_UNITEDUPLICATELINES
-            MENUITEM "Remo&ve Duplicate Lines",                IDM_EDIT_REMOVEDUPLICATELINES
+            MENUITEM "&Unir linhas duplicadas\tCtrl+Alt+D",     IDM_EDIT_UNITEDUPLICATELINES
+            MENUITEM "Remo&ver linhas duplicadas",                IDM_EDIT_REMOVEDUPLICATELINES
             MENUITEM "Fundir linhas vazias\tAlt+Y",            IDM_EDIT_MERGEEMPTYLINES
             MENUITEM "Fundir linhas em branco\tCtrl+Alt+Y",    IDM_EDIT_MERGEBLANKLINES
             MENUITEM "&Remover linhas vazias\tAlt+R",          IDM_EDIT_REMOVEEMPTYLINES
             MENUITEM "Remover linhas em branco\tCtrl+Alt+B",   IDM_EDIT_REMOVEBLANKLINES
         END
-        POPUP "Adva&nced"
+        POPUP "&Avançado"
         BEGIN
             MENUITEM "&Indentar",                               IDM_EDIT_INDENT
             MENUITEM "&Desindentar",                            IDM_EDIT_UNINDENT
@@ -481,8 +483,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Apenas uma instância por &Ficheiro",                 IDM_SET_SINGLEFILEINSTANCE
         MENUITEM "Notificação de alteração df fi&cheiro...\tAlt+F5",   IDM_SET_CHANGENOTIFY
-        ///MENUITEM "AutoSave / Backup Settings...",                   IDM_SET_AUTOSAVE_BACKUP
+        ///MENUITEM "Definições de Guarda Automática / Cópia de Segurança...",                   IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "Silenciar &beeps das mensagens",                     IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "Resolver para &caminhos UNC",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "Função da tecla Esc"
         BEGIN
             MENUITEM "&Nenhuma",                       IDM_SET_NOESCFUNC
@@ -491,7 +494,12 @@ BEGIN
         END
         MENUITEM "Guardar &antes de executar ferramentas",      IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Calcular E&xpressões-muito pequenas",         IDM_SET_EVALTINYEXPRONSEL
-        MENUITEM "Enable Multiple Selection",                   IDM_SET_MULTIPLE_SELECTION
+        MENUITEM "Activar selecção múltipla",                   IDM_SET_MULTIPLE_SELECTION
+        POPUP "Default &Directory"
+        BEGIN
+            MENUITEM "Definir para a &pasta do ficheiro atual",  IDM_SET_DEFAULTDIR
+            MENUITEM "&Repor predefinição",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "Lemb&rar"
         BEGIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "Abrir hiperligação",                         CMD_OPEN_HYPERLINK
+        MENUITEM "Copiar URL da hiperligação",           CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "Anular",                                     IDM_EDIT_UNDO
         MENUITEM "Refazer",                                    IDM_EDIT_REDO
@@ -570,6 +579,16 @@ BEGIN
         MENUITEM "Eliminar",                                   IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "Seleccionar tudo",                           IDM_EDIT_SELECTALL
+        MENUITEM SEPARATOR
+        POPUP "Convert Case"
+        BEGIN
+            MENUITEM "Maiúsculas",              CMD_CTX_UPPERCASE
+            MENUITEM "minúsculas",              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "Inverter maiús./minús.",            CMD_CTX_INVERTCASE
+            MENUITEM "Formato Título",             CMD_CTX_TITLECASE
+            MENUITEM "Formato Frase",          CMD_CTX_SENTENCECASE
+        END
         MENUITEM SEPARATOR
         MENUITEM "Alternar dobragem actual",                   IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR

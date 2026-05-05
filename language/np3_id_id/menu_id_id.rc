@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "Tambah ke Papan &Klip\tCtrl+E",    IDM_EDIT_COPYADD
         MENUITEM "Te&mpel\tCtrl+V",                  IDM_EDIT_PASTE
         MENUITEM "Tuka&r\tCtrl+K",                   IDM_EDIT_SWAP
-        MENUITEM "Hap&us\tDel",                      IDM_EDIT_CLEAR
-        MENUITEM "Bersi&hkan Papan Klip",            IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "Pil&ih Semua\tCtrl+A",             IDM_EDIT_SELECTALL
+        MENUITEM "Hap&us\tDel",                      IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "Bersi&hkan Papan Klip",            IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "Ak-/Nonak-tifkan &pemantauan papan klip",  IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "Ka&ta"
         BEGIN
@@ -483,6 +485,7 @@ BEGIN
         MENUITEM "&Notifikasi Berkas Berubah...\tAlt+F5",            IDM_SET_CHANGENOTIFY
         ///MENUITEM "Pengaturan Otomatis Simpan / Cadangkan ...",       IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "Bisukan Bun&yi Pesan Bip",                         IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "Selesaikan ke &jalur UNC",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "Fungsi Tombol &Escape"
         BEGIN
             MENUITEM "&Tidak Ada",                                   IDM_SET_NOESCFUNC
@@ -492,6 +495,11 @@ BEGIN
         MENUITEM "&Simpan sebelum Menggunakan Alat",                 IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Hitung &Ekspresi Kecil",                           IDM_SET_EVALTINYEXPRONSEL
         MENUITEM "Aktifkan Multiseleksi",                            IDM_SET_MULTIPLE_SELECTION
+        POPUP "Default &Directory"
+        BEGIN
+            MENUITEM "Atur ke &folder file saat ini",  IDM_SET_DEFAULTDIR
+            MENUITEM "&Setel ulang ke bawaan",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "Meng&ingat"
         BEGIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "Buka Tautan",                CMD_OPEN_HYPERLINK
+        MENUITEM "Salin URL hyperlink",           CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "Urungkan",                   IDM_EDIT_UNDO
         MENUITEM "Kembalikan",                 IDM_EDIT_REDO
@@ -570,6 +579,16 @@ BEGIN
         MENUITEM "Hapus",                      IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "Pilih Semua",                IDM_EDIT_SELECTALL
+        MENUITEM SEPARATOR
+        POPUP "Convert Case"
+        BEGIN
+            MENUITEM "Huruf Besar",              CMD_CTX_UPPERCASE
+            MENUITEM "huruf kecil",              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "Balik Huruf",            CMD_CTX_INVERTCASE
+            MENUITEM "Huruf Judul",             CMD_CTX_TITLECASE
+            MENUITEM "Huruf Kalimat",          CMD_CTX_SENTENCECASE
+        END
         MENUITEM SEPARATOR
         MENUITEM "Alihkan Lipatan",            IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR

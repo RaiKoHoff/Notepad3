@@ -91,6 +91,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_SETVIEWWS 2021
 #define SCTD_LONGARROW 0
 #define SCTD_STRIKEOUT 1
+#define SCTD_CONTROLCHAR 2
 #define SCI_GETTABDRAWMODE 2698
 #define SCI_SETTABDRAWMODE 2699
 #define SCI_POSITIONFROMPOINT 2022
@@ -863,8 +864,6 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_POPUP_TEXT 2
 #define SCI_USEPOPUP 2371
 #define SCI_SELECTIONISRECTANGLE 2372
-#define SC_MIN_ZOOM_LEVEL 10
-#define SC_MAX_ZOOM_LEVEL 1000
 #define SCI_SETZOOM 2373
 #define SCI_GETZOOM 2374
 #define SC_DOCUMENTOPTION_DEFAULT 0
@@ -882,6 +881,7 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SC_STATUS_OK 0
 #define SC_STATUS_FAILURE 1
 #define SC_STATUS_BADALLOC 2
+#define SC_STATUS_OUTSIDE_DOCUMENT 3
 #define SC_STATUS_WARN_START 1000
 #define SC_STATUS_WARN_REGEX 1001
 #define SCI_SETSTATUS 2382
@@ -1214,6 +1214,8 @@ typedef sptr_t (*SciFnDirectStatus)(sptr_t ptr, unsigned int iMessage, uptr_t wP
 #define SCI_RELEASELINECHARACTERINDEX 2712
 #define SCI_LINEFROMINDEXPOSITION 2713
 #define SCI_INDEXPOSITIONFROMLINE 2714
+#define SCI_GETDRAGDROPENABLED 2818
+#define SCI_SETDRAGDROPENABLED 2819
 #define SCI_STARTRECORD 3001
 #define SCI_STOPRECORD 3002
 #define SCI_GETLEXER 4002

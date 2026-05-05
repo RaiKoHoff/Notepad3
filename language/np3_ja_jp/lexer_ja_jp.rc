@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "Registry:レジストリ"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Inno Setupスクリプト"
     IDS_LEX_RUBY            "Rubyスクリプト"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "Verilog HDL"
     IDS_LEX_SYSVERILOG      "SystemVerilog HDVL"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -515,6 +517,10 @@ BEGIN
     IDS_LEX_STR_SysTasks    "システムタスク"
     IDS_LEX_STR_AfterLabel  "ラベル以降"
     IDS_LEX_STR_Table       "Table"
+    IDS_LEX_STR_StarCmd     "Star Command"
+    IDS_LEX_STR_SlashCmd    "Slash Command"
+    IDS_LEX_STR_Processor   "Processor"
+    IDS_LEX_STR_Argument    "Argument"
 END
 
 STRINGTABLE

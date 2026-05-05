@@ -73,7 +73,7 @@ BEGIN
     IDT_EDIT_REPLACE        "Замяніць"
     IDT_VIEW_WORDWRAP       "Перанос радкоў"
     IDT_VIEW_ZOOMIN         "Павялічыць"
-    IDT_VIEW_RESETZOOM      "Reset Zoom"
+    IDT_VIEW_RESETZOOM      "Скінуць маштаб"
     IDT_VIEW_ZOOMOUT        "Паменьшыць"
     IDT_VIEW_SCHEME         "Выбраць схему"
     IDT_VIEW_SCHEMECONFIG   "Наладзіць схему"
@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Павышаныя правы"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Буфер абмену"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Безыменны"
     IDS_MUI_TITLEEXCERPT    "«%s»"
     IDS_MUI_READONLY        "(Толькі чытанне)"
@@ -129,16 +129,19 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Памылка чытання «%s»"
     IDS_MUI_ERR_SAVEFILE    "Памылка захоўвання «%s»"
+    IDS_MUI_ERR_PATHNOTFOUND "Шлях да «%s» больш не існуе.\nАднавіць шлях і захаваць файл?"
     IDS_MUI_ERR_DLG_FORMAT  "Памылка '%s', прычына:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Не знойдзены плагін аглядніка файлаў\nПлагін MiniPath можна спампаваць з сайта https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Не знойдзены плагін для пошука ў файлах\nПлагін grepWinNP3 можна спампаваць з сайта https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Не знойдзены плагін для пошука ў файлах\nПлагін grepWin Portable можна спампаваць з сайта https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Плагін пошуку файлаў не знойдзены\nКалі ласка, усталюйце апошнюю версію grepWinPortable у платформе PortableApps."
     IDS_MUI_ERR_MRUDLG      "Няма доступа да выбранага файла!\nХочаце выдаліць яго са спіску?"
     IDS_MUI_ERR_CREATELINK  "Памылка стварэння цэтліка на Працоўным стале"
     IDS_MUI_ERR_PREVWINDISABLED
                             "Існы экзэмпляр Notepad3 альбо заняты, альбо мае адкрытае дыялогавае акно\nЖадаеце адкрыць новы экзэмпляр Notepad3?"
     IDS_MUI_ERR_ENCODINGNA  "Табліца пераўтварэння кодавай старонкі не знойдзена для выбранай кадоўкі ў гэтай сістэме"
     IDS_MUI_ERR_UNICODE     "Памылка пераўтварэння Unicode-файла\nДаныя будуць згублены падчас захавання файла!"
-    IDS_MUI_ERR_BITMAP      "Not suitable dimension of bitmap ""%s""\nSuitable dimension: %i x %i (width >= %i x height)"
+    IDS_MUI_ERR_BITMAP      "Bitmap «%s» мае непадыходныя памеры\nПатрэбныя памеры: %i x %i (шырыня >= %i x вышыня)"
     IDS_MUI_ERR_ELEVATED_RIGHTS
                             "Памылка павышэння праў карыстальніка!"
 END
@@ -176,10 +179,10 @@ BEGIN
     IDS_MUI_REPLCOUNT       "Заменена ўваходжанняў вызначанага шаблона пошуку: %s"
     IDS_MUI_ASK_ENCODING    "Пераключэнне кадоўкі файла з адной на другую можа замяніць непадтрымоўваны тэкст сімваламі-заменнікамі, а гісторыя адмены будзе прыбрана. Усё роўна працягнуць?"
     IDS_MUI_ASK_ENCODING2   "Вы збіраецеся змяніць кадоўку пустога файла. Звярніце ўвагу, што гэта прыбярэ гісторыю адмены, паколькі яна не можа быць скаардынаванай з новай кадоўкай. Усё роўна працягнуць?"
-    IDS_MUI_ASK_CLEAR_UNDO  "This operation will clear the undo history. Continue?"
+    IDS_MUI_ASK_CLEAR_UNDO  "Гэтая аперацыя прыбярэ гісторыю адмены. Усё роўна працягнуць?"
     IDS_MUI_READONLY_SAVE   "«%s» толькі для чытання. Захваць у іншы файл?"
     IDS_MUI_FILECHANGENOTIFY
-                            "The current file has been modified by an external program\nPlease choose:\n\nIgnore -\t\tIgnore further changes\nReload -\t\tReload File\nMonitor -\t\tSwitch to File Monitoring"
+                            "Гэты файл быў змянёны знешняй праграмай\nКалі ласка, выберыце:\n\nIgnore -\t\tІгнараваць далейшыя змяненні\nReload -\t\tПерачытаць файл\nMonitor -\t\tПерайсці да назірання за файлам"
     IDS_MUI_FILECHANGENOTIFY2 "Гэты файл быў выдалены. Захаваць нанава?"
     IDS_MUI_FILELOCK_ERROR  "Немагчыма атрымаць выключнае блакаванне для ""%s""!"
     IDS_MUI_STICKYWINPOS    "Фіксаваная пазіцыя акна задзейнічана. Усякае новае акно Notepad3 запусціцца з цяперашнімі наладамі пазіцыі"
@@ -205,6 +208,8 @@ BEGIN
                              "Азначаны ва URL шлях не знойдзены!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click, каб адкрыць файл"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click, каб адкрыць спасылку ў браўзеры"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Захоўванне зыходняй часаадзнакі змянення файла ўключана\nГэта опцыя застанецца ўключанай для гэтай сесіі!"
     IDS_MUI_OUT_OFF_OCCMRK   "Маркеры ўваходжанняў (закладка/падсвечванне) на зыходзе!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Захаваць змяненні ў:\n«%s»?"
+    IDS_MUI_ASK_SAVE        "Захаваць змяненні ў:\n%s?"
     IDS_MUI_ASK_REVERT      "Узнавіць файл да апошняга захаванага стану?"
     IDS_MUI_ASK_RECODE      "Каб пераадкрыць у іншай кадоўцы, неабходна пераладаваць файл з дыска. Незахаваныя змяненні будуць згублены!"
     IDS_MUI_ASK_CREATE      "«%s» не знойдены\nХочаце стварыць гэты файл?"
@@ -266,7 +271,7 @@ BEGIN
     IDS_MUI_MENU_LANGUAGE   "&Мова"
     IDS_USE_LOCALE_DATEFMT  "Мова вызначае &фармат даты"
     IDS_MUI_MENU_THEMES     "&Калекцыя схем"
-    IDM_THEMES_FACTORY_RESET "&Factory Reset"
+    IDM_THEMES_FACTORY_RESET "&Заводскі скід"
     IDM_THEMES_STD_CFG       "&Стандартны канфіг"
     IDS_MUI_STATUSBAR_PREFIXES "Ln  ,Col  ,Sel  ,Sb  ,SLn  ,Occ  ,,,,,,,Ch  ,Repl  ,Eval  ,U+,"
     IDS_MUI_STATUSBAR_POSTFIXES ",,,,,,,,,,,,,,,,"
@@ -276,8 +281,8 @@ BEGIN
     IDS_MUI_CLEAR_REPL_HISTORY
                             "Ачысціць гісторыю замен"
     IDS_MUI_SEARCHCLIPIFEMPTY
-                            "Search by Clipboard if empty selection"
-    IDS_MUI_REPLCLIPTAG     "Replace by Clipboard on Shortcut [^c]"
+                            "Шукаць па змесціву буфера абмену пры пустым вылучэнні"
+    IDS_MUI_REPLCLIPTAG     "Замяніць з буфера абмену па скарачэнні [^c]"
     IDS_MUI_WRAPSEARCH_FWD  "Супадзенне ў пачатку"
     IDS_MUI_WRAPSEARCH_BCK  "Супадзенне ў канцы"
 END
@@ -288,7 +293,7 @@ BEGIN
     IDS_MUI_SB_TOGGLE_VIEW    "Пераключэнне выгляду..."
     IDS_MUI_SB_REPLACE_ALL    "Замена ўсяго..."
     IDS_MUI_SB_WRAP_LINES     "Перанос радкоў..."
-    IDS_MUI_SB_SORTING_LINES  "Sorting Lines..."
+    IDS_MUI_SB_SORTING_LINES  "Сартаванне радкоў..."
     IDS_MUI_SB_CONV_LNBRK     "Пераўтварэнне канчаткаў радкоў..."
     IDS_MUI_SB_RECODING_DOC   "Перакадаванне дакумента..."
     IDS_MUI_SB_LEXER_STYLING  "Выкарыстанне стыля лексера..."
@@ -341,11 +346,11 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Пашырэнні файлаў павінны быць падзелены сімвалам ;\r\n\
-выкарыстоўвайце \\<regex>; каб вызначыць шаблон імя файла:\r\n\
-   \\xyz$;   => імя файла (basename+ext) з 'xyz' на канцы\r\n\r\n\
+Запісы, якія змяшчаюць '*', '?' або '.' адпавядае поўнай назве файла (падстаноўны знак):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Фармат стылю:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\
 Уласцівасці стыляў можна скапіяваць і ўставіць альбо перацягнуць\
 "
 

@@ -48,6 +48,7 @@ void RestoreWndFromTaskbar(HWND hWnd);
 
 
 INT_PTR DisplayCmdLineHelp(HWND hwnd);
+INT_PTR DisplayHelpDlgLng(HWND hwnd, UINT uidContent);
 INT_PTR CALLBACK AboutDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam);
 INT_PTR RunDlg(HWND hwnd,LPCWSTR lpstrDefault);
 bool OpenWithDlg(HWND hwnd,LPCWSTR lpstrFile);
@@ -82,10 +83,8 @@ void DialogFileBrowse(HWND hwnd);
 void DialogGrepWin(HWND hwnd, LPCWSTR searchPattern);
 void DialogAdminExe(HWND hwnd,bool);
 
-int  MessageBoxLng(UINT uType, UINT uidMsg, ...);
-DWORD MsgBoxLastError(LPCWSTR lpszMessage, DWORD dwErrID);
-
-LONG InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...);
+LONG  InfoBoxLng(UINT uType, LPCWSTR lpstrSetting, UINT uidMsg, ...);
+DWORD InfoBoxLastError(LPCWSTR lpszMessage, DWORD dwErrID);
 #define INFOBOX_ANSW(_R_) LOWORD(_R_)
 #define INFOBOX_MODE(_R_) HIWORD(_R_)
 
@@ -168,6 +167,7 @@ inline void ResizeDlg_InitY(HWND hwnd, int cyFrame, int nIdGrip)
 void ResizeDlg_Destroy(HWND hwnd, int* cxFrame, int* cyFrame);
 void ResizeDlg_Size(HWND hwnd, LPARAM lParam, int* cx, int* cy);
 void ResizeDlg_GetMinMaxInfo(HWND hwnd, LPARAM lParam);
+void ResizeDlg_DPIChanged(HWND hwnd, const RECT* pNewRect, UINT newDpi);
 
 #define MAX_RESIZEDLG_ATTR_COUNT	2
 void ResizeDlg_SetAttr(HWND hwnd, int index, int value);
@@ -312,6 +312,12 @@ void    CleanupDlgResources();
 //bool GetFolderDlg(HWND hwnd, HPATHL hdir_pth_io, const HPATHL hinidir_pth);
 bool OpenFileDlg(HWND hwnd, HPATHL hfile_pth_io, const HPATHL hinidir_pth);
 bool SaveFileDlg(HWND hwnd, HPATHL hfile_pth_io, const HPATHL hinidir_pth);
+
+// General-purpose IFileDialog wrappers (FOS_ option flags)
+bool FileOpenDlg(HWND hwnd, HPATHL hfile_pth_io, LPCWSTR lpInitialDir,
+                 LPCWSTR lpFilter, LPCWSTR lpDefExt, DWORD dwFosOptions);
+bool FileSaveDlg(HWND hwnd, HPATHL hfile_pth_io, LPCWSTR lpInitialDir,
+                 LPCWSTR lpFilter, LPCWSTR lpDefExt, DWORD dwFosOptions);
 
 
 // --- Hook Procedures for Std-System Dialogs ---------------------------------

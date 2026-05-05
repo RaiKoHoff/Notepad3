@@ -1,15 +1,19 @@
 #include "StyleLexers.h"
 
 // ----------------------------------------------------------------------------
+// Strict JSON (RFC 8259) lexer -- upstream Lexilla.
+// Default file extensions are empty so it does not steal `.json` from the
+// JSON5 lexer; users who want strict-JSON highlighting select it manually
+// via View > Syntax Scheme.
 
 KEYWORDLIST KeyWords_JSON =
 {
-    // JSON Keywords
-    "+Infinity -Infinity Infinity NaN false null true",
+    // JSON Keywords (strict: only these three are literals)
+    "false null true",
 
-    // JSON-LD Keywords
-    "@base @container @context @direction @graph @id @import @included @index @json @language @list @nest @none "
-    "@prefix @propagate @protected @reverse @set @type @value @version @vocab",
+    // Second list reserved (upstream lexer uses two lists for JSON-LD; for
+    // strict JSON it stays empty).
+    "",
 
     NULL
 };
@@ -17,7 +21,7 @@ KEYWORDLIST KeyWords_JSON =
 
 EDITLEXER lexJSON =
 {
-    SCLEX_JSON, "json", IDS_LEX_JSON, L"JSON", L"json; har; ipynb; wxcp; jshintrc; eslintrc; babelrc; prettierrc; stylelintrc; jsonld; jsonc; arcconfig; arclint; jscop", L"",
+    SCLEX_JSON, "json", IDS_LEX_JSON, L"JSON", L"", L"",
     &KeyWords_JSON, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_JSON_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },

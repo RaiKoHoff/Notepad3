@@ -90,7 +90,7 @@ END
 STRINGTABLE
 BEGIN
     IDT_FILE_LAUNCH          "Executar documento"
-    IDT_VIEW_NEW_WINDOW      "New Empty Window"
+    IDT_VIEW_NEW_WINDOW      "Nova Janela Vazia"
     IDT_VIEW_TOGGLE_VIEW     "Vista focada"
     IDT_VIEW_CHASING_DOCTAIL "Registo de monitorização"
     IDT_VIEW_PIN_ON_TOP      "Sempre visível"
@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Elevado"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Área de transferência"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Sem título"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Só de leitura)"
@@ -129,16 +129,19 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Erro ao carregar ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Erro ao guardar ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "O caminho para ""%s"" já não existe.\nRecriar o caminho e guardar o ficheiro?"
     IDS_MUI_ERR_DLG_FORMAT  "Erro '%s', causa:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Não foi encontrado nenhum plugin de navegador de ficheiros\nO plugin do navegador de ficheiros MiniPath pode ser transferido de https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Não foi encontrado nenhum plugin de procura de ficheiros\nO plugin de procura de ficheiros grepWinNP3 pode ser transferido de https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Não foi encontrado nenhum plugin de procura de ficheiros\nO plugin de procura de ficheiros grepWin Portable pode ser transferido de https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Nenhum plugin de pesquisa de ficheiros encontrado\nInstale a versão mais recente do grepWinPortable na plataforma PortableApps."
     IDS_MUI_ERR_MRUDLG      "Não foi possível aceder ao ficheiro seleccionado!\nDeseja removê-lo da lista?"
     IDS_MUI_ERR_CREATELINK  "Erro ao criar a ligação ao ambiente de trabalho"
     IDS_MUI_ERR_PREVWINDISABLED
                             "A janela existente do Notepad3 está ocupada ou tem uma caixa de diálogo activa\nDeseja abrir outra janela do Notepad3?"
     IDS_MUI_ERR_ENCODINGNA  "As tabelas de conversão da página de código para a codificação seleccionada, não estão disponíveis no seu sistema"
     IDS_MUI_ERR_UNICODE     "Erro ao converter este ficheiro Unicode\nSerão perdidos dados se o ficheiro for guardado!"
-    IDS_MUI_ERR_BITMAP      "Not suitable dimension of bitmap ""%s""\nSuitable dimension: %i x %i (width >= %i x height)"
+    IDS_MUI_ERR_BITMAP      "Dimensão de bitmap ""%s"" inadequada\nDimensão adequada: %i x %i (largura >= %i x altura)"
     IDS_MUI_ERR_ELEVATED_RIGHTS
                             "Erro na elevação dos direitos do utilizador!"
 END
@@ -205,6 +208,8 @@ BEGIN
                              "Caminho especificado da URL não encontrado!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Clique para abrir o ficheiro"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Clique para abrir a ligação no navegador"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Manter a data/hora de modificação original do ficheiro activada\nEsta opção será válida para esta sessão!"
     IDS_MUI_OUT_OFF_OCCMRK   "Não existem outros marcadores de ocorrência (Marcador/Realce)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Guardar alterações para:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Guardar alterações para:\n%s?"
     IDS_MUI_ASK_REVERT      "Reverter o ficheiro para o estado da última vez que foi guardado?"
     IDS_MUI_ASK_RECODE      "A recodificação requer recarregar o ficheiro do disco, serão perdidas as alterações não guardadas!"
     IDS_MUI_ASK_CREATE      """%s"" não encontrado\nDeseja criar este ficheiro?"
@@ -341,8 +346,8 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 As extensões de ficheiro devem ser separadas por ';'\r\n\
-usar \\<regex>; para definir um padrão de correspondência ao nome do ficheiro:\r\n\
-   \\xyz$;   => nomes de ficheiro(nome+ext) com 'xyz' como últimos caracteres\r\n\r\n\
+entries containing '*', '?' or '.' match the full filename (wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Formato do estilo:\r\n\
 tipo de letra:Nome; tamanho:[+/-]nn.mm; negrito; itálico; sublinhado;\r\n\
 1º plano:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

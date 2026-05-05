@@ -13,13 +13,17 @@
 *                                                                             *
 *                                                                             *
 *******************************************************************************/
-#define _WIN32_WINNT 0x601
+#include <sdkddkver.h>
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT _WIN32_WINNT_WIN10
+#endif
 #include <windows.h>
 #include <commctrl.h>
 #include <process.h>
 #include <shlobj.h>
 #include <shlwapi.h>
 #include <strsafe.h>
+#include <pathcch.h>
 #include "..\..\src\DarkMode\DarkMode.h"
 #include "helpers.h"
 #include "dlapi.h"
@@ -99,7 +103,18 @@ BOOL DirList_Init(HWND hwnd,LPCWSTR pszHeader)
 
     // Icon thread control
     lpdl->hExitThread = CreateEvent(NULL,TRUE,FALSE,NULL);
+    if (!lpdl->hExitThread) {
+        RemoveProp(hwnd,pDirListProp);
+        GlobalFree(lpdl);
+        return FALSE;
+    }
     lpdl->hTerminatedThread = CreateEvent(NULL,TRUE,TRUE,NULL);
+    if (!lpdl->hTerminatedThread) {
+        CloseHandle(lpdl->hExitThread);
+        RemoveProp(hwnd,pDirListProp);
+        GlobalFree(lpdl);
+        return FALSE;
+    }
 
     UNUSED(pszHeader);
 
@@ -120,8 +135,12 @@ BOOL DirList_Destroy(HWND hwnd)
 
     // Release multithreading objects
     DirList_TerminateIconThread(hwnd);
-    CloseHandle(lpdl->hExitThread);
-    CloseHandle(lpdl->hTerminatedThread);
+    if (lpdl->hExitThread) {
+        CloseHandle(lpdl->hExitThread);
+    }
+    if (lpdl->hTerminatedThread) {
+        CloseHandle(lpdl->hTerminatedThread);
+    }
 
     if (lpdl->pidl) {
         CoTaskMemFree(lpdl->pidl);
@@ -420,7 +439,7 @@ void WINAPIV DirList_IconThread(LPVOID lpParam)
     hwnd = lpdl->hwnd;
     iMaxItem = ListView_GetItemCount(hwnd);
 
-    (void)CoInitialize(NULL);
+    (void)CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     // Get IShellIcon
     lpdl->lpsf->lpVtbl->QueryInterface(lpdl->lpsf,&IID_IShellIcon,&lpshi);
@@ -1307,7 +1326,7 @@ BOOL DriveBox_GetSelDrive(HWND hwnd,LPWSTR lpszDrive,int nDrive,BOOL fNoSlash)
 
     // Remove Backslash if required (makes Drive relative!!!)
     if (fNoSlash) {
-        PathRemoveBackslash(lpszDrive);
+        PathCchRemoveBackslash(lpszDrive, nDrive);
     }
 
     return TRUE;

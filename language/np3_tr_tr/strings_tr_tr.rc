@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Yönetici"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Pano"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Başlıksız"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Salt okunur)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    """%s"" yüklenirken sorun çıktı"
     IDS_MUI_ERR_SAVEFILE    """%s"" kaydedilirken sorun çıktı"
+    IDS_MUI_ERR_PATHNOTFOUND """%s"" için yol artık mevcut değil.\nYolu yeniden oluşturup dosyayı kaydetmek ister misiniz?"
     IDS_MUI_ERR_DLG_FORMAT  "Hata '%s'. Nedeni:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Dosya gezgini uygulama eki bulunamadı\nMiniPath dosya tarayıcı uygulama ekini şuradan indirebilirsiniz: https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Dosya arama uygulama eki bulunamadı\ngrepWinNP3 dosya arama uygulama ekini şuradan indirebilirsiniz: https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Dosya arama uygulama eki bulunamadı\ngrepWin Portable dosya arama uygulama ekini şuradan indirebilirsiniz: https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Dosya arama eklentisi bulunamadı\nLütfen PortableApps platformuna grepWinPortable'ın en son sürümünü yükleyin."
     IDS_MUI_ERR_MRUDLG      "Seçilmiş dosyaya erişilemedi!\nWListeden kaldırmak ister misiniz?"
     IDS_MUI_ERR_CREATELINK  "Masaüstü bağlantısı oluşturulurken sorun çıktı"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "İnternet adresinde belirtilen yol bulunamadı!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Dosyayı açmak için tıklayın"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Bağlantıyı tarayıcıda açmak için tıklayın"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Özgün dosya değişiklik zamanının korunması seçeneği etkinleştirilmiş\nBu seçenek bu oturum boyunca etkin olacak!"
     IDS_MUI_OUT_OFF_OCCMRK   "Yinelenme işaretleyicileri bitiyor (Yer imi/Vurgula)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Değişikler şuraya kaydedilsin mi:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Değişikler şuraya kaydedilsin mi:\n%s?"
     IDS_MUI_ASK_REVERT      "Dosya son kaydedildiği duruma döndürülsün mü?"
     IDS_MUI_ASK_RECODE      "Yenide kodlama içindosyanın diskten yeniden yüklenmesi gerekir. Kaydedilmemiş değişiklikler kaybolacak!"
     IDS_MUI_ASK_CREATE      """%s"" bulunamadı\nBu dosyanın oluşturulmasını ister misiniz?"
@@ -266,7 +271,7 @@ BEGIN
     IDS_MUI_MENU_LANGUAGE   "&Dil"
     IDS_USE_LOCALE_DATEFMT  "&Tarih biçimi dile uygun ayarlansın"
     IDS_MUI_MENU_THEMES     "Şema &teması"
-    IDM_THEMES_FACTORY_RESET "&Factory Reset"
+    IDM_THEMES_FACTORY_RESET "&Fabrika Ayarlarına Sıfırla"
     IDM_THEMES_STD_CFG       "Standart yapılandırma"
     IDS_MUI_STATUSBAR_PREFIXES "Sat  ,Süt  ,Seç  ,Haz  ,SSat  ,Kop  ,,,,,,,Krk  ,Değ  ,Dene  ,U+,"
     IDS_MUI_STATUSBAR_POSTFIXES ",,,,,,,,,,,,,,,,"
@@ -341,11 +346,11 @@ Notepad3 /v d:\\temp\\Deneme.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Dosya uzantıları ';' ile ayrılarak yazılmalıdır\r\n\
-bir dosya eşleştirme modeli için \\<regex>; kullanın:\r\n\
-   \\xyz$;   => DosyaAdları(TemelAd+Uzantı) 'xyz' son karakterler olmak üzere\r\n\r\n\
+'*', '?' ýa-da '.' belgilerini öz içine alýan ýazgylar faýlyň doly adyna (joker belgi) gabat gelýär:\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Biçem özellikleri:\r\n\
 font:Ad; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\
 Biçem özellikleri kopyala-yapıştır ya da sürükle-bırak ile kopyalanabilir\
 "
 

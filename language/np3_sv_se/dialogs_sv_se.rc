@@ -55,7 +55,7 @@ END
 
 IDD_MUI_ABOUT DIALOGEX 0, 0, 400, 284
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_NOFAILCREATE | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "About Notepad3"
+CAPTION "Om Notepad3"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,330,266,50,14
@@ -74,13 +74,13 @@ BEGIN
     CONTROL         "",IDC_RICHEDITABOUT,RICHEDIT_CONTROL_VER,WS_VSCROLL | WS_HSCROLL | WS_TABSTOP | RICHEDTCTRL_ADDSTYLE,20,90,360,170, ES_EX_ZOOMABLE
 END
 
-IDD_MUI_CMDLINEHELP DIALOGEX 0, 0, 317, 210
+IDD_MUI_CMDLINEHELP DIALOGEX 0, 0, 317, 145
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Hjälp för kommandorad"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,256,187,55,16
-    EDITTEXT        IDC_CMDLINEHELP,15,7,295,176,ES_MULTILINE | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
+    DEFPUSHBUTTON   "OK",IDOK,256,122,55,16
+    EDITTEXT        IDC_CMDLINEHELP,15,7,295,111,ES_MULTILINE | ES_READONLY | NOT WS_BORDER | WS_VSCROLL
 END
 
 IDD_MUI_FIND DIALOGEX 0, 0, 273, 142
@@ -154,7 +154,7 @@ END
 
 IDD_MUI_RUN DIALOGEX 0, 0, 229, 96
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Run"
+CAPTION "Kör"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     ICON            IDI_MUI_RUN,IDC_STATIC,10,7,21,20
@@ -178,30 +178,30 @@ BEGIN
     SCROLLBAR       IDC_RESIZEGRIP,7,112,10,10
 END
 
-IDD_MUI_DEFENCODING DIALOGEX 0, 0, 197, 172
+IDD_MUI_DEFENCODING DIALOGEX 0, 0, 197, 160
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Encoding"
+CAPTION "Kodning"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     GROUPBOX        "Förvald kodning (nya filer):",IDC_STATIC,7,7,183,48,0,WS_EX_TRANSPARENT
     CONTROL         "",IDC_ENCODINGLIST,"ComboBoxEx32",CBS_DROPDOWNLIST | WS_CLIPSIBLINGS | WS_VSCROLL | WS_TABSTOP,14,19,167,128
     CONTROL         "Använd som förvald om identifiering misslyckas",IDC_USEASREADINGFALLBACK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,38,170,10
-    GROUPBOX        "Identifiering av teckenkodning:",IDC_STATIC2,7,58,183,88,0,WS_EX_TRANSPARENT
+    GROUPBOX        "Identifiering av teckenkodning:",IDC_STATIC2,7,58,183,76,0,WS_EX_TRANSPARENT
     CONTROL         "Öppna 7-bitars ASCII filer i UTF-8 läge",IDC_ASCIIASUTF8,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,70,140,10
-    CONTROL         "Använd endast pålitliga identifieringsresultat",IDC_RELIABLE_DETECTION_RES,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,82,160,10
     CONTROL         "Öppna 8-bit *.nfo/diz filer i DOS-437 läge",IDC_NFOASOEM,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,94,155,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,82,155,10
     CONTROL         "Analysera taggar i kodad fil",IDC_ENCODINGFROMFILEVARS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,106,126,10
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,94,126,10
     CONTROL         "Gör analys av ANSI-kodsida",IDC_NOANSICPDETECTION,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,106,110,10
+    EDITTEXT        IDC_ANSI_CONFIDENCE_LEVEL,140,105,28,12,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "",IDC_ANSI_CONFIDENCE_SPIN,"msctls_updown32",UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_AUTOBUDDY | UDS_ARROWKEYS | UDS_HOTTRACK,156,104,11,14
+    CONTROL         "Aktivera UNICODE-identifiering",IDC_NOUNICODEDETECTION,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,118,122,10
-    CONTROL         "Aktiviera UNICODE-identifiering",IDC_NOUNICODEDETECTION,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,130,122,10
-    DEFPUSHBUTTON   "OK",IDOK,87,151,50,14
-    PUSHBUTTON      "Avbryt",IDCANCEL,140,151,50,14
+    DEFPUSHBUTTON   "OK",IDOK,87,139,50,14
+    PUSHBUTTON      "Avbryt",IDCANCEL,140,139,50,14
 END
 
 IDD_MUI_DEFEOLMODE DIALOGEX 0, 0, 197, 80
@@ -211,9 +211,9 @@ FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     LTEXT           "Förvalt läge för radslut:",IDC_STATIC,7,7,116,8
     COMBOBOX        IDC_EOLMODELIST,7,20,118,81,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Visa varning för inkonsekvent radslut",IDC_WARN_INCONSISTENT_EOLS,
+    CONTROL         "Visa varning för inkonsekventa radslut",IDC_WARN_INCONSISTENT_EOLS,
                     "Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,7,40,186,10
-    CONTROL         "Tvinga konsekvent radslut när fil sparas",IDC_CONSISTENT_EOLS,
+    CONTROL         "Tvinga konsekventa radslut när fil sparas",IDC_CONSISTENT_EOLS,
                     "Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,7,52,182,10
     CONTROL         "Ta bort överflödiga mellanslag i slutet när filen sparas",IDC_AUTOSTRIPBLANKS,
                     "Button",BS_AUTOCHECKBOX | BS_VCENTER | WS_TABSTOP,7,64,189,10
@@ -223,10 +223,10 @@ END
 
 IDD_MUI_WARNLINEENDS DIALOGEX 0, 0, 196, 100
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Inkonsekvent radslut"
+CAPTION "Inkonsekventa radslut"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
-    LTEXT           "Inkonsekvent radslut hittades i filen:",IDC_STATIC,7,7,180,8
+    LTEXT           "Inkonsekventa radslut hittades i filen:",IDC_STATIC,7,7,180,8
     RTEXT           "CR+LF:",IDC_STATIC2,10,18,34,8
     RTEXT           "CR:",IDC_STATIC3,10,28,34,8
     RTEXT           "LF:",IDC_STATIC4,10,38,34,8
@@ -272,7 +272,7 @@ END
 
 IDD_MUI_CHANGENOTIFY DIALOGEX 0, 0, 184, 118
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Avisering vid ändring av filändelse"
+CAPTION "Avisering vid filändring"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     CONTROL         "&Ingen", IDC_RADIO_BTN_A,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,7,99,10
@@ -281,7 +281,7 @@ BEGIN
     CONTROL         "Ladda om automatiskt", IDC_RADIO_BTN_D,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,7,43,99,10
     CONTROL         "&Exklusivt fillås", IDC_RADIO_BTN_E,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,7,55,99,10
     CONTROL         "Återställ om en ny fil öppnas", IDC_CHECK_BOX_A,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,72,120,10
-    CONTROL         "&Övervakar log", IDC_CHECK_BOX_B,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,86,120,10
+    CONTROL         "&Övervakningslogg", IDC_CHECK_BOX_B,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,86,120,10
     LTEXT           "Intervall mellan kontroll av fil [ms]",IDC_LINE_TEXT,7,102,120,10
     EDITTEXT        IDC_FILE_CHECK_INTERVAL,127,100,50,12,ES_AUTOHSCROLL | ES_NUMBER
     DEFPUSHBUTTON   "OK",IDOK,127,7,50,14
@@ -331,7 +331,7 @@ BEGIN
     EDITTEXT        IDC_STYLEEDIT_HELP,197,54,252,74,ES_MULTILINE | ES_READONLY | NOT WS_BORDER
 END
 
-IDD_MUI_TABSETTINGS DIALOGEX 0, 0, 174, 114
+IDD_MUI_TABSETTINGS DIALOGEX 0, 0, 174, 126
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Tabulatorinställningar"
 FONT 9, "Segoe UI", 400, 0, 0x1
@@ -341,13 +341,14 @@ BEGIN
     LTEXT           "Indragsstorlek:",IDC_STATIC2,7,30,55,8
     EDITTEXT        IDC_INDENT_DEPTH,67,27,30,14,ES_AUTOHSCROLL
     CONTROL         "Indrag och mellanslag",IDC_TAB_AS_SPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,47,150,10
-    CONTROL         "Tab-knappen omformaterar indrag",IDC_TAB_INDENTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,59,150,10
+    CONTROL         "Tabb/Skift-Tabb ändrar alltid indrag",IDC_TAB_BACKTAB_INDENTS_ALWAYS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,59,150,10
+    CONTROL         "Tab-knappen omformaterar indrag",IDC_TAB_INDENTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,150,10
     CONTROL         "Backstegstangent omformaterar indrag",IDC_BACKTAB_INDENTS,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,150,10
-    CONTROL         "Varning vid inkonsekvent indrag",IDC_WARN_INCONSISTENT_INDENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,83,150,10
-    CONTROL         "Identifiera tab- eller mellanslagsindrag",IDC_AUTO_DETECT_INDENTS,
+    CONTROL         "Varning vid inkonsekvent indrag",IDC_WARN_INCONSISTENT_INDENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,95,150,10
+    CONTROL         "Identifiera tab- eller mellanslagsindrag",IDC_AUTO_DETECT_INDENTS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,107,150,10
     DEFPUSHBUTTON   "OK",IDOK,117,7,50,14
     PUSHBUTTON      "Avbryt",IDCANCEL,117,27,50,14
 END
@@ -390,7 +391,7 @@ END
 
 IDD_MUI_WORDWRAP DIALOGEX 0, 0, 226, 100
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Inställning för automatisk radbrytning"
+CAPTION "Inställningar för automatisk radbrytning"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     COMBOBOX        100,7,7,212,226,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
@@ -463,7 +464,7 @@ END
 
 IDD_MUI_ADDTOFAV DIALOGEX 0, 0, 172, 66
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Lägg till favoriter"
+CAPTION "Lägg till i favoriter"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     LTEXT           "Ange namn för favorit:",IDC_FAVORITESDESCR,7,7,158,8
@@ -541,7 +542,7 @@ END
 
 IDD_MUI_INSERTTAG DIALOGEX 0, 0, 182, 70
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Infoga HTML/XML Tagg"
+CAPTION "Infoga HTML/XML-tagg"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     LTEXT           "Öppna tagg (med attribut):",IDC_STATIC,7,7,110,8
@@ -718,7 +719,7 @@ END
 
 IDD_MUI_ENCODING DIALOGEX 0, 0, 165, 135
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Ange teckoenkodning"
+CAPTION "Ange teckenkodning"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     LTEXT           "Ange teckenkodning för detta dokument:",IDC_STATIC,7,7,140,8
@@ -730,7 +731,7 @@ END
 
 IDD_MUI_ALIGN DIALOGEX 0, 0, 184, 74
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Anpassa rader"
+CAPTION "Justera rader"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
     CONTROL         "Vänster",100,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,7,7,41,10
@@ -757,7 +758,7 @@ BEGIN
     CBS_SORT | WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS |
     CBS_OWNERDRAWFIXED
 
-    LTEXT           "Teckensnittstil:", stc2, 114, 7, 74, 9
+    LTEXT           "Teckensnittsstil:", stc2, 114, 7, 74, 9
     COMBOBOX        cmb2, 114, 16, 74, 76,
     CBS_SIMPLE | CBS_AUTOHSCROLL | CBS_DISABLENOSCROLL |
     WS_VSCROLL | WS_TABSTOP | CBS_HASSTRINGS |
@@ -770,7 +771,7 @@ BEGIN
     CBS_OWNERDRAWFIXED
 
     GROUPBOX        "Effekter", grp1, 7, 97, 98, 76, WS_GROUP
-    AUTOCHECKBOX    "Genomstuken", chx1, 13, 111, 90, 10, WS_TABSTOP
+    AUTOCHECKBOX    "Genomstruken", chx1, 13, 111, 90, 10, WS_TABSTOP
     AUTOCHECKBOX    "&Understruken", chx2, 13, 127, 90, 10
 
     LTEXT           "&Färg:", stc4, 13, 144, 89, 9
@@ -865,12 +866,12 @@ END
 //
 IDD_MUI_AUTOSAVE_BACKUP DIALOGEX 0, 0, 184, 166
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Auto-Save & Backup Settings"
+CAPTION "Automatiskt sparande och säkerhetskopiering"
 FONT 9, "Segoe UI", 400, 0, 0x1
 BEGIN
 GROUPBOX        "Spara automatiskt:", IDC_STATIC, 7, 7, 170, 62, 0, WS_EX_TRANSPARENT
 AUTOCHECKBOX    "Aktivera automatiskt sparande", IDC_AUTOSAVE_ENABLE, 14, 18, 155, 10, WS_GROUP | WS_TABSTOP
-LTEXT           "Intervall för automatiskt sparande [sec]:", IDC_STATIC2, 14, 30, 108, 10, SS_RIGHT
+LTEXT           "Intervall för automatiskt sparande [sek]:", IDC_STATIC2, 14, 30, 108, 10, SS_RIGHT
 EDITTEXT        IDC_AUTOSAVE_INTERVAL, 130, 28, 40, 12, ES_AUTOHSCROLL
 AUTOCHECKBOX    "Spara automatiskt när dator sätts i viloläge", IDC_AUTOSAVE_SUSPEND, 14, 40, 155, 10, WS_GROUP | WS_TABSTOP
 AUTOCHECKBOX    "Spara automatiskt när datorn stängs av", IDC_AUTOSAVE_SHUTDOWN, 14, 52, 155, 10, WS_TABSTOP
@@ -939,7 +940,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 190
         TOPMARGIN, 7
-        BOTTOMMARGIN, 165
+        BOTTOMMARGIN, 153
     END
 
     IDD_MUI_DEFEOLMODE, DIALOG
@@ -1003,7 +1004,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 167
         TOPMARGIN, 7
-        BOTTOMMARGIN, 107
+        BOTTOMMARGIN, 119
     END
 
     IDD_MUI_WARNINDENTATION, DIALOG

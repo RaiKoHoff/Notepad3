@@ -57,9 +57,6 @@
 
 #define Encoding_IsNONE(enc) ((enc) == CPI_NONE)
 
-//#define CPI_PREFERRED_ENCODING  CPI_ANSI_DEFAULT
-#define CPI_PREFERRED_ENCODING  CPI_UTF8
-
 typedef struct _np2encoding {
     UINT        uFlags;
     UINT        uCodePage;
@@ -74,10 +71,7 @@ DWORD Encoding_GetWCMBFlagsByCodePage(const UINT codePage);
 cpi_enc_t  Encoding_Current(cpi_enc_t iEncoding);         // getter/setter
 cpi_enc_t  Encoding_Forced(cpi_enc_t iEncoding);          // getter/setter
 cpi_enc_t  Encoding_SrcWeak(cpi_enc_t iSrcWeakEnc);       // getter/setter
-inline cpi_enc_t const Encoding_GetCurrent()
-{
-    return Encoding_Current(CPI_GET);
-}
+inline cpi_enc_t const Encoding_GetCurrent() { return Encoding_Current(CPI_GET); }
 
 void       Encoding_InitDefaults();
 int        Encoding_MapIniSetting(bool, int iSetting);
@@ -96,20 +90,20 @@ bool       Encoding_GetFromComboboxEx(HWND hwnd, cpi_enc_t* pidEncoding);
 UINT       Encoding_GetCodePage(const cpi_enc_t iEncoding);
 
 bool       Encoding_IsDefault(const cpi_enc_t iEncoding);
-bool       Encoding_IsASCII(const cpi_enc_t iEncoding);
-bool       Encoding_IsANSI(const cpi_enc_t iEncoding);
-bool       Encoding_IsOEM(const cpi_enc_t iEncoding);
-bool       Encoding_IsUTF8(const cpi_enc_t iEncoding);
+bool       Encoding_HasASCII7Bit(const cpi_enc_t iEncoding);
+bool       Encoding_IsSystemANSI_CP(const cpi_enc_t iEncoding);
+bool       Encoding_IsSystemOEM(const cpi_enc_t iEncoding);
+bool       Encoding_MaybeUTF8(const cpi_enc_t iEncoding);
 bool       Encoding_IsUTF8_SIGN(const cpi_enc_t iEncoding);
-bool       Encoding_IsUTF8_NO_SIGN(const cpi_enc_t iEncoding);
+bool       Encoding_MaybeUTF8_NO_SIGN(const cpi_enc_t iEncoding);
 bool       Encoding_IsMBCS(const cpi_enc_t iEncoding);
-bool       Encoding_IsCJK(const cpi_enc_t iEncoding);
 bool       Encoding_IsUNICODE(const cpi_enc_t iEncoding);
 bool       Encoding_IsUNICODE_BOM(const cpi_enc_t iEncoding);
 bool       Encoding_IsUNICODE_REVERSE(const cpi_enc_t iEncoding);
 bool       Encoding_IsINTERNAL(const cpi_enc_t iEncoding);
 bool       Encoding_IsEXTERNAL_8BIT(const cpi_enc_t iEncoding);
 bool       Encoding_IsRECODE(const cpi_enc_t iEncoding);
+bool       Encoding_IsCJK(const cpi_enc_t iEncoding);
 
 // Scintilla related
 #define Encoding_SciCP   CP_UTF8
@@ -121,10 +115,13 @@ const char* Encoding_GetParseNames(const cpi_enc_t iEncoding);
 int Encoding_GetNameA(const cpi_enc_t iEncoding, char* buffer, size_t cch);
 int Encoding_GetNameW(const cpi_enc_t iEncoding, LPWSTR buffer, size_t cwch);
 
+bool Has_UTF32_LE_BOM(const char* pBuf, size_t cnt);
+bool Has_UTF32_BE_BOM(const char* pBuf, size_t cnt);
+bool Has_UTF32_BOM(const char* pBuf, size_t cnt);
+
 bool Has_UTF16_LE_BOM(const char* pBuf, size_t cnt);
 bool Has_UTF16_BE_BOM(const char* pBuf, size_t cnt);
 bool Has_UTF16_BOM(const char *pBuf, size_t cnt);
-bool HasUnicodeNullBytes(const char* pBuf, size_t cnt);
 
 inline bool IsUTF8Signature(const char* p)
 {
@@ -132,8 +129,7 @@ inline bool IsUTF8Signature(const char* p)
 }
 #define UTF8StringStart(p) (IsUTF8Signature(p)) ? ((p)+3) : (p)
 
-bool IsValidUTF8(const char* pTest, size_t nLength);
-bool IsPureAscii7Bit(const char* pTest, size_t nLength);
+bool IsValidUTF8(const char* pTest, size_t nLength, bool* pbIsASCII, bool* pbHasNullBytes);
 
 
 //////////////////////////////////////////////////////
@@ -193,14 +189,16 @@ typedef struct _enc_det_t {
     bool bIsReverse;
     bool bIsUTF8Sig;
     bool bValidUTF8;
-    bool bHasUnicodeNullBytes;
-    bool bPureASCII7Bit;
+    bool bPureASCII7Bit;  // all bytes 0x01-0x7F (no nulls, no high-bit)
+    bool bHasNullBytes;   // buffer contains 0x00 bytes (binary/UTF-16/UTF-32)
+    bool bIsUTF32;
+    bool bIsAnalyzed;     // Encoding_AnalyzeText() was actually called (not skipped)
 
     char encodingStrg[64];
 
 } ENC_DET_T;
 
-#define INIT_ENC_DET_T  { CPI_NONE, CPI_NONE, CPI_NONE, CPI_NONE, CPI_NONE, 0.0f, false, false, false, false, false, false, false, "" }
+#define INIT_ENC_DET_T  { CPI_NONE, CPI_NONE, CPI_NONE, CPI_NONE, CPI_NONE, 0.0f, false, false, false, false, false, false, false, false, false, "" }
 
 
 ENC_DET_T Encoding_DetectEncoding(const HPATHL hpath, const char* lpData, const size_t cbData,

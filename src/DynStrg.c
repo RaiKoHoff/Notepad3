@@ -165,12 +165,18 @@ static void ReAllocW(STRINGW* pstr, size_t len)
         }
     }
     else if (pstr->alloc_length < alloc_len) {
-        pstr->data = ReAllocBuffer(pstr->data, alloc_len, false);
-        pstr->alloc_length = LengthOfBuffer(pstr->data);
-        assert("inconsistent data 1" && (alloc_len == pstr->alloc_length));
-        /// original memory block is moved, so data_length is not touched
-        assert("inconsistent data 2" && (alloc_len > pstr->data_length));
-        pstr->data[pstr->data_length] = WCHR_NULL; // ensure terminating zero
+        // apply 1.5x growth factor to amortize repeated reallocations
+        size_t const grow_len = pstr->alloc_length + (pstr->alloc_length >> 1);
+        size_t const new_alloc = min_s(max_s(alloc_len, grow_len), STRINGW_MAX_CCH);
+        LPWSTR new_data = ReAllocBuffer(pstr->data, new_alloc, false);
+        if (new_data) {
+            pstr->data = new_data;
+            pstr->alloc_length = LengthOfBuffer(pstr->data);
+            assert("inconsistent data 1" && (pstr->alloc_length >= alloc_len));
+            /// original memory block is moved, so data_length is not touched
+            assert("inconsistent data 2" && (pstr->alloc_length > pstr->data_length));
+            pstr->data[pstr->data_length] = WCHR_NULL; // ensure terminating zero
+        }
     }
     else {
         ZeroMemory(&(pstr->data[pstr->data_length]), (pstr->alloc_length - pstr->data_length) * sizeof(wchar_t));
@@ -185,7 +191,7 @@ static void AllocCopyW(STRINGW* pstr, STRINGW* pDest, size_t copy_len, size_t co
     {
         ReAllocW(pDest, new_len);
         StringCchCopyNW(pDest->data, pDest->alloc_length, (pstr->data + copy_index), copy_len);
-        pDest->data_length = StrlenW(pstr->data);
+        pDest->data_length = StrlenW(pDest->data);
     }
 }
 // ----------------------------------------------------------------------------
@@ -444,7 +450,6 @@ void STRAPI StrgDestroy(HSTRINGW hstr)
     if (!pstr)
         return;
     FreeBufferW(pstr);
-    FreeBuffer((LPWSTR)pstr);
 }
 // ----------------------------------------------------------------------------
 
@@ -801,7 +806,7 @@ size_t STRAPI StrgRemoveCh(HSTRINGW hstr, const wchar_t chRemove)
     }
     if (dest)
         *dest = WCHR_NULL;
-    count = (int)(ptrdiff_t)(source - dest);
+    count = (size_t)(source - dest);
     pstr->data_length -= count;
 
     return count;
@@ -862,7 +867,7 @@ void STRAPI StrgToUpper(HSTRINGW hstr)
         ReAllocW(pstr, 0);
     }
     if (pstr->data)
-        _wcsupr_s(pstr->data, pstr->data_length);
+        _wcsupr_s(pstr->data, pstr->data_length + 1);
 }
 // ----------------------------------------------------------------------------
 
@@ -876,7 +881,7 @@ void STRAPI StrgToLower(HSTRINGW hstr)
         ReAllocW(pstr, 0);
     }
     if (pstr->data)
-        _wcslwr_s(pstr->data, pstr->data_length);
+        _wcslwr_s(pstr->data, pstr->data_length + 1);
 }
 // ----------------------------------------------------------------------------
 
@@ -1102,8 +1107,6 @@ void STRAPI StrgFormat(HSTRINGW hstr, LPCWSTR fmt, ...)
 }
 // ----------------------------------------------------------------------------
 
-// ############################################################################
-
 LPWSTR STRAPI StrgWriteAccessBuf(HSTRINGW hstr, size_t min_len)
 {
     STRINGW* pstr = ToWStrg(hstr);
@@ -1134,4 +1137,70 @@ void STRAPI StrgSanitize(HSTRINGW hstr)
 }
 // --------------------------------------------------------------------------
 
+// ############################################################################
+ 
+//=============================================================================
+//
+//  EscapeStringForCmdLine()
+//  Escapes a string for safe inclusion inside a double-quoted Windows
+//  command-line argument (CommandLineToArgvW rules):
+//    - '"' becomes '\"'
+//    - runs of N backslashes before a '"' or at end-of-string become 2N
+//  Caller must destroy the returned HSTRINGW.
+//
+HSTRINGW STRAPI EscapeStringForCmdLine(LPCWSTR pattern)
+{
+    HSTRINGW hesc = StrgCreate(L"");
+    if (!pattern || (*pattern == L'\0')) {
+        return hesc;
+    }
+
+    size_t const len = wcsnlen_s(pattern, STRSAFE_MAX_CCH);
+    // worst case: every char is '"' or '\' → roughly 2x+1 expansion
+    wchar_t* const buf = StrgWriteAccessBuf(hesc, (len * 2) + 2);
+    size_t         j = 0;
+
+    for (size_t i = 0; i < len; /* advanced in loop */) {
+        if (pattern[i] == L'\\') {
+            // count consecutive backslashes
+            size_t nbs = 0;
+            while (i < len && pattern[i] == L'\\') {
+                ++nbs;
+                ++i;
+            }
+            if (i == len || pattern[i] == L'"') {
+                // before end-of-string or before a '"': double the backslashes
+                for (size_t k = 0; k < nbs * 2; ++k) {
+                    buf[j++] = L'\\';
+                }
+                if (i < len) {
+                    // the '"' itself must be escaped
+                    buf[j++] = L'\\';
+                    buf[j++] = L'"';
+                    ++i;
+                }
+            }
+            else {
+                // backslashes not before a '"': keep as-is
+                for (size_t k = 0; k < nbs; ++k) {
+                    buf[j++] = L'\\';
+                }
+            }
+        }
+        else if (pattern[i] == L'"') {
+            buf[j++] = L'\\';
+            buf[j++] = L'"';
+            ++i;
+        }
+        else {
+            buf[j++] = pattern[i++];
+        }
+    }
+    buf[j] = L'\0';
+    StrgSanitize(hesc);
+    return hesc;
+}
+// --------------------------------------------------------------------------
+ 
+ 
 // ############################################################################

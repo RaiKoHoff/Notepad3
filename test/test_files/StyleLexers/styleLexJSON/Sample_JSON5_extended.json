@@ -1,0 +1,172 @@
+// =====================================================================
+// Extended JSON5 / JSON-LD test file for the Notepad3 homebrew JSON lexer
+// (lexilla/lexers_x/LexJSON.cxx).
+//
+// Requires both lexer properties enabled to exercise every branch:
+//   lexer.json.allow.comments  = 1
+//   lexer.json.escape.sequence = 1
+//
+// Each section is annotated with the lexer feature it targets so a failed
+// highlight is easy to attribute to a specific code path.
+// =====================================================================
+
+/* ---------------------------------------------------------------
+   Stream / block comment.  Multiple lines, with stray * and / chars
+   inside (separated, so they cannot form a close marker).
+   --------------------------------------------------------------- */
+
+{
+  // ---------- Strings: quoting variants ----------
+  doubleQuoted:   "plain double-quoted string",
+  singleQuoted:   'plain single-quoted string',
+  mixedInside1:   "contains 'single quotes' inside double",
+  mixedInside2:   'contains "double quotes" inside single',
+  emptyDouble:    "",
+  emptySingle:    '',
+
+  // ---------- Strings: line continuation (backslash + EOL) ----------
+  lineContLF:     "first line\
+second line\
+third line",
+  lineContSingle: 'wrap with\
+single quotes too',
+
+  // ---------- Strings: standard escape sequences ----------
+  // (lexer.json.escape.sequence = 1 to highlight these)
+  escSimple:      "tab=\t  nl=\n  cr=\r  bs=\b  ff=\f  vt=\v  null=\0  slash=\/  bslash=\\  quote=\"  apos=\'",
+  escUnicode:     "äöü € 껮 꿾",
+  escSingleStr:   'mix: \té\\done',
+
+  // ---------- Property names: quoted vs unquoted ----------
+  unquotedKey:    'JSON5 allows bare property names',
+  "quotedKey":    "classic JSON",
+  'singleKey':    'single-quoted property name',
+  $dollar:        1,
+  _underscore:    2,
+  mixed123name:   3,
+
+  // ---------- Numbers: integers, signs, decimals ----------
+  zero:           0,
+  posInt:         42,
+  negInt:         -42,
+  posSign:        +7,
+  decimal:        3.14159,
+  leadingDot:      .5,
+  trailingDot:    5. ,
+  // Tightened dot-part rule (E1): "1 . 0" is no longer a valid number.
+  // Uncomment to verify it now highlights as ERROR (was NUMBER before E1):
+  //tightDot:     1 . 0,
+
+  // ---------- Numbers: exponent / scientific ----------
+  exp1:           1e10,
+  exp2:           1.5E-3,
+  exp3:           2.5e+12,
+  expNeg:         -6.022e23,
+
+  // ---------- Numbers: hexadecimal (homebrew-only) ----------
+  hexLower:       0xff,
+  hexMixed:       0xDeCaF,
+  hexBig:         0xCAFEBABE,
+
+  // ---------- Keywords ----------
+  yes:            true,
+  no:             false,
+  nothing:        null,
+  inf:            Infinity,
+  posInf:         +Infinity,
+  negInf:         -Infinity,
+  notNum:         NaN,
+
+  // ---------- Trailing commas (objects + arrays) ----------
+  trailingInObj:  { a: 1, b: 2, },
+  trailingInArr:  [ 1, 2, 3, ],
+  emptyArr:       [],
+  emptyObj:       {},
+
+  // ---------- URL hotspots inside strings ----------
+  urlHttps:       "https://example.com/path?q=1#frag",
+  urlHttp:        "http://example.com/",
+  urlFtp:         "ftp://files.example.com/dir/",
+  urlSsh:         "ssh://git@example.com/repo.git",
+  urlGit:         "git://example.com/repo.git",
+  urlSvn:         "svn://svn.example.com/trunk",
+  urlMailto:      "mailto:user@example.com",
+
+  // ---------- URL with embedded escape (exercises the URI/LDKEYWORD escape fix) ----------
+  // Without the fix the URI style would terminate at '\' and the rest of
+  // the string would be mis-styled.  With the fix, 'é' is recognized
+  // as an escape sequence and the URI style resumes afterwards (well, the
+  // remainder is plain string -- the URI ends at the non-URL char).
+  urlWithEsc:     "https://example.com/café/menu",
+  urlWithBackslash:"https://example.com/path\\sub",
+
+  // ---------- JSON-LD @ keywords ----------
+  "@context":     "https://schema.org/",
+  "@id":          "https://example.org/things/1",
+  "@type":        "Person",
+  "@language":    "en",
+  "@vocab":       "https://example.org/vocab#",
+
+  // ---------- Compact IRIs (single colon, alpha/$/_/- around it) ----------
+  "schema:name":          "Compact IRI Example",
+  "foaf:knows":           "another-iri",
+  "$compact_-Form:value": "edge characters in prefix",
+
+  // ---------- Strings that look like compact IRI but aren't (multiple colons -> not highlighted) ----------
+  "not:a:compact:iri":    "more than one colon disqualifies highlighting",
+  "has space:notIRI":     "space disqualifies",
+
+  // ---------- Nested structure with everything mixed ----------
+  nested: {
+    'array': [
+      0xAB,
+      .25,
+      'item with \'escaped\' single quotes',
+      "item with \"escaped\" double quotes",
+      { inner: +Infinity, hex: 0xFEED, },
+    ],
+    'urls': [
+      "http://a.example/",
+      "https://b.example/path",
+      "mailto:noreply@example.com",
+    ],
+  },
+
+  // ---------- B1: wrong-quote close in ESCAPESEQUENCE ----------
+  // To trigger the bug requires (a) lexer.json.escape.sequence = 1 and
+  // (b) an escape sequence whose terminating char is immediately followed
+  // by the OPPOSITE quote.  Pre-fix, the opposite quote falsely closed
+  // the string and the rest of the line styled as ERROR.  Post-fix, the
+  // whole string highlights cleanly.
+  b1DoubleAfterU: "before\u1234'after the false-close point",
+  b1SingleAfterU: 'before\u5678"after the false-close point',
+  b1DoubleAfterX: "before\xAB'after",
+  b1SingleAfterX: 'before\xCD"after',
+
+  // ---------- L1: \xHH hex escape (JSON5 §5.5.4) ----------
+  l1Hex:        "low=\x00  high=\xFF  tilde=\x7E  AT=\x40",
+  l1HexInSing:  'mix \xAA before \xbb after',
+
+  // ---------- L2: identity escape (any non-LineTerminator/digit/x/u char) ----------
+  // These were ERROR before; JSON5 says \? -> ?, \, -> , etc.
+  l2Identity:   "\? \, \; \! \% \& \= \[ \] \( \) \{ \}",
+  l2InSingle:   'punct: \? \, \; -- still string',
+  // Legacy octal (\1..\9) remains forbidden -- uncomment to verify ERROR:
+  //l2OctalErr: "\1\2\3",
+
+  // ---------- L3: bare CR line continuation ----------
+  // Cannot be exercised in a CRLF/LF file -- requires CR-only line endings
+  // (Edit > Line Endings > Macintosh CR).  When that's set, a string ending
+  // a line with a single backslash should continue onto the next line just
+  // like the LF / CRLF case above.
+
+  // ---------- L4: U+2028 / U+2029 line continuation ----------
+  // The two Unicode LineTerminator chars are below as literals.  Each line
+  // contains "\<LS>continued" or "\<PS>continued" -- a single STRING that
+  // wraps via the JS-style line separator.
+  l4LS:         "before\ continued",
+  l4PS:         "before\ continued",
+
+  // ---------- Trailing item to verify the closing brace styling ----------
+  last: 'end-of-test',
+}

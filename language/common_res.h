@@ -162,6 +162,8 @@
 #define IDS_MUI_ERR_FILE_TOO_LARGE      13016
 #define IDS_MUI_WARN_UNKNOWN_EXT        13017
 #define IDS_MUI_ERR_DLG_FORMAT          13018
+#define IDS_MUI_ERR_GREPWIN_PORTAPPS    13019
+
 // keep order (CRLF(0),  CR(1),  LF(2))
 #define IDS_MUI_EOLMODENAME_CRLF        13020
 #define IDS_MUI_EOLMODENAME_CR          13021
@@ -170,6 +172,8 @@
 #define IDS_MUI_INF_PRSVFILEMODTM       13024
 #define IDS_MUI_WARN_STYLE_RESET        13025
 #define IDS_MUI_ASK_INSTANCE_EXISTS     13026
+#define IDS_MUI_ERR_PATHNOTFOUND        13027
+
 
 #define IDS_MUI_SELRECT                 14000
 #define IDS_MUI_BUFFERTOOSMALL          14001
@@ -263,6 +267,8 @@
 #define IDS_MUI_URL_DIR_EXISTS          15065
 #define IDS_MUI_URL_FILE_EXISTS         15066
 #define IDS_MUI_URL_PATH_NOT_FOUND      15067
+#define IDS_MUI_UNMATCHED_BRACE         15068
+#define IDS_MUI_NO_ENCLOSING_BRACE      15069
 
 #define IDS_MUI_SB_MARK_ALL_OCC         15500
 #define IDS_MUI_SB_TOGGLE_VIEW          15501
@@ -440,7 +446,7 @@
 #define IDC_AUTO_DETECT_INDENTS         18104
 #define IDC_CMDLINEHELP                 18105
 #define IDC_STYLEEDIT_HELP              18106
-#define IDC_RELIABLE_DETECTION_RES      18107
+//#define IDC_RELIABLE_DETECTION_RES      18107  // removed: UseReliableCEDonly replaced by AnalyzeReliableConfidenceLevel=0
 #define IDC_LINE_TEXT                   18108
 #define IDC_COLUMN_TEXT                 18109
 #define IDC_INDENT_WIDTH_TAB            18110
@@ -470,6 +476,9 @@
 #define IDC_AS_BACKUP_OPENFOLDER        18134
 #define IDC_FILE_CHECK_INTERVAL         18135
 #define IDC_DARK_MODE_CONTRAST          18136
+#define IDC_TAB_BACKTAB_INDENTS_ALWAYS  18137
+#define IDC_ANSI_CONFIDENCE_LEVEL       18138
+#define IDC_ANSI_CONFIDENCE_SPIN        18139
 
 #define IDC_RADIO_BTN_A                 18200
 #define IDC_RADIO_BTN_B                 18201
@@ -555,6 +564,12 @@
 #define CMD_ENTER_RETURN                20062
 #define CMD_PARAGRAPH_UP                20063
 #define CMD_PARAGRAPH_DOWN              20064
+#define CMD_COPY_HYPERLINK              20065
+#define CMD_CTX_UPPERCASE               20066
+#define CMD_CTX_LOWERCASE               20067
+#define CMD_CTX_INVERTCASE              20068
+#define CMD_CTX_TITLECASE               20069
+#define CMD_CTX_SENTENCECASE            20070
 
 #define IDS_MUI_MENU_LANGUAGE           34500
 #define IDS_MUI_LANG_EN_US              34501
@@ -756,7 +771,7 @@
 #define IDM_VIEW_ZOOMOUT                41019
 #define IDM_VIEW_RESETZOOM              41020
 #define IDM_VIEW_STICKYWINPOS           41021
-#define IDM_VIEW_TITLEBAR               41022 
+#define IDM_VIEW_TITLEBAR               41022
 #define IDM_VIEW_MENUBAR                41023
 #define IDM_VIEW_TOOLBAR                41024
 #define IDM_VIEW_CUSTOMIZETB            41025
@@ -807,7 +822,7 @@
 #define IDM_SET_RENDER_TECH_D2DDC       42003   // SC_TECHNOLOGY_DIRECTWRITEDC(3)
 #define IDM_SET_RTL_LAYOUT_EDIT         42004
 #define IDM_SET_RTL_LAYOUT_DLG          42005
-// keep Scintilla(SC) order 
+// keep Scintilla(SC) order
 #define IDM_SET_BIDIRECTIONAL_NONE      42006   // SC_BIDIRECTIONAL_DISABLED(0)
 #define IDM_SET_BIDIRECTIONAL_L2R       42007   // SC_BIDIRECTIONAL_L2R(1)
 #define IDM_SET_BIDIRECTIONAL_R2L       42008   // SC_BIDIRECTIONAL_R2L(2)
@@ -846,6 +861,9 @@
 #define IDM_SET_AUTOCLOSEBRACKETS       42042
 #define IDM_SET_AUTOCLOSEQUOTES         42043
 #define IDM_SET_MULTIPLE_SELECTION      42044
+#define IDM_SET_DEFAULTDIR              42045
+#define IDM_SET_DEFAULTDIR_RESET        42046
+#define IDM_SET_RESOLVE_UNC_PATHS       42047
 
 #define IDM_HELP_ABOUT                  43000
 #define IDM_HELP_CMD                    43001
@@ -857,6 +875,7 @@
 #define IDM_TRAY_EXIT                   43701
 #define IDM_SETPASS                     43702
 #define IDM_EDIT_INSERT_GUID            43705
+#define IDM_EDIT_TOGGLE_PASTEBOARD      43706
 
 
 #define IDS_ENC_ANSI                    61000
@@ -943,6 +962,7 @@
 #define IDS_ENC_JOHAB                   61081
 #define IDS_ENC_ISO_8859_10             61082
 #define IDS_ENC_BIG5_HKSCS              61083
+#define IDS_ENC_DOS_855                 61084
 
 #define IDS_EOL_WIN                     62000
 #define IDS_EOL_MAC                     62001
@@ -1007,6 +1027,7 @@
 //#define IDS_LEX_F77                     63056
 #define IDS_LEX_VERILOG                 63057
 #define IDS_LEX_SYSVERILOG              63058
+#define IDS_LEX_ABAQUS                  63059
 
 
 #define IDS_LEX_STD_STYLE               63100
@@ -1317,6 +1338,10 @@
 #define IDS_LEX_STR_SysTasks            63404
 #define IDS_LEX_STR_AfterLabel          63405
 #define IDS_LEX_STR_Table               63406
+#define IDS_LEX_STR_StarCmd             63407
+#define IDS_LEX_STR_SlashCmd            63408
+#define IDS_LEX_STR_Processor           63409
+#define IDS_LEX_STR_Argument            63410
 
 #define IDS_LEX_CSV_COL_0               63490
 #define IDS_LEX_CSV_COL_1               63491
@@ -1328,6 +1353,7 @@
 #define IDS_LEX_CSV_COL_7               63497
 #define IDS_LEX_CSV_COL_8               63498
 #define IDS_LEX_CSV_COL_9               63499
+#define IDS_LEX_JSON5                   63500
 
 #define RICHEDIT_CONTROL_VER            "RichEdit50W"  // RICHEDIT_CONTROL_VER
 
@@ -1339,6 +1365,6 @@
 #define RICHEDTCTRL_ADDSTYLE            0x29c4
 #endif
 
-//#ifndef 
+//#ifndef
 
 #endif //_COMMON_RES_H_

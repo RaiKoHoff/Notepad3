@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "注册表项"
     IDS_LEX_VHDL            "VHDL 源代码"
     IDS_LEX_JSON            "JSON 文件"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS 脚本"
     IDS_LEX_INNO            "Inno 脚本"
     IDS_LEX_RUBY            "Ruby 脚本"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "Verilog HDL"
     IDS_LEX_SYSVERILOG      "SystemVerilog HDVL"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -261,8 +263,8 @@ BEGIN
     IDS_LEX_STR_63194       "标记类别"
     IDS_LEX_STR_63195       "标记 ID"
     IDS_LEX_STR_63196       "标记属性"
-    IDS_LEX_STR_63197       "伪类别"
-    IDS_LEX_STR_63198       "未知伪类别"
+    IDS_LEX_STR_63197       "伪类"
+    IDS_LEX_STR_63198       "未知伪类"
     IDS_LEX_STR_63199       "CSS 属性"
 END
 
@@ -514,7 +516,11 @@ BEGIN
     IDS_LEX_STR_PortConn    "端口连接"
     IDS_LEX_STR_SysTasks    "系统任务"
     IDS_LEX_STR_AfterLabel  "在标签后"
-    IDS_LEX_STR_Table       "Table"
+    IDS_LEX_STR_Table       "表"
+    IDS_LEX_STR_StarCmd     "星号命令"
+    IDS_LEX_STR_SlashCmd    "斜杠命令"
+    IDS_LEX_STR_Processor   "处理器"
+    IDS_LEX_STR_Argument    "参数"
 END
 
 STRINGTABLE

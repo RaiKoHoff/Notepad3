@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Erhöhte Rechte"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Zwischenablage"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Kein Titel"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Nur Lesen)"
@@ -121,19 +121,22 @@ BEGIN
     IDS_MUI_OPENWITH        "Wähle das Verzeichnis mit den Links zu den favorisierten Applikationen"
     IDS_MUI_FAVORITES       "Wähle das Verzeichnis mit den Links zu den favorisierten Dateien"
     IDS_MUI_BACKSLASHHELP   "Backslash Transformationen\n\n\\a\tAlert (BEL, Ascii 7)\n\\b\tBackspace (BS, Ascii 8)\n\\f\tFormfeed (FF, Ascii 12)\n\\n\tNewline (LF, Ascii 10)\n\\r\tCarriage return (CR, Ascii 13)\n\\t\tHorizontal Tab (HT, Ascii 9)\n\\v\tVertical Tab (VT, Ascii 11)\n\\0oo\tOctal Value\n\\u####\tHexadecimal Value\n\\xhh\tHexadecimal Value\n\\\\\tBackslash"
-    IDS_MUI_REGEXPHELP      "RegExp Matching Syntax (Multi Lines)\n\n.\tMatches any character\n^\tEmpty string immediately after Newline\n$\tEmpty string immediately before End of Line\n\\<\tStart of a word\n\\>\tEnd of a word\n\\b\tWord boundary\n[...]\tA set of chars ([abc]) or a range ([a-z])\n[^...]\tChars NOT in the set or range\n\\d\tAny decimal digit\n\\D\tAny non-digit char\n\\s\tAny whitespace char\n\\S\tNot a whitespace char\n\\w\tAny ""word"" char\n\\W\tAny ""non-word"" char\n\\x\tEscape character with otherwise special meaning\n\\xHH\tChar with hex code HH\n?\tMatches preceding 0 or 1 times\n*\tMatches preceding 0 or more times\n+\tMatches preceding 1 or more times\n*? or +?\tNon greedy matching of quantifiers ""?"" and ""+""\n(\tStart of a region\n)\tEnd of a region\n\\n\tRefers to a region when replacing (n is 1-9)\n"
+    IDS_MUI_REGEXPHELP      "RegExp-Suchmuster-Syntax (Mehrere Zeilen)\n\n.\tBeliebiges Zeichen\n^\tLeere Zeichenkette direkt nach Zeilenumbruch\n$\tLeere Zeichenkette direkt vor Zeilenende\n\\<\tWortanfang\n\\>\tWortende\n\\b\tWortgrenze\n[...]\tZeichenmenge ([abc]) oder Bereich ([a-z])\n[^...]\tZeichen NICHT in der Menge oder im Bereich\n\\d\tJede Dezimalziffer\n\\D\tJedes Nicht-Ziffern-Zeichen\n\\s\tJedes Leerzeichen\n\\S\tKein Leerzeichen\n\\w\tJedes Wort-Zeichen\n\\W\tJedes Nicht-Wort-Zeichen\n\\x\tSonderzeichen mit besonderer Bedeutung entwerten\n\\xHH\tZeichen mit Hex-Code HH\n?\tVorheriges 0 oder 1 Mal\n*\tVorheriges 0 oder mehr Male\n+\tVorheriges 1 oder mehr Male\n*? or +?\tNicht-gieriges Matchen der Quantifizierer ""?"" und ""+""\n(\tAnfang einer Region\n)\tEnde einer Region\n\\n\tBezug auf Region beim Ersetzen (n ist 1-9)\n"
     IDS_MUI_WILDCARDHELP    "Wildcard Suche\n\n*\tPasst zu keinem oder mehr Zeichen\n?\tPasst zu genau einem Zeichen"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ERR_LOADFILE    "Fehler beim laden ""%s"""
-    IDS_MUI_ERR_SAVEFILE    "Fehler beim speichern ""%s"""
+    IDS_MUI_ERR_LOADFILE    "Fehler beim Laden ""%s"""
+    IDS_MUI_ERR_SAVEFILE    "Fehler beim Speichern ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "Der Dateipfad ""%s"" existiert nicht mehr.\nPfad neu anlegen und Datei speichern?"
     IDS_MUI_ERR_DLG_FORMAT  "Fehler '%s', weil:\n%s(ID:%d)\n"
-    IDS_MUI_ERR_BROWSE      "Kein Datei-Browser-Plugin gefunden\nDas MiniPath Datei-Browser-Plugin kann hier https://rizonesoft.com herunter geladen werden"
-    IDS_MUI_ERR_GREPWIN     "Kein Datei-Suchen-Plugin gefunden\nDas grepWinNP3 Datei-Suchen-Plugin kann hier https://rizonesoft.com herunter geladen werden"
-    IDS_MUI_ERR_MRUDLG      "Es kann nicht auf die ausgewählte Datei zugegriffen werden!\nMöchtest Du den Eintrag aus der Liste entfernen?"
-    IDS_MUI_ERR_CREATELINK  "Fehler beim erzeugen des Desktop-Links"
+    IDS_MUI_ERR_BROWSE      "Es wurde kein Datei-Browser Plugin gefunden\nDas MiniPath Datei-Browser Plugin kann hier herunter geladen werden: https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Es wurde kein Datei-Inhaltsuche Tool gefunden\nDas grepWin Portable Datei-Inhaltsuche Tool kann hier herunter geladen werden: https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Es wurde kein Datei-Inhaltsuche Tool gefunden\nBitte die neueste Version von grepWinPortable in der PortableApps Platform installieren."
+    IDS_MUI_ERR_MRUDLG      "Keine Zugriff auf die selektierte Datei!\nSoll dieser Eintrag aus der Liste entfernt werden?"
+    IDS_MUI_ERR_CREATELINK  "Fehler beim Erzeugen der Desktop Verknüpfung"
     IDS_MUI_ERR_PREVWINDISABLED
                             "Die existierende Notepad3-Instanz ist entweder beschäftigt oder hat eine geöffnete Dialogbox\nMöchtest Du eine andere Notepad3-Instanz öffnen?"
     IDS_MUI_ERR_ENCODINGNA  "Die Code-Page Konvertierungstabellen sind für die ausgewählte Codierung auf diesem System nicht vorhanden"
@@ -205,6 +208,8 @@ BEGIN
                             "URL spezifizierter Pfad nicht gefunden!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click um die Datei zu  öffnen"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click um die URL im Browser zu öffnen"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Die Speicherung mit originalem Zeitstempel wurde aktiviert\nDiese Option gilt nun für die gesamte Sitzung (Datei)!"
     IDS_MUI_OUT_OFF_OCCMRK   "Es stehen keine weiteren Fundstellen Markierungen/Lesezeichen mehr zur Verfügung!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Speichere die Änderungen nach:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Speichere die Änderungen nach:\n%s?"
     IDS_MUI_ASK_REVERT      "Soll das Dokument aus dem zuletzt gespeicherten Zustand wieder hergestellt werden?"
     IDS_MUI_ASK_RECODE      "Eine Recodierung erzwingt ein erneutes Laden der Datei vom Speichermedium, nicht gesicherte Änderungen werden verloren gehen!"
     IDS_MUI_ASK_CREATE      """%s"" wurde nicht gefunden\nMöchtest Du diese Datei neu erzeugen?"
@@ -341,8 +346,8 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Trennung von Dateinamen-Erweiterungen mittels ';'\r\n\
-nutze \\<regex>; um ein Regular Expression für Dateinamen zu definieren:\r\n\
-   \\xyz$;   => Dateinamen(basename+ext) mit 'xyz' am Ende\r\n\r\n\
+Einträge mit '*', '?' oder '.' werden auf den Dateinamen angewendet (Wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Stil-Format:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

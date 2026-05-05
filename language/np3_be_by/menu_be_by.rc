@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "Дадаць у канец буфера\tCtrl+E",   IDM_EDIT_COPYADD
         MENUITEM "Уст&авіць\tCtrl+V",               IDM_EDIT_PASTE
         MENUITEM "Памяняць\tCtrl+K",                IDM_EDIT_SWAP
-        MENUITEM "В&ыдаліць\tDel",                  IDM_EDIT_CLEAR
-        MENUITEM "А&чысціць буфер абмену",          IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "Вылучыць у&сё\tCtrl+A",           IDM_EDIT_SELECTALL
+        MENUITEM "В&ыдаліць\tDel",                  IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "А&чысціць буфер абмену",          IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "Уключыць/выключыць &маніторынг буфера абмену",  IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "Словы"
         BEGIN
@@ -197,14 +199,14 @@ BEGIN
             MENUITEM SEPARATOR
             MENUITEM "Разбіць па &шырыні...\tCtrl+Shift+W",           IDM_EDIT_COLUMNWRAP
             MENUITEM SEPARATOR
-            MENUITEM "&Unite Duplicate Lines\tCtrl+Alt+D",      IDM_EDIT_UNITEDUPLICATELINES
-            MENUITEM "Remo&ve Duplicate Lines",                 IDM_EDIT_REMOVEDUPLICATELINES
+            MENUITEM "&Аб'яднаць дублікаты радкоў\tCtrl+Alt+D",      IDM_EDIT_UNITEDUPLICATELINES
+            MENUITEM "Выдал&іць дублікаты радкоў",                  IDM_EDIT_REMOVEDUPLICATELINES
             MENUITEM "Аб'яднаць пустыя радкі\tAlt+Y",           IDM_EDIT_MERGEEMPTYLINES
             MENUITEM "Аб'яднаць радкі з прабеламі\tCtrl+Alt+Y", IDM_EDIT_MERGEBLANKLINES
             MENUITEM "Выдаліць пустыя радкі\tAlt+R",            IDM_EDIT_REMOVEEMPTYLINES
             MENUITEM "Выдаліць радкі з прабеламі\tCtrl+Alt+B",  IDM_EDIT_REMOVEBLANKLINES
         END
-        POPUP "Adva&nced"
+        POPUP "&Пашыранае"
         BEGIN
             MENUITEM "&Дадаць водступ",                    IDM_EDIT_INDENT
             MENUITEM "&Выдаліць водступ",                  IDM_EDIT_UNINDENT
@@ -358,7 +360,7 @@ BEGIN
             MENUITEM "Паказваць толькі ў дакуменце",        IDM_VIEW_CHGHIST_DOCTXT
             MENUITEM "Паказваць усюды",                     IDM_VIEW_CHGHIST_ALL
         END
-        MENUITEM "Clear Change/Undo History"             IDM_VIEW_CHGHIST_CLEAR_UNDOREDO
+        MENUITEM "Ачысціць гісторыю змяненняў/адмены"             IDM_VIEW_CHGHIST_CLEAR_UNDOREDO
         MENUITEM SEPARATOR
         MENUITEM "Адзначаць &гіперспасылкі\tCtrl+Alt+W",    IDM_VIEW_HYPERLINKHOTSPOTS
         POPUP "Адзначаць рэгі&ёны вылучэння колера"
@@ -426,7 +428,7 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "П&аліцы"
         BEGIN
-            MENUITEM "Show Titlebar",                 IDM_VIEW_TITLEBAR
+            MENUITEM "Паказаць загаловак акна",                 IDM_VIEW_TITLEBAR
             MENUITEM "Паказаць паліцу &меню",         IDM_VIEW_MENUBAR
             MENUITEM "Паказаць &паліцу прыладаў",     IDM_VIEW_TOOLBAR
             MENUITEM "Паказаць &радок стану",         IDM_VIEW_STATUSBAR
@@ -472,7 +474,7 @@ BEGIN
         MENUITEM "Налады перано&са радкоў...",                  IDM_SET_WORDWRAPSETTINGS
         MENUITEM "Налады до&ўгіх радкоў...",                    IDM_SET_LONGLINESETTINGS
         MENUITEM "Аўта&матычны водступ тэксту",                 IDM_SET_AUTOINDENTTEXT
-        MENUITEM "Auto Close &Quotes",                          IDM_SET_AUTOCLOSEQUOTES
+        MENUITEM "Аўтазакрыццё &двукоссяў",                          IDM_SET_AUTOCLOSEQUOTES
         MENUITEM "Аўтазакрыццё дужак",                          IDM_SET_AUTOCLOSEBRACKETS
         MENUITEM "Аўтазакрыццё тэгаў &HTML/XML\tCtrl+Shift+H",  IDM_SET_AUTOCLOSETAGS
         MENUITEM "Cамадавяр&шэнне слоў",                        IDM_SET_AUTOCOMPLETEWORDS
@@ -483,6 +485,7 @@ BEGIN
         MENUITEM "Паведамленне а&б змяненні файла...\tAlt+F5",  IDM_SET_CHANGENOTIFY
         ///MENUITEM "Аўтазахаванне / рэзервовыя копіі...",      IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "&Заглушыць гук паведамленняў",                IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "Прывесці да &UNC-шляхоў",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "&Функцыя клавішы Esc"
         BEGIN
             MENUITEM "&Няма",                         IDM_SET_NOESCFUNC
@@ -491,7 +494,12 @@ BEGIN
         END
         MENUITEM "Захоўваць перад запускам прыладаў", IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Вылічваць простыя в&ыразы",         IDM_SET_EVALTINYEXPRONSEL
-        MENUITEM "Enable Multiple Selection",         IDM_SET_MULTIPLE_SELECTION
+        MENUITEM "Задзейнічаць мульціпадбор",         IDM_SET_MULTIPLE_SELECTION
+        POPUP "Default &Directory"
+        BEGIN
+            MENUITEM "Усталяваць у бягучы &каталог файла",  IDM_SET_DEFAULTDIR
+            MENUITEM "&Скінуць да прадвызначанага",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "&Гісторыя"
         BEGIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "Адкрыць гіперспасылку",        CMD_OPEN_HYPERLINK
+        MENUITEM "Капіяваць URL гіперспасылкі",           CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "Адмена",                       IDM_EDIT_UNDO
         MENUITEM "Паўтор",                       IDM_EDIT_REDO
@@ -571,6 +580,16 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Вылучыць усё",                 IDM_EDIT_SELECTALL
         MENUITEM SEPARATOR
+        POPUP "Convert Case"
+        BEGIN
+            MENUITEM "Вялікія літары",              CMD_CTX_UPPERCASE
+            MENUITEM "Малыя літары",              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "Інвертаваць рэгістр",            CMD_CTX_INVERTCASE
+            MENUITEM "Загаловачны рэгістр",             CMD_CTX_TITLECASE
+            MENUITEM "Рэгістр сказа",          CMD_CTX_SENTENCECASE
+        END
+        MENUITEM SEPARATOR
         MENUITEM "Згарнуць/разгарнуць блок",     IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR
         MENUITEM "Адкрыць вэб-дзеянне 1",        CMD_WEBACTION1
@@ -579,7 +598,7 @@ BEGIN
     END
     POPUP "+"
     BEGIN
-        MENUITEM "Show Titlebar",                IDM_VIEW_TITLEBAR
+        MENUITEM "Паказаць загаловак акна",                IDM_VIEW_TITLEBAR
         MENUITEM "Паказаць паліцу меню",         IDM_VIEW_MENUBAR
         MENUITEM "Паказаць паліцу прыладаў",     IDM_VIEW_TOOLBAR
         MENUITEM "Паказаць радок стану",         IDM_VIEW_STATUSBAR

@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Elevado"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Portapapeles"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Sin título"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Sólo lectura)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Error cargando ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Error guardando ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "La ruta para ""%s"" ya no existe.\n¿Recrear la ruta y guardar el archivo?"
     IDS_MUI_ERR_DLG_FORMAT  "Error '%s', causa:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "No se encontró plug-in para el navegador de archivos\nEl plug-in de navegador de archivos MiniPath se puede descargar desde https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "No se encontró plug-in de búsqueda de archivos\nEl plug-in grepWinNP3 de búsqueda de archivos se puede descargar desde https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "No se encontró plug-in de búsqueda de archivos\nEl plug-in grepWin Portable de búsqueda de archivos se puede descargar desde https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "No file search plugin was found\nPlease install the latest version of grepWinPortable in PortableApps Platform."
     IDS_MUI_ERR_MRUDLG      "¡No hay acceso al archivo seleccionado!\n¿Desea eliminarlo de la lista?"
     IDS_MUI_ERR_CREATELINK  "Error al crear el enlace de escritorio"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "¡Ruta especificada por URL no encontrada!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Cliquear para abrir el archivo"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Cliquear para abrir el enlace en navegador"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Conservar la marca de tiempo de modificación del archivo original habilitada\n¡Esta opción permanecerá para esta sesión!"
     IDS_MUI_OUT_OFF_OCCMRK   "¡No hay más marcadores de ocurrencia (Marcador/Resaltar)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "¿Guardar cambios a:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "¿Guardar cambios a:\n%s?"
     IDS_MUI_ASK_REVERT      "¿Revertir archivo al último estado guardado?"
     IDS_MUI_ASK_RECODE      "¡La recodificación requiere volver a cargar el archivo desde el disco y los cambios no guardados se perderán!"
     IDS_MUI_ASK_CREATE      """%s"" no encontrado\n¿Quiere crear este archivo?"
@@ -341,11 +346,11 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Las extensiones de archivo están separadas por ';'\r\n\
-usar \\<regex>; para definir un patrón de coincidencia de nombre de archivo:\r\n\
-   \\xyz$;   => nombres de archivo(basename+ext) con 'xyz' como últimas letras\r\n\r\n\
+Entradas que contienen '*', '?' o '.' coinciden con el nombre de archivo completo (comodín):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Estilo formato:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
-fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
+fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\
 Copiar formato: usar 'copiar y pegar' o 'arrastrar y soltar'\
 "
 

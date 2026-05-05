@@ -159,6 +159,7 @@ BEGIN
     IDS_ENC_JOHAB                  "C;韓文 (Johab);韓文 (Johab)"
     IDS_ENC_ISO_8859_10            "B;北歐 (ISO-8859-10);ISO-8859-10"
     IDS_ENC_BIG5_HKSCS             "C;簡體中文 (Big5-HKSCS);Big5-HKSCS"
+    IDS_ENC_DOS_855                "B;西里爾文 (CP-855);CP-855"
 END
 
 

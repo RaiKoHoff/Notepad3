@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Quyền nâng cao"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Clipboard"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Không có tiêu đề"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Chỉ đọc)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Đã xảy ra lỗi khi mở tệp ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Đã xảy ra lỗi khi lưu tệp ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "Đường dẫn cho ""%s"" không còn tồn tại.\nTạo lại đường dẫn và lưu tệp?"
     IDS_MUI_ERR_DLG_FORMAT  "Lỗi '%s', Nguyên nhân:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Không thể tìm thấy plugin trình duyệt tệp\nPlugin MiniPath có thể tải xuống từ https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Không thể tìm thấy plugin tìm kiếm tệp\nPlugin grepWinNP3 có thể tải xuống từ https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Không thể tìm thấy plugin tìm kiếm tệp\nPlugin grepWin Portable có thể tải xuống từ https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Không tìm thấy plugin tìm kiếm tệp\nVui lòng cài đặt phiên bản mới nhất của grepWinPortable trên nền tảng PortableApps."
     IDS_MUI_ERR_MRUDLG      "Không thể truy cập tệp đã chọn!\nCó muốn xóa khỏi danh sách không?"
     IDS_MUI_ERR_CREATELINK  "Đã xảy ra lỗi khi tạo liên kết trên màn hình chính"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "Không thể tìm thấy đường dẫn URL đã chỉ định!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt+Click để mở tệp"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl+Click để mở liên kết trong trình duyệt"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Có thể bảo tồn dấu thời gian sửa đổi tệp gốc\nTùy chọn này sẽ giữ nguyên trong phiên này!"
     IDS_MUI_OUT_OFF_OCCMRK   "Không đủ dấu đánh dấu (dấu trang/nổi bật)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Bạn có muốn lưu các thay đổi không:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Bạn có muốn lưu các thay đổi không:\n%s?"
     IDS_MUI_ASK_REVERT      "Bạn có muốn khôi phục tệp về trạng thái lưu lần cuối không?"
     IDS_MUI_ASK_RECODE      "Để ghi, bạn phải tải lại tệp từ đĩa. Các thay đổi chưa lưu sẽ bị mất!"
     IDS_MUI_ASK_CREATE      "Không thể tìm thấy tệp ""%s""\nBạn có muốn tạo tệp này không?"
@@ -341,10 +346,10 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Các phần mở rộng tên tệp phải được phân tách bằng dấu ';'\r\n\
-Sử dụng \\<regex>; để định nghĩa mẫu khớp tên tệp:\r\n\
-   \\xyz$;   => Tên tệp (tên cơ bản + phần mở rộng) kết thúc bằng 'xyz'\r\n\r\n\
+Các mục chứa '*', '?' hoặc '.' khớp với toàn bộ tên tệp (ký tự đại diện):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Định dạng kiểu:\r\n\
-Phông chữ:Tên; Kích thước:[+/-]nn.mm; Đậm; Nghiêng; Gạch chân;\r\n\
+font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 Màu chữ:#ffffff; Màu nền:#bbbbbb; Lấp đầy kết thúc dòng; indic_gradient\r\n\r\n\
 Thuộc tính kiểu có thể được sao chép và dán hoặc kéo và thả\
 "

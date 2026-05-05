@@ -36,6 +36,9 @@ bool SaveWindowPositionSettings(bool bClearSettings);
 bool SaveAllSettings(bool bForceSaveSettings);
 void CmdSaveSettingsNow();
 
+void InitIniFileSaveMutex(void);
+void CloseIniFileSaveMutex(void);
+
 bool OpenSettingsFile(LPCSTR fctname);
 bool CloseSettingsFile(LPCSTR fctname, bool bSaveSettings);
 
@@ -97,6 +100,7 @@ inline bool IniSectionSetPos(LPCWSTR lpSectionName, LPCWSTR lpKeyName, DocPos po
 //
 bool IniSectionDelete(LPCWSTR lpSectionName, LPCWSTR lpKeyName, bool bRemoveEmpty);
 bool IniSectionClear(LPCWSTR lpSectionName, bool bRemoveEmpty);
+int  IniSectionGetKeyCount(LPCWSTR lpSectionName);
 bool IniClearAllSections(LPCWSTR lpPrefix, bool bRemoveEmpty);
 
 // ----------------------------------------------------------------------------

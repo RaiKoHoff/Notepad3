@@ -16,6 +16,7 @@
 #include <strsafe.h>
 #include <shlobj.h>
 #include <Shlwapi.h>
+#include <pathcch.h>
 
 // ----------------------------------------------------------------------------
 
@@ -225,7 +226,7 @@ extern "C" size_t IniSectionGetString(LPCWSTR lpSectionName, LPCWSTR lpKeyName, 
     StringCchCopyW(lpReturnedString, cchReturnedString,
                    s_INI.GetValue(lpSectionName, lpKeyName, lpDefault, &bHasMultiple));
     //assert(!bHasMultiple);
-    return (size_t)lstrlen(lpReturnedString);
+    return (size_t)wcslen(lpReturnedString);
 }
 // ============================================================================
 
@@ -373,7 +374,7 @@ extern "C" size_t IniFileGetString(LPCWSTR lpFilePath, LPCWSTR lpSectionName, LP
 {
     if (StrIsEmpty(lpFilePath)) {
         StringCchCopyW(lpReturnedString, cchReturnedString, lpDefault);
-        return (size_t)lstrlen(lpReturnedString);
+        return (size_t)wcslen(lpReturnedString);
     }
 
     CSimpleIni Ini(s_bIsUTF8, s_bUseMultiKey, s_bUseMultiLine);
@@ -382,7 +383,7 @@ extern "C" size_t IniFileGetString(LPCWSTR lpFilePath, LPCWSTR lpSectionName, LP
     HANDLE hFile = AcquireReadFileLock(lpFilePath, ovrLpd);
     if (hFile == INVALID_HANDLE_VALUE) {
         StringCchCopyW(lpReturnedString, cchReturnedString, lpDefault);
-        return (size_t)lstrlen(lpReturnedString);
+        return (size_t)wcslen(lpReturnedString);
     }
 
     SI_Error const rc = Ini.LoadFile(hFile);
@@ -395,7 +396,7 @@ extern "C" size_t IniFileGetString(LPCWSTR lpFilePath, LPCWSTR lpSectionName, LP
     } else {
         StringCchCopyW(lpReturnedString, cchReturnedString, lpDefault);
     }
-    return (size_t)lstrlen(lpReturnedString);
+    return (size_t)wcslen(lpReturnedString);
 }
 // ============================================================================
 
@@ -648,32 +649,34 @@ void InitDefaultSettings()
 
 //=============================================================================
 //
-//  CreateIniFile()
+//  CreateIniFileEx()
 //
 //
-int CreateIniFile()
+static int CreateIniFileEx(LPCWSTR lpszPath)
 {
     int result = 0;
-    if (g_wchIniFile[0] != L'\0') {
-        WCHAR* pwchTail = StrRChrW(g_wchIniFile, NULL, L'\\');
+    if (lpszPath[0] != L'\0') {
+
+        WCHAR tchDir[MAX_PATH];
+        StringCchCopy(tchDir, COUNTOF(tchDir), lpszPath);
+        WCHAR* pwchTail = StrRChrW(tchDir, NULL, L'\\');
 
         if (pwchTail) {
             *pwchTail = 0;
-            SHCreateDirectoryEx(NULL, g_wchIniFile, NULL);
-            *pwchTail = L'\\';
+            SHCreateDirectoryEx(NULL, tchDir, NULL);
         }
 
         DWORD dwFileSize = 0UL;
 
-        if (!PathIsExistingFile(g_wchIniFile)) {
-            HANDLE hFile = CreateFile(g_wchIniFile,
+        if (!PathIsExistingFile(lpszPath)) {
+            HANDLE hFile = CreateFile(lpszPath,
                                       GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
                                       CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
             if (hFile != INVALID_HANDLE_VALUE) {
                 CloseHandle(hFile);
             }
         } else {
-            HANDLE hFile = CreateFile(g_wchIniFile,
+            HANDLE hFile = CreateFile(lpszPath,
                                       GENERIC_READ, FILE_SHARE_READ,
                                       nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
             if (hFile == INVALID_HANDLE_VALUE) {
@@ -685,7 +688,7 @@ int CreateIniFile()
         }
 
         if ((dwFileSize == 0) && (dwFileSize != INVALID_FILE_SIZE)) {
-            result = IniFileSetString(g_wchIniFile, L"minipath", NULL, NULL);
+            result = IniFileSetString(lpszPath, L"minipath", NULL, NULL);
         } else {
             result = true;
         }
@@ -693,6 +696,17 @@ int CreateIniFile()
         return result;
     }
     return result;
+}
+
+
+//=============================================================================
+//
+//  CreateIniFile()
+//
+//
+int CreateIniFile()
+{
+    return CreateIniFileEx(g_wchIniFile);
 }
 //=============================================================================
 
@@ -711,39 +725,44 @@ int CheckIniFile(LPWSTR lpszFile, LPCWSTR lpszModule)
 
     if (PathIsRelative(tchFileExpanded)) {
         // program directory
-        lstrcpy(tchBuild, lpszModule);
-        lstrcpy(PathFindFileName(tchBuild), tchFileExpanded);
+        StringCchCopy(tchBuild, COUNTOF(tchBuild), lpszModule);
+        StringCchCopy(PathFindFileName(tchBuild), COUNTOF(tchBuild) - (PathFindFileName(tchBuild) - tchBuild), tchFileExpanded);
         if (PathIsExistingFile(tchBuild)) {
-            lstrcpy(lpszFile, tchBuild);
-            return 1;
-        }
-        // Sub directory (.\np3\)
-        lstrcpy(tchBuild, lpszModule);
-        PathRemoveFileSpec(tchBuild);
-        lstrcat(tchBuild, L"\\np3\\");
-        lstrcat(tchBuild, tchFileExpanded);
-        if (PathIsExistingFile(tchBuild)) {
-            lstrcpy(lpszFile, tchBuild);
+            StringCchCopy(lpszFile, MAX_PATH, tchBuild);
             return 1;
         }
         // Application Data (%APPDATA%)
-        if (S_OK == SHGetFolderPath(nullptr, CSIDL_APPDATA, nullptr, SHGFP_TYPE_CURRENT, tchBuild)) {
-            PathAppend(tchBuild, tchFileExpanded);
-            if (PathIsExistingFile(tchBuild)) {
-                lstrcpy(lpszFile, tchBuild);
-                return 1;
+        {
+            PWSTR pszPath = nullptr;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &pszPath))) {
+                StringCchCopy(tchBuild, COUNTOF(tchBuild), pszPath);
+                CoTaskMemFree(pszPath);
+                if (SUCCEEDED(PathCchAppend(tchBuild, COUNTOF(tchBuild), L"Rizonesoft")) &&
+                    SUCCEEDED(PathCchAppend(tchBuild, COUNTOF(tchBuild), L"Notepad3")) &&
+                    SUCCEEDED(PathCchAppend(tchBuild, COUNTOF(tchBuild), tchFileExpanded))) {
+                    if (PathIsExistingFile(tchBuild)) {
+                        StringCchCopy(lpszFile, MAX_PATH, tchBuild);
+                        return 1;
+                    }
+                }
             }
         }
         // Home (%HOMEPATH%)
-        if (S_OK == SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, SHGFP_TYPE_CURRENT, tchBuild)) {
-            PathAppend(tchBuild, tchFileExpanded);
-            if (PathIsExistingFile(tchBuild)) {
-                lstrcpy(lpszFile, tchBuild);
-                return 1;
+        {
+            PWSTR pszPath = nullptr;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Profile, 0, nullptr, &pszPath))) {
+                StringCchCopy(tchBuild, COUNTOF(tchBuild), pszPath);
+                CoTaskMemFree(pszPath);
+                if (SUCCEEDED(PathCchAppend(tchBuild, COUNTOF(tchBuild), tchFileExpanded))) {
+                    if (PathIsExistingFile(tchBuild)) {
+                        StringCchCopy(lpszFile, MAX_PATH, tchBuild);
+                        return 1;
+                    }
+                }
             }
         }
     } else if (PathIsExistingFile(tchFileExpanded)) {
-        lstrcpy(lpszFile, tchFileExpanded);
+        StringCchCopy(lpszFile, MAX_PATH, tchFileExpanded);
         return 1;
     }
 
@@ -756,19 +775,20 @@ int CheckIniFileRedirect(LPCWSTR lpszAppName, LPCWSTR lpszKeyName, LPWSTR lpszFi
 
     if (IniFileGetString(lpszFile, lpszAppName, lpszKeyName, L"", tch, COUNTOF(tch))) {
         if (CheckIniFile(tch, lpszModule)) {
-            lstrcpy(lpszFile, tch);
+            StringCchCopy(lpszFile, MAX_PATH, tch);
             return(1);
         } else {
             WCHAR tchFileExpanded[MAX_PATH];
             ExpandEnvironmentStrings(tch, tchFileExpanded, COUNTOF(tchFileExpanded));
             if (PathIsRelative(tchFileExpanded)) {
-                lstrcpy(lpszFile, lpszModule);
-                lstrcpy(PathFindFileName(lpszFile), tchFileExpanded);
-                return(1);
+                StringCchCopy(lpszFile, MAX_PATH, lpszModule);
+                StringCchCopy(PathFindFileName(lpszFile), MAX_PATH - (PathFindFileName(lpszFile) - lpszFile), tchFileExpanded);
             } else {
-                lstrcpy(lpszFile, tchFileExpanded);
-                return(1);
+                StringCchCopy(lpszFile, MAX_PATH, tchFileExpanded);
             }
+            // Redirect target doesn't exist — try to create it
+            CreateIniFileEx(lpszFile);
+            return(1);
         }
     }
     return(0);
@@ -789,22 +809,25 @@ int FindIniFile()
             if (!CheckIniFile(g_wchIniFile, tchModule)) {
                 ExpandEnvironmentStringsEx(g_wchIniFile, COUNTOF(g_wchIniFile));
                 if (PathIsRelative(g_wchIniFile)) {
-                    lstrcpy(tchTest, tchModule);
-                    PathRemoveFileSpec(tchTest);
-                    PathAppend(tchTest, g_wchIniFile);
-                    lstrcpy(g_wchIniFile, tchTest);
+                    StringCchCopy(tchTest, COUNTOF(tchTest), tchModule);
+                    if (SUCCEEDED(PathCchRemoveFileSpec(tchTest, COUNTOF(tchTest))) &&
+                        SUCCEEDED(PathCchAppend(tchTest, COUNTOF(tchTest), g_wchIniFile))) {
+                        StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), tchTest);
+                    }
                 }
             }
         }
         return(1);
     }
 
-    lstrcpy(tchTest, PathFindFileName(tchModule));
-    PathRenameExtension(tchTest, L".ini");
+    StringCchCopy(tchTest, COUNTOF(tchTest), PathFindFileName(tchModule));
+    if (FAILED(PathCchRenameExtension(tchTest, COUNTOF(tchTest), L".ini"))) {
+        StringCchCopy(tchTest, COUNTOF(tchTest), L"minipath.ini");
+    }
     bFound = CheckIniFile(tchTest, tchModule);
 
     if (!bFound) {
-        lstrcpy(tchTest, L"minipath.ini");
+        StringCchCopy(tchTest, COUNTOF(tchTest), L"minipath.ini");
         bFound = CheckIniFile(tchTest, tchModule);
     }
 
@@ -813,20 +836,25 @@ int FindIniFile()
         if (CheckIniFileRedirect(L"minipath", L"minipath.ini", tchTest, tchModule)) {
             CheckIniFileRedirect(L"minipath", L"minipath.ini", tchTest, tchModule);
         }
-        lstrcpy(g_wchIniFile, tchTest);
+        StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), tchTest);
     } else {
-        lstrcpy(g_wchIniFile, tchModule);
-        PathRenameExtension(g_wchIniFile, L".ini");
+        StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), tchModule);
+        if (FAILED(PathCchRenameExtension(g_wchIniFile, COUNTOF(g_wchIniFile), L".ini"))) {
+            StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), L"");
+        }
     }
 
     // --- check for Notepad3.ini to synchronize some settings ---
-    PathRemoveFileSpec(tchModule);
-    lstrcat(tchModule, L"\\Notepad3.exe");
-    lstrcpy(tchTest, PathFindFileName(tchModule));
-    PathRenameExtension(tchTest, L".ini");
+    if (SUCCEEDED(PathCchRemoveFileSpec(tchModule, COUNTOF(tchModule)))) {
+        StringCchCat(tchModule, COUNTOF(tchModule), L"\\Notepad3.exe");
+    }
+    StringCchCopy(tchTest, COUNTOF(tchTest), PathFindFileName(tchModule));
+    if (FAILED(PathCchRenameExtension(tchTest, COUNTOF(tchTest), L".ini"))) {
+        StringCchCopy(tchTest, COUNTOF(tchTest), L"notepad3.ini");
+    }
     bFound = CheckIniFile(tchTest, tchModule);
     if (!bFound) {
-        lstrcpy(tchTest, L"notepad3.ini");
+        StringCchCopy(tchTest, COUNTOF(tchTest), L"notepad3.ini");
         bFound = CheckIniFile(tchTest, tchModule);
     }
     if (bFound) {
@@ -834,10 +862,12 @@ int FindIniFile()
         if (CheckIniFileRedirect(L"notepad3", L"notepad3.ini", tchTest, tchModule)) {
             CheckIniFileRedirect(L"notepad3", L"notepad3.ini", tchTest, tchModule);
         }
-        lstrcpy(g_wchNP3IniFile, tchTest);
+        StringCchCopy(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), tchTest);
     } else {
-        lstrcpy(g_wchNP3IniFile, tchModule);
-        PathRenameExtension(g_wchNP3IniFile, L".ini");
+        StringCchCopy(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), tchModule);
+        if (FAILED(PathCchRenameExtension(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), L".ini"))) {
+            StringCchCopy(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), L"");
+        }
     }
     return (bFound ? 1 : 0);
 }
@@ -847,21 +877,22 @@ int TestIniFile()
 {
 
     if (lstrcmpi(g_wchIniFile, L"*?") == 0) {
-        lstrcpy(g_wchIniFile2, L"");
-        lstrcpy(g_wchIniFile, L"");
+        StringCchCopy(g_wchIniFile2, COUNTOF(g_wchIniFile2), L"");
+        StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), L"");
         return(0);
     }
 
     if (PathIsDirectory(g_wchIniFile) || *CharPrev(g_wchIniFile, StrEnd(g_wchIniFile)) == L'\\') {
         WCHAR wchModule[MAX_PATH];
         GetModuleFileName(nullptr, wchModule, COUNTOF(wchModule));
-        PathAppend(g_wchIniFile, PathFindFileName(wchModule));
-        PathRenameExtension(g_wchIniFile, L".ini");
+        if (SUCCEEDED(PathCchAppend(g_wchIniFile, COUNTOF(g_wchIniFile), PathFindFileName(wchModule)))) {
+            PathCchRenameExtension(g_wchIniFile, COUNTOF(g_wchIniFile), L".ini");
+        }
         if (!PathIsExistingFile(g_wchIniFile)) {
-            lstrcpy(PathFindFileName(g_wchIniFile), L"minipath.ini");
+            StringCchCopy(PathFindFileName(g_wchIniFile), COUNTOF(g_wchIniFile) - (PathFindFileName(g_wchIniFile) - g_wchIniFile), L"minipath.ini");
             if (!PathIsExistingFile(g_wchIniFile)) {
-                lstrcpy(PathFindFileName(g_wchIniFile), PathFindFileName(wchModule));
-                PathRenameExtension(g_wchIniFile, L".ini");
+                StringCchCopy(PathFindFileName(g_wchIniFile), COUNTOF(g_wchIniFile) - (PathFindFileName(g_wchIniFile) - g_wchIniFile), PathFindFileName(wchModule));
+                PathCchRenameExtension(g_wchIniFile, COUNTOF(g_wchIniFile), L".ini");
             }
         }
     }
@@ -869,25 +900,27 @@ int TestIniFile()
     if (PathIsDirectory(g_wchNP3IniFile) || *CharPrev(g_wchNP3IniFile, StrEnd(g_wchNP3IniFile)) == L'\\') {
         WCHAR wchModule[MAX_PATH];
         GetModuleFileName(nullptr, wchModule, COUNTOF(wchModule));
-        PathRemoveFileSpec(wchModule);
-        lstrcat(wchModule, L"\\Notepad3.exe");
-        PathAppend(g_wchNP3IniFile, PathFindFileName(wchModule));
-        PathRenameExtension(g_wchNP3IniFile, L".ini");
+        if (SUCCEEDED(PathCchRemoveFileSpec(wchModule, COUNTOF(wchModule)))) {
+            StringCchCat(wchModule, COUNTOF(wchModule), L"\\Notepad3.exe");
+        }
+        if (SUCCEEDED(PathCchAppend(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), PathFindFileName(wchModule)))) {
+            PathCchRenameExtension(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), L".ini");
+        }
         if (!PathIsExistingFile(g_wchNP3IniFile)) {
-            lstrcpy(PathFindFileName(g_wchNP3IniFile), L"notepad3.ini");
+            StringCchCopy(PathFindFileName(g_wchNP3IniFile), COUNTOF(g_wchNP3IniFile) - (PathFindFileName(g_wchNP3IniFile) - g_wchNP3IniFile), L"notepad3.ini");
             if (!PathIsExistingFile(g_wchNP3IniFile)) {
-                lstrcpy(PathFindFileName(g_wchNP3IniFile), PathFindFileName(wchModule));
-                PathRenameExtension(g_wchNP3IniFile, L".ini");
+                StringCchCopy(PathFindFileName(g_wchNP3IniFile), COUNTOF(g_wchNP3IniFile) - (PathFindFileName(g_wchNP3IniFile) - g_wchNP3IniFile), PathFindFileName(wchModule));
+                PathCchRenameExtension(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), L".ini");
             }
         }
     }
     if (!PathIsExistingFile(g_wchNP3IniFile) || PathIsDirectory(g_wchNP3IniFile)) {
-        lstrcpy(g_wchNP3IniFile, L"");
+        StringCchCopy(g_wchNP3IniFile, COUNTOF(g_wchNP3IniFile), L"");
     }
 
     if (!PathFileExists(g_wchIniFile) || PathIsDirectory(g_wchIniFile)) {
-        lstrcpy(g_wchIniFile2, g_wchIniFile);
-        lstrcpy(g_wchIniFile, L"");
+        StringCchCopy(g_wchIniFile2, COUNTOF(g_wchIniFile2), g_wchIniFile);
+        StringCchCopy(g_wchIniFile, COUNTOF(g_wchIniFile), L"");
         return(0);
     } else {
         return(1);
@@ -995,7 +1028,11 @@ void LoadSettings()
             }
         }
         if (StrIsEmpty(Settings.tchFavoritesDir)) {
-            SHGetFolderPath(nullptr, CSIDL_PERSONAL, nullptr, SHGFP_TYPE_CURRENT, Settings.tchFavoritesDir);
+            PWSTR pszPath = nullptr;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, 0, nullptr, &pszPath))) {
+                StringCchCopy(Settings.tchFavoritesDir, COUNTOF(Settings.tchFavoritesDir), pszPath);
+                CoTaskMemFree(pszPath);
+            }
         } else {
             PathAbsoluteFromApp(Settings.tchFavoritesDir, nullptr, COUNTOF(Settings.tchFavoritesDir), TRUE);
         }
@@ -1005,8 +1042,8 @@ void LoadSettings()
         if (!IniSectionGetString(Settings_Section, L"Quikview.exe", Defaults.szQuickview,
                                  Settings.szQuickview, COUNTOF(Settings.szQuickview))) {
             GetSystemDirectory(Settings.szQuickview, COUNTOF(Settings.szQuickview));
-            PathAddBackslash(Settings.szQuickview);
-            lstrcat(Settings.szQuickview, L"Viewers\\Quikview.exe");
+            PathCchAddBackslash(Settings.szQuickview, COUNTOF(Settings.szQuickview));
+            StringCchCat(Settings.szQuickview, COUNTOF(Settings.szQuickview), L"Viewers\\Quikview.exe");
         } else {
             PathAbsoluteFromApp(Settings.szQuickview, nullptr, COUNTOF(Settings.szQuickview), TRUE);
         }
@@ -1018,14 +1055,18 @@ void LoadSettings()
                             Settings.szQuickviewParams, COUNTOF(Settings.szQuickviewParams));
 
 
-        lstrcpy(Defaults.tchOpenWithDir, L"%USERPROFILE%\\Desktop");
+        StringCchCopy(Defaults.tchOpenWithDir, COUNTOF(Defaults.tchOpenWithDir), L"%USERPROFILE%\\Desktop");
         if (IniSectionGetString(Settings_Section, L"OpenWithDir", L"",
                                 Settings.tchOpenWithDir, COUNTOF(Settings.tchOpenWithDir)) == 0) {
             // try to fetch Open With dir from Notepad3.ini
             IniFileGetString(g_wchNP3IniFile, L"Settings", L"OpenWithDir", L"", Settings.tchOpenWithDir, COUNTOF(Settings.tchOpenWithDir));
         }
         if (StrIsEmpty(Settings.tchOpenWithDir)) {
-            SHGetSpecialFolderPath(nullptr, Settings.tchOpenWithDir, CSIDL_DESKTOPDIRECTORY, TRUE);
+            PWSTR pszPath = nullptr;
+            if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Desktop, 0, nullptr, &pszPath))) {
+                StringCchCopy(Settings.tchOpenWithDir, COUNTOF(Settings.tchOpenWithDir), pszPath);
+                CoTaskMemFree(pszPath);
+            }
         } else {
             PathAbsoluteFromApp(Settings.tchOpenWithDir, nullptr, COUNTOF(Settings.tchOpenWithDir), TRUE);
         }
@@ -1034,16 +1075,16 @@ void LoadSettings()
         GET_INT_VALUE_FROM_INISECTION(nSortFlags, L"SortOptions", DS_TYPE, 0, 3);
         GET_BOOL_VALUE_FROM_INISECTION(fSortRev, L"SortReverse", FALSE);
 
-        lstrcpy(Defaults.tchFilter, L"*.*");
+        StringCchCopy(Defaults.tchFilter, COUNTOF(Defaults.tchFilter), L"*.*");
         if (!lpFilterArg) {
             IniSectionGetString(Settings_Section, L"FileFilter", Defaults.tchFilter, Settings.tchFilter, COUNTOF(Settings.tchFilter));
         } else { // ignore filter if /m was specified
             if (*(lpFilterArg) == L'-') {
                 Settings.bNegFilter = TRUE;
-                (void)lstrcpyn(Settings.tchFilter, lpFilterArg + 1, COUNTOF(Settings.tchFilter));
+                (void)StringCchCopy(Settings.tchFilter, COUNTOF(Settings.tchFilter), lpFilterArg + 1);
             } else {
                 Settings.bNegFilter = FALSE;
-                (void)lstrcpyn(Settings.tchFilter, lpFilterArg, COUNTOF(Settings.tchFilter));
+                (void)StringCchCopy(Settings.tchFilter, COUNTOF(Settings.tchFilter), lpFilterArg);
             }
         }
         GET_BOOL_VALUE_FROM_INISECTION(bNegFilter, L"NegativeFilter", FALSE);
@@ -1052,9 +1093,9 @@ void LoadSettings()
         GET_INT_VALUE_FROM_INISECTION(crNoFilt, L"ColorNoFilter", GetSysColor(COLOR_WINDOWTEXT), 0, INT_MAX);
         GET_INT_VALUE_FROM_INISECTION(crFilter, L"ColorFilter", GetSysColor(COLOR_HIGHLIGHT), 0, INT_MAX);
 
-        lstrcpy(Defaults.tchToolbarButtons, L"1 2 3 4 5 0 8");
+        StringCchCopy(Defaults.tchToolbarButtons, COUNTOF(Defaults.tchToolbarButtons), L"1 2 3 4 5 0 8");
         if (IniSectionGetString(Settings_Section, L"ToolbarButtons", Defaults.tchToolbarButtons, Settings.tchToolbarButtons, COUNTOF(Settings.tchToolbarButtons)) == 0) {
-            lstrcpy(Settings.tchToolbarButtons, Defaults.tchToolbarButtons);
+            StringCchCopy(Settings.tchToolbarButtons, COUNTOF(Settings.tchToolbarButtons), Defaults.tchToolbarButtons);
         }
 
         GET_BOOL_VALUE_FROM_INISECTION(bShowToolbar, L"ShowToolbar", TRUE);

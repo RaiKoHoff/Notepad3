@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "Kopírov&ať pridané\tCtrl+E",              IDM_EDIT_COPYADD
         MENUITEM "&Vložiť\tCtrl+V",                         IDM_EDIT_PASTE
         MENUITEM "Z&ameniť\tCtrl+K",                        IDM_EDIT_SWAP
-        MENUITEM "Z&mazať\tDel",                            IDM_EDIT_CLEAR
-        MENUITEM "Vyprázdniť &schránku",                    IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "Vy&brať všetko\tCtrl+A",                  IDM_EDIT_SELECTALL
+        MENUITEM "Z&mazať\tDel",                            IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "Vyprázdniť &schránku",                    IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "Prepnúť &monitorovanie schránky",        IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "&Slová"
         BEGIN
@@ -483,6 +485,7 @@ BEGIN
         MENUITEM "&Oznámenie o zmene súboru...\tAlt+F5",           IDM_SET_CHANGENOTIFY
         ///MENUITEM "Auto-ukladanie / Nastavenie zálohovania...",  IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "&Stlmiť hlásenie pípnutím",                      IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "Vyriešiť na &UNC-Paths",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "&Funkcia klávesy Esc"
         BEGIN
             MENUITEM "Ž&iadna",                             IDM_SET_NOESCFUNC
@@ -492,6 +495,11 @@ BEGIN
         MENUITEM "Uložiť pred spustením &nástrojov",        IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Výpočet drobných výrazov",                IDM_SET_EVALTINYEXPRONSEL
         MENUITEM "Povoliť viacnásobný výber",               IDM_SET_MULTIPLE_SELECTION
+        POPUP "&Predvolený adresár"
+        BEGIN
+            MENUITEM "&Adresár aktuálneho súboru",  IDM_SET_DEFAULTDIR
+            MENUITEM "&Obnoviť predvolené",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "&Pamätať si"
         BEGIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "Otvoriť Hyperlink",                      CMD_OPEN_HYPERLINK
+        MENUITEM "Kopírovať adresu URL",           CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "Späť",                                   IDM_EDIT_UNDO
         MENUITEM "Znova",                                  IDM_EDIT_REDO
@@ -570,6 +579,16 @@ BEGIN
         MENUITEM "Zmazať",                                 IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "Vybrať všetko",                          IDM_EDIT_SELECTALL
+        MENUITEM SEPARATOR
+        POPUP "Zmeniť veľkosť písma"
+        BEGIN
+            MENUITEM "Veľké písmená",              CMD_CTX_UPPERCASE
+            MENUITEM "Malé písmená",              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "Invertovať  veľkosť",            CMD_CTX_INVERTCASE
+            MENUITEM "Prvé veľké v slove",             CMD_CTX_TITLECASE
+            MENUITEM "Prvé veľké vo vete",          CMD_CTX_SENTENCECASE
+        END
         MENUITEM SEPARATOR
         MENUITEM "Prepnúť aktuálny uzol",                  IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR

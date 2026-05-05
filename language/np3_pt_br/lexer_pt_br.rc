@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "Arquivos de Registro"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Inno (Script de Configuração)"
     IDS_LEX_RUBY            "Ruby (Script)"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "HDL da Verilog"
     IDS_LEX_SYSVERILOG      "HDVL da SystemVerilog"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -515,6 +517,10 @@ BEGIN
     IDS_LEX_STR_SysTasks    "Tarefas do Sistema"
     IDS_LEX_STR_AfterLabel  "Depois do Rótulo"
     IDS_LEX_STR_Table       "Tabela"
+    IDS_LEX_STR_StarCmd     "Comando de Estrela"
+    IDS_LEX_STR_SlashCmd    "Comando de Barra"
+    IDS_LEX_STR_Processor   "Processador"
+    IDS_LEX_STR_Argument    "Argumento"
 END
 
 STRINGTABLE

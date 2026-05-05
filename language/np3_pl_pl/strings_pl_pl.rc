@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Podniesiony"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Schowek"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Bez nazwy"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Tylko do odczytu)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Błąd podczas ładowania ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Błąd podczas zapisu ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "Ścieżka do ""%s"" już nie istnieje.\nOdtwórz ścieżkę i zapisz plik?"
     IDS_MUI_ERR_DLG_FORMAT  "Błąd '%s', powód:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Nie znaleziono wtyczki przeglądarki pliku\nWtyczkę przeglądarki pliku do MiniPath można pobrać z https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Nie znaleziono wtyczki wyszukiwania pliku.\Wtyczkę wyszukiwania pliku programu grepWinNP3 można pobrać ze strony https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Nie znaleziono wtyczki wyszukiwania pliku.\Wtyczkę wyszukiwania pliku programu grepWin Portable można pobrać ze strony https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Nie znaleziono wtyczki wyszukiwania plików\nZainstaluj najnowszą wersję grepWinPortable na platformie PortableApps."
     IDS_MUI_ERR_MRUDLG      "Brak dostępu do wybranego pliku!\nCzy chcesz usunąć go z listy?"
     IDS_MUI_ERR_CREATELINK  "Błąd podczas tworzenia skrótu na Pulpicie"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "URL nie znaleziono określonej ścieżki!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Kliknij, aby otworzyć plik"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Kliknij, aby otworzyć link w przeglądarce"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Włączono zachowanie znacznika czasu w modyfikacji pliku\nTa opcja pozostanie dla tej sesji!"
     IDS_MUI_OUT_OFF_OCCMRK   "Kończą się znaczniki występowania (Zakładka/Podświetlenie)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Zapisać zmiany w:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Zapisać zmiany w:\n%s?"
     IDS_MUI_ASK_REVERT      "Przywrócić plik do poprzedniego stanu? Zmiany zostaną utracone!"
     IDS_MUI_ASK_RECODE      "Ponowne kodowanie wymaga ponownego załadowania pliku z dysku, niezapisane zmiany zostaną utracone!"
     IDS_MUI_ASK_CREATE      """%s"" nie znaleziono\nCzy chcesz utworzyć ten plik?"
@@ -243,7 +248,7 @@ BEGIN
     IDS_MUI_STY_BASESTD     "BASE (Styl domyślny):"
     IDS_MUI_STY_BASE2ND     "BASE (drugi styl domyślny):"
     IDS_MUI_STY_LEXDEF      "%s - Styl domyślny:"
-    IDS_MUI_STY_LEXSTYLE    "%s's  Style:"
+    IDS_MUI_STY_LEXSTYLE    "Styl %s:"
     IDS_MUI_TITLE_RELBASE   "+++ BASE (%s) +++"
 END
 
@@ -251,12 +256,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_TRANSL_AUTHOR   "(pl-PL) Polskie tłumaczenie: Crane70"
     IDS_MUI_TITLE_FIXBASE   "BASE (%s)"
-    IDS_MUI_TITLE_RELCUR    "+++ %s: %s Style +++"
-    IDS_MUI_TITLE_FIXCUR    "%s: %s Style"
-    IDS_MUI_TITLE_RELARB    "+++ Style '%s' (%s) +++"
-    IDS_MUI_TITLE_FIXARB    "Style '%s' (%s)"
+    IDS_MUI_TITLE_RELCUR    "+++ %s: %s Styl +++"
+    IDS_MUI_TITLE_FIXCUR    "%s: %s Styl"
+    IDS_MUI_TITLE_RELARB    "+++ Styl '%s' (%s) +++"
+    IDS_MUI_TITLE_FIXARB    "Styl '%s' (%s)"
     IDS_MUI_ASSOCIATED_EXT  "Skojarzone rozszerzenia nazwy plików:"
-    IDS_MUI_ZERO_LEN_MATCH  "^ Zero-Length Match"
+    IDS_MUI_ZERO_LEN_MATCH  "^ Dopasowanie zerowej długości"
     IDS_MUI_GOTO_LINE       "Linia (1 - %lli):"
     IDS_MUI_GOTO_COLUMN     "Kolumna (1 - %lli):"
 END
@@ -341,8 +346,8 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Rozszerzenia plików należy oddzielić ';'\r\n\
-zastosuj \\<regex>; aby zdefiniować nazwę pliku pasującą do wzoru:\r\n\
-   \\xyz$;   => filenames(basename+ext) with 'xyz' as last chars\r\n\r\n\
+Wpisy zawierające '*', '?' lub '.' odpowiadają pełnej nazwie pliku (symbol wieloznaczny):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Style format:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

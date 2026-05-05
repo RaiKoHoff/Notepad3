@@ -1,3 +1,4 @@
+si# OS generated files #
 # OS generated files #
 ######################
 .DS_Store
@@ -8,6 +9,8 @@
 ehthumbs.db
 Thumbs.db
 .vscode
+.venv
+.agent
 
 # C++ Junk           #
 ######################
@@ -27,13 +30,14 @@ Thumbs.db
 
 /.vs
 /Bin
-/Build/Ignore*
-/Build/*portable*
+#/Build/Ignore*
+#/Build/*portable*
 /Build/notepad3*setup*
 /Build/Resources
 /Build/Packages
 
-/packages
+/_upgrade_backup
+
 /other_sln/packages
 
 ### changes by Version.ps1 script ###
@@ -49,18 +53,30 @@ Thumbs.db
 /test/test.log
 /Notepad3.VC.VC.opendb
 
-/np3portableapp/*.7z
-/np3portableapp/*.cmd
-/np3portableapp/*.exe
-/np3portableapp/*.txt
-/np3portableapp/Notepad3Portable/Data
-/np3portableapp/Notepad3Portable/Notepad3Portable.*
+/grepWin/portables/*.zip
+
+/np3portableapp/Signing*.cmd
+/np3portableapp/Signing*.txt
+/np3portableapp/_buildname.txt
+/np3portableapp/Notepad3Portable*.7z
+/np3portableapp/Notepad3Portable*.exe
+/np3portableapp/Notepad3Portable*.exe
+/np3portableapp/Notepad3Portable/Notepad3Portable*.exe
 /np3portableapp/Notepad3Portable/App/AppInfo/appinfo.ini
 /np3portableapp/Notepad3Portable/App/AppInfo/installer.ini
-/np3portableapp/Notepad3Portable/App/DefaultData/settings
-/np3portableapp/Notepad3Portable/App/Notepad3/Docs
+/np3portableapp/Notepad3Portable/App/DefaultData/settings/
 /np3portableapp/Notepad3Portable/App/Notepad3/x64/*.exe
 /np3portableapp/Notepad3Portable/App/Notepad3/x64/lng
 /np3portableapp/Notepad3Portable/App/Notepad3/x86/*.exe
 /np3portableapp/Notepad3Portable/App/Notepad3/x86/lng
+/np3portableapp/Notepad3Portable/App/Notepad3/Docs/
+#
 
+# Upgrade staging directory
+_upgrade_staging/
+
+# Research documents (local only)
+/todo/research/
+
+# ARM64 build intermediate directories
+**/ARM64/

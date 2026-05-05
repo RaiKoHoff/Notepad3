@@ -72,20 +72,21 @@ IDC_COPY                CURSOR                  "Copy.cur"
 // =============================================================================
 // Following Text is streamed to RichEdit Control supporting ANSI CP-1252 only
 // Unicode characters have to be encoded using '\\uN<ch>' sequences.
-// Example: K�ng => K\\u252nng
+// Example: K?ng => K\\u252nng
 // =============================================================================
 
 STRINGTABLE
 BEGIN
 
 IDS_MUI_ABOUT_DEV  "\
-\\cf0 \\b1 Florian 'Flo' Balmer (Notepad2)\\b0\\tab https://www.flos-freeware.ch\\par\
+\\cf0 \\b1 Florian 'Flo' Balmer (Notepad2,minipath)\\b0\\tab https://www.flos-freeware.ch\\par\
 \\cf0 RaiKoHoff\\tab https://github.com/RaiKoHoff\\par\
 \\cf0 \\par\
 "
 
 IDS_MUI_ABOUT_CONTRIBS  "\
 \\cf0 Derick Payne (\\u0169   Rizonesoft)\\tab https://rizonesoft.com\\par\
+\\cf0 Pairi Daiza (MUI language support)\\tab https://github.com/hpwamr\\par\
 \\cf0 XhmikosR (Notepad2-mod)\\tab https://xhmikosr.github.io/notepad2-mod\\par\
 \\cf0 Kai Liu (CodeFolding)\\tab https://code.kliu.org/misc/notepad2\\par\
 \\cf0 RL Vision (Bookmarks)\\tab https://www.rlvision.com/notepad2/about.php\\par\
@@ -99,13 +100,15 @@ IDS_MUI_ABOUT_CONTRIBS  "\
 "
 
 IDS_MUI_ABOUT_LIBS  "\
-\\cf0 N.Hodgson (Scintilla)\\tab https://www.scintilla.org\\par\
-\\cf0 K.Kosako (Oniguruma Regex)\\tab https://github.com/kkos/oniguruma\\par\
-\\cf0 Stefan K\\u252nng (grepWin)\\tab https://github.com/stefankueng/grepWin\\par\
-\\cf0 D.Dyer (NotepadCrypt)\\tab https://www.real-me.net/ddyer/notepad/NotepadCrypt.html\\par\
+\\cf0 Neil Hodgson (Scintilla)\\tab https://www.scintilla.org\\par\
+\\cf0 Neil Hodgson (Lexilla)\\tab https://www.scintilla.org/Lexilla.html\\par\
+\\cf0 Philip Hazel et al. (PCRE2 Regex)\\tab https://pcre2project.github.io/pcre2\\par\
+\\cf0 Stefan Küng (grepWin)\\tab https://github.com/stefankueng/grepWin\\par\
+\\cf0 Dave Dyer (NotepadCrypt)\\tab https://www.real-me.net/ddyer/notepad/NotepadCrypt.html\\par\
+\\cf0 Brodie Thiesfield (SimpleIni)\\tab https://github.com/brofield/simpleini\\par\
 \\cf0 T.D.Hanson (uthash)\\tab https://troydhanson.github.io/uthash\\par\
 \\cf0 Carbo Kuo (Mozilla's uchardet)\\tab https://www.freedesktop.org/wiki/Software/uchardet\\par\
-\\cf0 Lewis Van Winkle (TinyExpr)\\tab https://github.com/codeplea/tinyexpr\\par\
+\\cf0 Blake Madden (TinyExpr++)\\tab https://github.com/Blake-Madden/tinyexpr-plusplus\\par\
 \\cf0 Carlo Pallini (Resample BMP)\\tab https://www.codeproject.com/Articles/22271/Plain-C-Resampling-DLL\\par\
 \\cf0 \\par\
 "
@@ -119,10 +122,12 @@ IDS_MUI_ABOUT_ACKNOWLEDGES  "\
 \\cf0 alex-ilin\\tab https://github.com/alex-ilin\\par\
 \\cf0 alexantr\\tab https://github.com/alexantr\\par\
 \\cf0 ashish12phnx\\tab https://github.com/ashish12phnx\\par\
+\\cf0 bovirus\\tab https://github.com/bovirus\\par\
 \\cf0 bravo-hero\\tab https://github.com/bravo-hero\\par\
 \\cf0 chuanliwen\\tab https://github.com/chuanliwen\\par\
 \\cf0 craigo-\\tab https://github.com/craigo-/\\par\
 \\cf0 Crane70\\tab https://github.com/Crane70\\par\
+\\cf0 en2sv\\tab https://github.com/en2sv\\par\
 \\cf0 engelhro\\tab https://github.com/engelhro\\par\
 \\cf0 Hexaae\\tab https://github.com/Hexaae\\par\
 \\cf0 hpwamr\\tab https://github.com/hpwamr\\par\
@@ -144,6 +149,7 @@ IDS_MUI_ABOUT_ACKNOWLEDGES  "\
 \\cf0 Mitezuss\\tab https://github.com/Mitezuss\\par\
 \\cf0 nickreserved\\tab https://github.com/nickreserved\\par\
 \\cf0 np3fan\\tab https://github.com/np3fan\\par\
+\\cf0 p0k33m0n\\tab https://github.com/p0k33m0n\\par\
 \\cf0 quadratz\\tab https://github.com/quadratz\\par\
 \\cf0 RaiKoHoff\\tab https://github.com/RaiKoHoff\\par\
 \\cf0 rizonesoft\\tab https://github.com/rizonesoft\\par\
@@ -166,11 +172,11 @@ IDS_MUI_ABOUT_MORE  "\
 
 IDS_MUI_ABOUT_LICENSES  "\
 \\cf0 Scintilla\\tab https://www.scintilla.org/License.txt\\par\
-\\cf0 Oniguruma Regex\\tab https://github.com/kkos/oniguruma/blob/master/COPYING\\par\
+\\cf0 PCRE2 Regex\\tab https://github.com/PCRE2Project/pcre2/blob/main/LICENCE.md\\par\
 \\cf0 grepWin\\tab https://github.com/stefankueng/grepWin/blob/master/LICENSE\\par\
 \\cf0 uthash\\tab https://troydhanson.github.io/uthash/license.html\\par\
 \\cf0 uchardet\\tab https://www.freedesktop.org/wiki/Software/uchardet/#license\\par\
-\\cf0 TinyExpr\\tab https://github.com/codeplea/tinyexpr/blob/master/LICENSE\\par\
+\\cf0 TinyExpr++\\tab https://github.com/Blake-Madden/tinyexpr-plusplus/blob/master/LICENSE\\par\
 \\cf0 Notepad3 icon by Vexels.com\\tab https://www.vexels.com\\par\
 \\cf0   -  designed by\\tab smanashova@gmail.com\\par\
 \\cf0 \\par\

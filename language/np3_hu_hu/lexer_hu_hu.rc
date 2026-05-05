@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "Registry fájl"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Inno Setup szkript"
     IDS_LEX_RUBY            "Ruby szkript"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "Verilog HDL"
     IDS_LEX_SYSVERILOG      "SystemVerilog HDVL"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -491,30 +493,34 @@ BEGIN
     IDS_LEX_STR_63376       "Continuation"
     IDS_LEX_STR_Special     "Speciális"
     IDS_LEX_STR_63378       "Syntax Operator"
-    IDS_LEX_STR_63379       "Unclosed String"
+    IDS_LEX_STR_63379       "Lezáratlan szöveg"
     IDS_LEX_STR_63380       "URL/IRI"
-    IDS_LEX_STR_63381       "Compact IRI"
+    IDS_LEX_STR_63381       "Kompakt IRI"
     IDS_LEX_STR_SendKey     "Send Key"
     IDS_LEX_STR_63383       "Meta-Data"
     IDS_LEX_STR_Enum        "Enumeration"
     IDS_LEX_STR_63385       "TriQ-String"
-    IDS_LEX_STR_63386       "Symbol Identifier"
-    IDS_LEX_STR_63387       "Symbol Operator"
+    IDS_LEX_STR_63386       "Szimbólum azonosító"
+    IDS_LEX_STR_63387       "Szimbólum operátor"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_LEX_STR_StrgEOL     "String EOL"
+    IDS_LEX_STR_StrgEOL     "Szöveg EOL"
     IDS_LEX_STR_Backticks   "Backticks"
     IDS_LEX_STR_GUIDStrg    "GUID String"
     IDS_LEX_STR_Global      "Global"
     IDS_LEX_STR_Input       "Input"
     IDS_LEX_STR_Output      "Output"
     IDS_LEX_STR_InOut       "InOut"
-    IDS_LEX_STR_PortConn    "Port Connection"
-    IDS_LEX_STR_SysTasks    "System Tasks"
-    IDS_LEX_STR_AfterLabel  "After Label"
-    IDS_LEX_STR_Table       "Table"
+    IDS_LEX_STR_PortConn    "Port kapcsolat"
+    IDS_LEX_STR_SysTasks    "Rendszerfeladatok"
+    IDS_LEX_STR_AfterLabel  "Címke után"
+    IDS_LEX_STR_Table       "Tábla"
+    IDS_LEX_STR_StarCmd     "Csillag parancs"
+    IDS_LEX_STR_SlashCmd    "Per parancs"
+    IDS_LEX_STR_Processor   "Processzor"
+    IDS_LEX_STR_Argument    "Argumentum"
 END
 
 STRINGTABLE

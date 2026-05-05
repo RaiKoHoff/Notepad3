@@ -122,7 +122,7 @@ BEGIN
     IDS_ENC_ISO_8859_15            "C;라틴어 9 (ISO-8859-15);ISO-8859-15"
     IDS_ENC_DOS_865                "C;북유럽어 (DOS-865);DOS-865"
     IDS_ENC_DOS_437                "C;OEM 미국 (DOS-437);DOS-437"
-    IDS_ENC_DOS_858                "C;OEM 다국 라틴어 1 (DOS-858);DOS-858"
+    IDS_ENC_DOS_858                "C;OEM 다국어 라틴 1 (DOS-858);DOS-858"
     IDS_ENC_DOS_860                "C;포르투갈어 (DOS-860);DOS-860"
     IDS_ENC_MAC_ROMANIAN           "C;루마니아어 (Mac);Mac (Romanian)"
 END
@@ -131,20 +131,20 @@ STRINGTABLE
 BEGIN
     IDS_ENC_MAC_THAI               "C;태국어 (Mac);Mac (Thai)"
     IDS_ENC_WIN_874                "C;태국어 (Windows-874);Windows-874"
-    IDS_ENC_DOS_857                "C;터키어 (DOS-857);DOS-857"
-    IDS_ENC_ISO_8859_9             "C;터키어 (ISO-8859-9);ISO-8859-9"
-    IDS_ENC_MAC_TURKISH            "C;터키어 (Mac);Mac (Turkish)"
-    IDS_ENC_WIN_1254               "C;터키어 (Windows-1254);Windows-1254"
+    IDS_ENC_DOS_857                "C;튀르키예어 (DOS-857);DOS-857"
+    IDS_ENC_ISO_8859_9             "C;튀르키예어 (ISO-8859-9);ISO-8859-9"
+    IDS_ENC_MAC_TURKISH            "C;튀르키예어 (Mac);Mac (Turkish)"
+    IDS_ENC_WIN_1254               "C;튀르키예어 (Windows-1254);Windows-1254"
     IDS_ENC_MAC_UKRAINIAN          "C;우크라이나어 (Mac);Mac (Ukrainian)"
     IDS_ENC_WIN_1258               "C;베트남어 (Windows-1258);Windows-1258"
     IDS_ENC_DOS_850                "B;서유럽어 (DOS-850);DOS-850"
     IDS_ENC_ISO_8859_1             "B;서유럽어 (ISO-8859-1);ISO-8859-1"
     IDS_ENC_MAC_WESTERN_EUROP      "B;서유럽어 (Mac);Mac (Western)"
     IDS_ENC_WIN_1252               "B;서유럽어 (Windows-1252);Windows-1252"
-    IDS_ENC_IBM_EBCDIC_US          "D0;IBM EBCDIC (US-Canada);EBCDIC (US)"
-    IDS_ENC_IBM_EBCDIC_INT         "D1;IBM EBCDIC (International);EBCDIC (Int.)"
-    IDS_ENC_IBM_EBCDIC_GR          "D2;IBM EBCDIC (Greek Modern);EBCDIC (GR)"
-    IDS_ENC_IBM_EBCDIC_LAT_5       "D3;IBM EBCDIC (Turkish Latin-5);EBCDIC (Latin-5)"
+    IDS_ENC_IBM_EBCDIC_US          "D0;IBM EBCDIC (미국-캐나다);EBCDIC (US)"
+    IDS_ENC_IBM_EBCDIC_INT         "D1;IBM EBCDIC (국제);EBCDIC (Int.)"
+    IDS_ENC_IBM_EBCDIC_GR          "D2;IBM EBCDIC (그리스어 현대);EBCDIC (GR)"
+    IDS_ENC_IBM_EBCDIC_LAT_5       "D3;IBM EBCDIC (튀르키예어 라틴-5);EBCDIC (Latin-5)"
 END
 
 STRINGTABLE
@@ -159,6 +159,7 @@ BEGIN
     IDS_ENC_JOHAB                  "C;한국어 (조합);한국어 (조합)"
     IDS_ENC_ISO_8859_10            "B;북유럽어 (ISO-8859-10);ISO-8859-10"
     IDS_ENC_BIG5_HKSCS             "C;중국어 번체 (Big5-HKSCS);Big5-HKSCS"
+    IDS_ENC_DOS_855                "B;키릴 자모 (CP-855);CP-855"
 END
 
 

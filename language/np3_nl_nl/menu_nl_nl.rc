@@ -165,9 +165,11 @@ BEGIN
         MENUITEM "Kopie &toevoegen\tCtrl+E",                        IDM_EDIT_COPYADD
         MENUITEM "&Plakken\tCtrl+V",                                IDM_EDIT_PASTE
         MENUITEM "&Verwisselen\tCtrl+K",                            IDM_EDIT_SWAP
-        MENUITEM "&Wissen\tDel",                                    IDM_EDIT_CLEAR
-        MENUITEM "&Klembord wissen",                                IDM_EDIT_CLEARCLIPBOARD
         MENUITEM "Alles &selecteren\tCtrl+A",                       IDM_EDIT_SELECTALL
+        MENUITEM "&Wissen\tDel",                                    IDM_EDIT_CLEAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Klembord wissen",                                IDM_EDIT_CLEARCLIPBOARD
+        MENUITEM "&Bewaking van klembord omschakelen",              IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "W&oorden"
         BEGIN
@@ -483,6 +485,7 @@ BEGIN
         MENUITEM "Melding bij bestandswijziging...\tAlt+F5",        IDM_SET_CHANGENOTIFY
         ///MENUITEM "Automatisch opslaan / Back-up...",             IDM_SET_AUTOSAVE_BACKUP
         MENUITEM "Meldingen dempen",                                IDM_SET_MUTE_MESSAGEBEEP
+        MENUITEM "Oplossen naar &UNC-paden",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "Functie Esc-&toets"
         BEGIN
             MENUITEM "&Geen",                                       IDM_SET_NOESCFUNC
@@ -491,7 +494,12 @@ BEGIN
         END
         MENUITEM "O&pslaan voor uitvoeren",                         IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Tiny-E&xpressies berekenen",                      IDM_SET_EVALTINYEXPRONSEL
-        MENUITEM "Enable Multiple Selection",                       IDM_SET_MULTIPLE_SELECTION
+        MENUITEM "&Meervoudige selectie inschakelen",                       IDM_SET_MULTIPLE_SELECTION
+        POPUP "&Standaardmap"
+        BEGIN
+            MENUITEM "Instellen naar huidige &bestandsmap",  IDM_SET_DEFAULTDIR
+            MENUITEM "Herstellen naar &standaard",                 IDM_SET_DEFAULTDIR_RESET
+        END
         MENUITEM SEPARATOR
         POPUP "&Onthouden"
         BEGIN
@@ -516,7 +524,7 @@ BEGIN
         END
         POPUP "Tech&nologie"
         BEGIN
-            POPUP "&Rendering"
+            POPUP "Wee&Meervoudigeoudige"
             BEGIN
                 MENUITEM "DirectWrite (&Direct2D)",                 IDM_SET_RENDER_TECH_D2D
                 MENUITEM "DirectWrite &behouden",                   IDM_SET_RENDER_TECH_D2DRETAIN
@@ -560,6 +568,7 @@ BEGIN
     POPUP "+"
     BEGIN
         MENUITEM "Hyperlink openen",                                CMD_OPEN_HYPERLINK
+        MENUITEM "Hyperlink URL kopiëren",                          CMD_COPY_HYPERLINK
         MENUITEM SEPARATOR
         MENUITEM "Ongedaan maken",                                  IDM_EDIT_UNDO
         MENUITEM "Opnieuw uitvoeren",                               IDM_EDIT_REDO
@@ -570,6 +579,16 @@ BEGIN
         MENUITEM "Wissen",                                          IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "Alles selecteren",                                IDM_EDIT_SELECTALL
+        MENUITEM SEPARATOR
+        POPUP "Hoofdlettergebruik"
+        BEGIN
+            MENUITEM "HOOFDLETTERS",                                CMD_CTX_UPPERCASE
+            MENUITEM "kleine letters",                              CMD_CTX_LOWERCASE
+            MENUITEM SEPARATOR
+            MENUITEM "Hoofd/kleine letters omkeren",                CMD_CTX_INVERTCASE
+            MENUITEM "Alle Woorden Hoofdletters",                   CMD_CTX_TITLECASE
+            MENUITEM "Zin met hoofdletter",                         CMD_CTX_SENTENCECASE
+        END
         MENUITEM SEPARATOR
         MENUITEM "Huidige in/uitklappen wisselen",                  IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR

@@ -101,6 +101,7 @@ BEGIN
     IDS_LEX_REG_FILES       "登錄檔"
     IDS_LEX_VHDL            "VHDL"
     IDS_LEX_JSON            "JSON"
+    IDS_LEX_JSON5           "JSON5"
     IDS_LEX_NSIS            "NSIS"
     IDS_LEX_INNO            "Inno 安裝指令稿"
     IDS_LEX_RUBY            "Ruby 指令稿"
@@ -136,6 +137,7 @@ STRINGTABLE
 BEGIN
     IDS_LEX_VERILOG         "Verilog HDL"
     IDS_LEX_SYSVERILOG      "SystemVerilog HDVL"
+    IDS_LEX_ABAQUS          "ABAQUS"
 END
 
 STRINGTABLE
@@ -504,7 +506,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_LEX_STR_StrgEOL     "String EOL"
+    IDS_LEX_STR_StrgEOL     "字串換行"
     IDS_LEX_STR_Backticks   "反引號"
     IDS_LEX_STR_GUIDStrg    "GUID 字串"
     IDS_LEX_STR_Global      "全域"
@@ -514,7 +516,11 @@ BEGIN
     IDS_LEX_STR_PortConn    "埠連結"
     IDS_LEX_STR_SysTasks    "系統任務"
     IDS_LEX_STR_AfterLabel  "在標籤後"
-    IDS_LEX_STR_Table       "Table"
+    IDS_LEX_STR_Table       "表"
+    IDS_LEX_STR_StarCmd     "星號命令"
+    IDS_LEX_STR_SlashCmd    "斜線命令"
+    IDS_LEX_STR_Processor   "處理器"
+    IDS_LEX_STR_Argument    "參數"
 END
 
 STRINGTABLE

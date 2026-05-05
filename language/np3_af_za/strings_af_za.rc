@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Verhoogde"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Knipbord"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Ongetiteld"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Lees Net)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Kon nie ""%s"" laai nie"
     IDS_MUI_ERR_SAVEFILE    "Kon nie ""%s"" stoor nie"
+    IDS_MUI_ERR_PATHNOTFOUND "Die pad vir ""%s"" bestaan ​​nie meer nie.\nHerskep die pad en stoor die lêer?"
     IDS_MUI_ERR_DLG_FORMAT  "Fout '%s', oorsaak:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Geen lêerblaaier plugin is gevind nie\nDie MiniPath-lêerblaaier plugin kan afgelaai word vanaf https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Geen lêer soek-inprop is gevind nie\nDie grepWinNP3 lêersoek plugin kan afgelaai word vanaf https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Geen lêer soek-inprop is gevind nie\nDie grepWin Portable lêersoek plugin kan afgelaai word vanaf https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "No file search plugin was found\nPlease install the latest version of grepWinPortable in PortableApps Platform."
     IDS_MUI_ERR_MRUDLG      "Geen toegang tot die gekose lêer nie!\nWil jy dit uit die lys verwyder?"
     IDS_MUI_ERR_CREATELINK  "Kon nie die Desktop skakel skep nie"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "URL gespesifiseerde pad nie gevind nie!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik om die lêer oop te maak"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik om skakel in leser oop te maak"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Die behoud van die oorspronklike tydstempel vir lêerveranderings is geaktiveer\nHierdie opsie bly vir hierdie sessie!"
     IDS_MUI_OUT_OFF_OCCMRK   "Die optredemarkers raak op (Bookmerk/Merk)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Stoor veranderinge na:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Stoor veranderinge na:\n%s?"
     IDS_MUI_ASK_REVERT      "Herstel lêer na laaste gestoor toestand?"
     IDS_MUI_ASK_RECODE      "Herkodering vereis herlaai van lêer vanaf skyf, ongestoorde veranderinge sal verlore gaan!"
     IDS_MUI_ASK_CREATE      """%s"" nie gevind nie\nWil jy hierdie lêer skep?"
@@ -266,7 +271,7 @@ BEGIN
     IDS_MUI_MENU_LANGUAGE   "&Taal"
     IDS_USE_LOCALE_DATEFMT  "Taal Definieer &Datumformaat"
     IDS_MUI_MENU_THEMES     "&Skema-versameling"
-    IDM_THEMES_FACTORY_RESET "&Factory Reset"
+    IDM_THEMES_FACTORY_RESET "&Fabrieksherstel"
     IDM_THEMES_STD_CFG       "&Standaard Config"
     IDS_MUI_STATUSBAR_PREFIXES "Ln  ,Col  ,Sel  ,Sb  ,SLn  ,Occ  ,,,,,,,Ch  ,Repl  ,Eval  ,U+,"
     IDS_MUI_STATUSBAR_POSTFIXES ",,,,,,,,,,,,,,,,"
@@ -341,8 +346,8 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Lêernaam uitbreidings moet geskei word deur ;\r\n\
-gebruik \\<regex>; om 'n lêernaampasvorm te definieer:\r\n\
-   \\xyz$;   => lêername(basisnaam+ext) met 'xyz' vir laaste karakters\r\n\r\n\
+Inskrywings wat '*', '?' of '.' bevat, stem ooreen met die volle lêernaam (wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Stylformaat:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

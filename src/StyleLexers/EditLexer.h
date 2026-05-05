@@ -40,7 +40,7 @@ typedef struct _editlexer
     int          resID;        // language resource
     LPCWSTR      pszName;      // config/settings section
     LPCWSTR      pszDefExt;    // default file name ext (4 reset)
-    WCHAR        szExtensions[STYLE_EXTENTIONS_BUFFER];
+    WCHAR        szExtensions[STYLE_EXTENSIONS_BUFFER];
     PKEYWORDLIST pKeyWords;
     EDITSTYLE    Styles[];     // must be last
 
@@ -92,6 +92,7 @@ LexDefaultStyles;
 extern EDITLEXER lexStandard;      // Default Text
 extern EDITLEXER lexStandard2nd;   // 2nd Default Text
 extern EDITLEXER lexTEXT;          // Pure Text Files
+extern EDITLEXER lexAbaqus;        // Abaqus
 extern EDITLEXER lexANSI;          // ANSI Files
 extern EDITLEXER lexCONF;          // Apache Config Files
 extern EDITLEXER lexASM;           // Assembly Script
@@ -116,7 +117,8 @@ extern EDITLEXER lexGo;            // Go Source Code
 extern EDITLEXER lexINNO;          // Inno Setup Script
 extern EDITLEXER lexJAVA;          // Java Source Code
 extern EDITLEXER lexJS;            // JavaScript
-extern EDITLEXER lexJSON;          // JSON
+extern EDITLEXER lexJSON;          // JSON (strict, upstream Lexilla)
+extern EDITLEXER lexJSON5;         // JSON5 / JSON-LD (Notepad3 homebrew)
 extern EDITLEXER lexJulia;         // Julia
 extern EDITLEXER lexKiX;           // KiX
 extern EDITLEXER lexKotlin;        // Kotlin

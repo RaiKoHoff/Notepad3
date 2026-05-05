@@ -22,7 +22,7 @@ KEYWORDLIST KeyWords_BASH =
 
 EDITLEXER lexBASH =
 {
-    SCLEX_BASH, "bash", IDS_LEX_SHELL_SCR, L"Shell Script", L"sh; csh; zsh; bash; tcsh; m4; in; \\^mozconfig$", L"",
+    SCLEX_BASH, "bash", IDS_LEX_SHELL_SCR, L"Shell Script", L"sh; csh; zsh; bash; tcsh; m4; in; mozconfig*", L"",
     &KeyWords_BASH, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_SH_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },

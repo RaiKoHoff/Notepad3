@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : 権限昇格"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s: クリップボード履歴"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s: PASTEBOARD"
     IDS_MUI_UNTITLED        "無題"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(読み取り専用)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "読込失敗 ""%s"""
     IDS_MUI_ERR_SAVEFILE    "保存失敗 ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND """%s"" のパスが存在しなくなりました。\nパスを再作成してファイルを保存しますか?"
     IDS_MUI_ERR_DLG_FORMAT  "エラー '%s', 原因:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "ファイラーのプラグインがありません\nこのプラグイン MiniPath は以下からダウンロードできます https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "ファイル検索プラグインが見つかりません\nファイル検索プラグインの grepWinNP3 は以下からダウンロードできます https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "ファイル検索プラグインが見つかりません\nファイル検索プラグインの grepWin Portable は以下からダウンロードできます https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "ファイル検索プラグインが見つかりませんでした\nPortableApps プラットフォームに grepWinPortable の最新バージョンをインストールしてください。"
     IDS_MUI_ERR_MRUDLG      "選択したファイルにアクセスできません\n一覧から除去しますか?"
     IDS_MUI_ERR_CREATELINK  "デスクトップへのショートカット作成時にエラーが発生しました"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "URL で指定されたパスが見つかりません!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + クリック : ファイルを開きます"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + クリック : ブラウザーでリンクを開きます"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "元ファイルの更新日時のままにします\nこのセッションでのみ有効となります"
     IDS_MUI_OUT_OFF_OCCMRK   "単語出現マーカーが枯渇しています (しおり/強調表示)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "この編集を保存しますか?\n「%s」"
+    IDS_MUI_ASK_SAVE        "この編集を保存しますか:\n%s?"
     IDS_MUI_ASK_REVERT      "最後に保存された内容で再読み込みしますか?"
     IDS_MUI_ASK_RECODE      "読み直しはファイルを再読み込みするため、変更内容は失われます!"
     IDS_MUI_ASK_CREATE      "次のファイルは存在しません。作成しますか?\n%s"
@@ -341,8 +346,8 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 拡張子の区切りは ; です\r\n\
-\\正規表現記法; という書式でファイル名の一致パターンを定義できます:\r\n\
-   例 \\xyz$;   ファイル名(ベースファイル名+拡張子)の末尾が xyz に合致\r\n\r\n\
+'*'、'?'、または'.'を含むエントリは、ファイル名全体（ワイルドカード）に一致します\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 設定書式(各指定は省略可能, foreは文字色):\r\n\
 font:フォント名; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

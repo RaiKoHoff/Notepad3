@@ -100,7 +100,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_MUI_APPTITLE_ELEVATED "%s : Prioritas"
-    IDS_MUI_APPTITLE_PASTEBOARD "%s : Papan Klip"
+    IDS_MUI_APPTITLE_PASTEBOARD "%s : PASTEBOARD"
     IDS_MUI_UNTITLED        "Tidak Berjudul"
     IDS_MUI_TITLEEXCERPT    """%s"""
     IDS_MUI_READONLY        "(Hanya Baca)"
@@ -129,9 +129,12 @@ STRINGTABLE
 BEGIN
     IDS_MUI_ERR_LOADFILE    "Kesalahan memuat ""%s"""
     IDS_MUI_ERR_SAVEFILE    "Kesalahan menyimpan ""%s"""
+    IDS_MUI_ERR_PATHNOTFOUND "Jalur untuk ""%s"" sudah tidak ada.\nBuat ulang jalur dan simpan file?"
     IDS_MUI_ERR_DLG_FORMAT  "Kesalahan pada '%s', penyebab:\n%s(ID:%d)\n"
     IDS_MUI_ERR_BROWSE      "Tidak ditemukan plugin penelusuran berkas\nPlugin penelusuran berkas MiniPath dapat diunduh di https://rizonesoft.com"
-    IDS_MUI_ERR_GREPWIN     "Tidak ditemukan plugin pencarian berkas\nPlugin pencarian berkas grepWinNP3 dapat diunduh di https://rizonesoft.com"
+    IDS_MUI_ERR_GREPWIN     "Tidak ditemukan plugin pencarian berkas\nPlugin pencarian berkas grepWin Portable dapat diunduh di https://github.com/stefankueng/grepWin/releases"
+    IDS_MUI_ERR_GREPWIN_PORTAPPS
+                            "Plugin pencarian file tidak ditemukan\nInstal versi terbaru grepWinPortable di platform PortableApps."
     IDS_MUI_ERR_MRUDLG      "Tidak ada akses ke berkas yang dipilih!\nApakah Anda ingin menghapusnya dari daftar?"
     IDS_MUI_ERR_CREATELINK  "Kesalahan saat membuat pintasan Desktop"
     IDS_MUI_ERR_PREVWINDISABLED
@@ -205,6 +208,8 @@ BEGIN
                              "Jalur URL yang dituju tidak ditemukan!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik untuk membuka berkas"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik untuk membuka tautan di browser"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Mempertahankan berkas dari Modifikasi Stempel Waktu telah diaktifkan\nOpsi ini hanya akan berlangsung untuk sesi ini saja!"
     IDS_MUI_OUT_OFF_OCCMRK   "Penanda Pengulangan Kata telah habis (Markah/Sorotan)!"
@@ -214,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "Simpan perubahan ke:\n""%s""?"
+    IDS_MUI_ASK_SAVE        "Simpan perubahan ke:\n%s?"
     IDS_MUI_ASK_REVERT      "Kembalikan semula berkas ke kondisi tersimpan?"
     IDS_MUI_ASK_RECODE      "Pengkodean ulang akan memuat ulang berkas, perubahan yang tidak disimpan akan hilang!"
     IDS_MUI_ASK_CREATE      """%s"" tidak ditemukan\nApakah Anda ingin membuat berkas ini?"
@@ -341,8 +346,8 @@ Notepad3 /v D:\\temp\\Tes.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 Ekstensi nama berkas harus dipisah dengan ';'\r\n\
-gunakan \\<regex>$; untuk menentukan polanya:\r\n\
-   \\xyz$;   => nama berkas (nama dasar + ekstensi), 'xyz' adalah ekstensinya\r\n\r\n\
+Entri yang berisi '*', '?' atau '.' cocok dengan nama file lengkap (wildcard):\r\n\
+   Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Gaya format tampilan:\r\n\
 font:nama font; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\

@@ -22,6 +22,7 @@
 #include <shlobj.h>
 #include <shellapi.h>
 #include <shlwapi.h>
+#include <pathcch.h>
 #include <stdio.h>
 
 #include "Lexilla.h"
@@ -37,7 +38,7 @@
 #include "Notepad3.h"
 #include "Config/Config.h"
 #include "DarkMode/DarkMode.h"
-#include "tinyexpr/tinyexpr.h"
+#include "tinyexprcpp/tinyexpr_cif.h"
 
 #include "SciCall.h"
 
@@ -57,6 +58,7 @@ static PEDITLEXER g_pLexArray[] = {
     &lexStandard,      // Default Text
     &lexStandard2nd,   // 2nd Default Text
     &lexTEXT,          // Pure Text Files (Constants.StdDefaultLexerID = 2)
+    &lexAbaqus,        // Abaqus
     &lexANSI,          // ANSI Files (ASCII Art)
     &lexCONF,          // Apache Config Files
     &lexASM,           // Assembly Script
@@ -81,7 +83,8 @@ static PEDITLEXER g_pLexArray[] = {
     &lexINNO,          // Inno Setup Script
     &lexJAVA,          // Java Source Code
     &lexJS,            // JavaScript
-    &lexJSON,          // JSON
+    &lexJSON,          // JSON (strict)
+    &lexJSON5,         // JSON5 / JSON-LD (Notepad3 homebrew)
     &lexJulia,         // Julia
     &lexKiX,           // KiX
     &lexKotlin,        // Kotlin
@@ -226,6 +229,36 @@ typedef enum {
     FW_IDX_EXTRABLACK,
     FW_IDX_ULTRADARK
 } FW_IDX;
+
+// Font Stretch
+typedef struct _fntstrtch {
+    LPCWSTR const wname;
+    int const stretch;
+} FONTSTRETCH_T;
+
+static const FONTSTRETCH_T FontStretches[9] = {
+    { L"ultracondensed",  SC_STRETCH_ULTRA_CONDENSED },  // 0
+    { L"extracondensed",  SC_STRETCH_EXTRA_CONDENSED },  // 1
+    { L"condensed",       SC_STRETCH_CONDENSED },        // 2
+    { L"semicondensed",   SC_STRETCH_SEMI_CONDENSED },   // 3
+    { L"normal",          SC_STRETCH_NORMAL },           // 4 (default)
+    { L"semiexpanded",    SC_STRETCH_SEMI_EXPANDED },    // 5
+    { L"expanded",        SC_STRETCH_EXPANDED },         // 6
+    { L"extraexpanded",   SC_STRETCH_EXTRA_EXPANDED },   // 7
+    { L"ultraexpanded",   SC_STRETCH_ULTRA_EXPANDED },   // 8
+};
+
+typedef enum {
+    FS_IDX_ULTRACONDENSED = 0,
+    FS_IDX_EXTRACONDENSED,
+    FS_IDX_CONDENSED,
+    FS_IDX_SEMICONDENSED,
+    FS_IDX_NORMAL,
+    FS_IDX_SEMIEXPANDED,
+    FS_IDX_EXPANDED,
+    FS_IDX_EXTRAEXPANDED,
+    FS_IDX_ULTRAEXPANDED,
+} FONTSTRETCH_IDX;
 
 //// font quality
 //#define Style_StrHasAttrNone(lpszStyle)         Style_StrHasAttribute((lpszStyle), L"none")
@@ -435,7 +468,7 @@ static void _FillThemesMenuTable()
 
         WIN32_FIND_DATA FindFileData;
         ZeroMemory(&FindFileData, sizeof(WIN32_FIND_DATA));
-        HANDLE hFindFile = FindFirstFileW(Path_Get(hThemePath), &FindFileData);
+        HANDLE hFindFile = Path_FindFirstFile(hThemePath, &FindFileData);
 
         // ---  fill table by directory entries  ---
 
@@ -448,7 +481,7 @@ static void _FillThemesMenuTable()
                 Theme_Files[iTheme].rid = (iTheme + IDM_THEMES_STD_CFG);
 
                 StringCchCopy(wchFileName, COUNTOF(wchFileName), PathFindFileNameW(FindFileData.cFileName));
-                PathRemoveExtensionW(wchFileName);
+                PathCchRemoveExtension(wchFileName, COUNTOF(wchFileName));
                 StringCchCopy(Theme_Files[iTheme].szName, COUNTOF(Theme_Files[iTheme].szName), wchFileName);
 
                 if (StringCchCompareXI(Theme_Files[iTheme].szName, Settings.CurrentThemeName) == 0) {
@@ -523,7 +556,6 @@ bool Style_InsertThemesMenu(HMENU hMenuBar)
     WCHAR wchMenuItemStrg[128] = { L'\0' };
     GetLngString(IDS_MUI_MENU_THEMES, wchMenuItemStrg, COUNTOF(wchMenuItemStrg));
 
-    //bool const res = InsertMenu(hMenuBar, pos, MF_BYPOSITION | MF_POPUP | MF_STRING, (UINT_PTR)s_hmenuThemes, wchMenuItemStrg);
     bool const res = InsertMenu(hMenuBar, IDM_VIEW_SCHEMECONFIG, MF_BYCOMMAND | MF_POPUP | MF_STRING, (UINT_PTR)s_hmenuThemes, wchMenuItemStrg);
 
     unsigned const iTheme = Globals.uCurrentThemeIndex;
@@ -682,29 +714,21 @@ int Style_RgbAlpha(int rgbFore, int rgbBack, int alpha)
 //
 bool Style_Import(HWND hwnd)
 {
-    HPATHL         hfile_pth = Path_Allocate(NULL);
-    wchar_t* const file_buf = Path_WriteAccessBuf(hfile_pth, CMDLN_LENGTH_LIMIT);
+    HPATHL hfile_pth = Path_Allocate(NULL);
 
     HSTRINGW       hflt_str = StrgCreate(NULL);
-    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENTIONS_FILTER_BUFFER);
+    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENSIONS_FILTER_BUFFER);
 
     GetLngString(IDS_MUI_FILTER_INI, flt_buf, (int)StrgGetAllocLength(hflt_str));
     StrgSanitize(hflt_str);
 
     PrepareFilterStr(flt_buf);
 
-    OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = StrgGet(hflt_str);
-    ofn.lpstrFile = file_buf;
-    ofn.lpstrDefExt = L"ini";
-    ofn.nMaxFile = (DWORD)Path_GetBufCount(hfile_pth);
-    ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_DONTADDTORECENT
-                | OFN_PATHMUSTEXIST | OFN_SHAREAWARE /*| OFN_NODEREFERENCELINKS*/;
-
     bool result = false;
 
-    if (GetOpenFileNameW(&ofn)) {
+    if (FileOpenDlg(hwnd, hfile_pth, NULL, StrgGet(hflt_str), L"ini",
+            FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR |
+            FOS_DONTADDTORECENT | FOS_SHAREAWARE)) {
         Path_Sanitize(hfile_pth);
         result = Style_ImportFromFile(hfile_pth);
     }
@@ -712,6 +736,158 @@ bool Style_Import(HWND hwnd)
     StrgDestroy(hflt_str);
     Path_Release(hfile_pth);
     return result;
+}
+
+
+//=============================================================================
+//
+//   _TryTranslateRegexEntry()
+//
+//   Conservative migration helper: try to translate a simple legacy regex
+//   pattern (without its leading '\' marker) into an equivalent wildcard
+//   entry. Only patterns of the form '^<inner>$' are accepted, where <inner>
+//   contains exclusively ASCII alphanumerics, '_', '-', and optional '\.'
+//   escapes for literal dots — anything else (real regex metacharacters,
+//   missing anchors, etc.) is rejected and the caller drops the entry.
+//
+//   Output rules:
+//     - Bare name (no literal dot): append '*' so the result is still
+//       classified as a wildcard pattern by Style_WildcardMatchLexer. E.g.
+//       '^Makefile$' → 'Makefile*' (matches the extensionless file plus
+//       suffixed variants like 'Makefile.dev'; same broadening as the
+//       hard-coded defaults).
+//     - With at least one '\.': unescape to '.' and emit verbatim. E.g.
+//       '^cmakelists\.txt$' → 'cmakelists.txt' (literal whole-filename
+//       match via PathMatchSpec).
+//
+//   Returns true on successful translation (writes a NUL-terminated string
+//   to `out`); false otherwise.
+//
+static bool _TryTranslateRegexEntry(const WCHAR *pat, size_t patLen, LPWSTR out, size_t outCap)
+{
+    if (patLen < 3 || pat[0] != L'^' || pat[patLen - 1] != L'$') {
+        return false;
+    }
+
+    const WCHAR *inner    = pat + 1;
+    const WCHAR *innerEnd = pat + patLen - 1; // exclusive (points at '$')
+
+    bool   hasDot = false;
+    size_t outLen = 0;
+    for (const WCHAR *c = inner; c < innerEnd; ) {
+        WCHAR ch = *c;
+        if (ch == L'\\' && (c + 1) < innerEnd && c[1] == L'.') {
+            if (outLen + 1 >= outCap) {
+                return false;
+            }
+            out[outLen++] = L'.';
+            hasDot = true;
+            c += 2;
+        } else if ((ch >= L'a' && ch <= L'z') ||
+                   (ch >= L'A' && ch <= L'Z') ||
+                   (ch >= L'0' && ch <= L'9') ||
+                   ch == L'_' || ch == L'-') {
+            if (outLen + 1 >= outCap) {
+                return false;
+            }
+            out[outLen++] = ch;
+            ++c;
+        } else {
+            return false; // potential regex metacharacter — refuse
+        }
+    }
+
+    if (outLen == 0) {
+        return false;
+    }
+    if (!hasDot) {
+        if (outLen + 1 >= outCap) {
+            return false;
+        }
+        out[outLen++] = L'*';
+    }
+    out[outLen] = L'\0';
+    return true;
+}
+
+
+//=============================================================================
+//
+//   _MigrateLegacyRegexEntries()
+//
+//   Walks a ';'-separated FileNameExtensions list in-place and migrates any
+//   entry beginning with '\' (the legacy PCRE2 syntax that the wildcard
+//   refactor replaced). Simple patterns of the form '\^<chars>$' are
+//   translated to their wildcard equivalents via _TryTranslateRegexEntry();
+//   anything more complex is dropped. Returns true if the list was changed,
+//   in which case the buffer has been compacted. Buffer size is
+//   STYLE_EXTENSIONS_BUFFER (the szExtensions slot's size).
+//
+static bool _MigrateLegacyRegexEntries(LPWSTR lpszList)
+{
+    if (StrIsEmpty(lpszList)) {
+        return false;
+    }
+    WCHAR cleaned[STYLE_EXTENSIONS_BUFFER] = { L'\0' };
+    size_t cleanedLen = 0;
+    bool changed = false;
+
+    const WCHAR *p = lpszList;
+    while (*p) {
+        while (*p == L';' || *p == L' ' || *p == L'\t') {
+            ++p;
+        }
+        if (!*p) {
+            break;
+        }
+        const WCHAR *e = p;
+        while (*e && *e != L';') {
+            ++e;
+        }
+        const WCHAR *eTrim = e;
+        while (eTrim > p && (eTrim[-1] == L' ' || eTrim[-1] == L'\t')) {
+            --eTrim;
+        }
+
+        // Decide what (if anything) to append to the cleaned buffer.
+        const WCHAR *src      = NULL;
+        size_t       entryLen = 0;
+        WCHAR        translated[STYLE_EXTENSIONS_BUFFER];
+
+        if (*p == L'\\') {
+            // Legacy regex entry. Try to translate; otherwise drop.
+            if (_TryTranslateRegexEntry(p + 1, (size_t)(eTrim - p - 1),
+                                        translated, COUNTOF(translated))) {
+                src      = translated;
+                entryLen = StringCchLen(translated, COUNTOF(translated));
+            }
+            changed = true; // either we translated (different shape) or dropped
+        } else {
+            src      = p;
+            entryLen = (size_t)(eTrim - p);
+        }
+
+        if (src && entryLen > 0) {
+            if (cleanedLen > 0 && cleanedLen + 1 < COUNTOF(cleaned)) {
+                cleaned[cleanedLen++] = L';';
+            }
+            size_t copyLen = entryLen;
+            if (cleanedLen + copyLen >= COUNTOF(cleaned)) {
+                copyLen = COUNTOF(cleaned) - cleanedLen - 1;
+            }
+            if (copyLen > 0) {
+                CopyMemory(&cleaned[cleanedLen], src, copyLen * sizeof(WCHAR));
+                cleanedLen += copyLen;
+            }
+            cleaned[cleanedLen] = L'\0';
+        }
+        p = e;
+    }
+
+    if (changed) {
+        StringCchCopy(lpszList, STYLE_EXTENSIONS_BUFFER, cleaned);
+    }
+    return changed;
 }
 
 
@@ -731,8 +907,32 @@ static void _LoadLexerFileExtensions()
                 Lexer_Section = (iLexer == 0) ? L"Default Text" : L"2nd Default Text";
             }
 
-            IniSectionGetString(Lexer_Section, L"FileNameExtensions", g_pLexArray[iLexer]->pszDefExt,
-                g_pLexArray[iLexer]->szExtensions, COUNTOF(g_pLexArray[iLexer]->szExtensions));
+            // Read into an oversized buffer so we can detect when the INI value
+            // would exceed the per-schema STYLE_EXTENSIONS_BUFFER limit and warn,
+            // instead of silently dropping the tail.
+            WCHAR tmpExt[STYLE_EXTENSIONS_BUFFER * 2] = { L'\0' };
+            size_t const cchRead = IniSectionGetString(Lexer_Section, L"FileNameExtensions",
+                g_pLexArray[iLexer]->pszDefExt, tmpExt, COUNTOF(tmpExt));
+
+            if (cchRead >= (size_t)STYLE_EXTENSIONS_BUFFER) {
+                WCHAR warnMsg[256];
+                StringCchPrintf(warnMsg, COUNTOF(warnMsg),
+                    L"Notepad3: FileNameExtensions for [%s] is %zu chars, exceeds %d-char limit; truncating.\n",
+                    Lexer_Section, cchRead, STYLE_EXTENSIONS_BUFFER - 1);
+                OutputDebugStringW(warnMsg);
+            }
+            StringCchCopy(g_pLexArray[iLexer]->szExtensions,
+                COUNTOF(g_pLexArray[iLexer]->szExtensions), tmpExt);
+
+            // Auto-migrate: translate or drop any legacy '\regex' entries from
+            // user INIs so the next save writes the cleaned wildcard-only form.
+            if (_MigrateLegacyRegexEntries(g_pLexArray[iLexer]->szExtensions)) {
+                WCHAR migMsg[256];
+                StringCchPrintf(migMsg, COUNTOF(migMsg),
+                    L"Notepad3: migrated legacy '\\regex' entries in FileNameExtensions for [%s]; will be rewritten on next save.\n",
+                    Lexer_Section);
+                OutputDebugStringW(migMsg);
+            }
 
             // don't allow empty extensions settings => use default ext
             if (StrIsEmpty(g_pLexArray[iLexer]->szExtensions)) {
@@ -975,29 +1175,21 @@ void Style_SaveSettings(bool bForceSaveSettings)
 //
 bool Style_Export(HWND hwnd)
 {
-    HPATHL         hfile_pth = Path_Allocate(NULL);
-    wchar_t* const file_buf = Path_WriteAccessBuf(hfile_pth, CMDLN_LENGTH_LIMIT);
+    HPATHL hfile_pth = Path_Allocate(NULL);
 
     HSTRINGW       hflt_str = StrgCreate(NULL);
-    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENTIONS_FILTER_BUFFER);
+    wchar_t* const flt_buf = StrgWriteAccessBuf(hflt_str, EXTENSIONS_FILTER_BUFFER);
 
     GetLngString(IDS_MUI_FILTER_INI, flt_buf, (int)StrgGetAllocLength(hflt_str));
     StrgSanitize(hflt_str);
 
     PrepareFilterStr(flt_buf);
 
-    OPENFILENAME ofn = { sizeof(OPENFILENAME) };
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = StrgGet(hflt_str);
-    ofn.lpstrFile = file_buf;
-    ofn.lpstrDefExt = L"ini";
-    ofn.nMaxFile = (DWORD)Path_GetBufCount(hfile_pth);
-    ofn.Flags = /*OFN_FILEMUSTEXIST |*/ OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_DONTADDTORECENT
-                | OFN_PATHMUSTEXIST | OFN_SHAREAWARE /*| OFN_NODEREFERENCELINKS*/ | OFN_OVERWRITEPROMPT;
-
     bool result = false;
 
-    if (GetSaveFileNameW(&ofn)) {
+    if (FileSaveDlg(hwnd, hfile_pth, NULL, StrgGet(hflt_str), L"ini",
+            FOS_OVERWRITEPROMPT | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR |
+            FOS_DONTADDTORECENT | FOS_SHAREAWARE)) {
         Path_Sanitize(hfile_pth);
         result = Style_ExportToFile(hfile_pth, true);
         if (!result) {
@@ -1138,6 +1330,13 @@ bool Style_ToIniSection(bool bForceAll)
     IniSectionDelete(L"Default Text", NULL, true);
     IniSectionDelete(L"2nd Default Text", NULL, true);
 
+    // remove empty lexer sections (preserve canonical order for non-empty ones)
+    for (int iLexer = 0; iLexer < COUNTOF(g_pLexArray); ++iLexer) {
+        if (IniSectionGetKeyCount(g_pLexArray[iLexer]->pszName) == 0) {
+            IniSectionClear(g_pLexArray[iLexer]->pszName, true);
+        }
+    }
+
     return true;
 }
 
@@ -1266,7 +1465,7 @@ void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
     if ((pLexNew->lexerID > SCLEX_NULL) && (iNewLexer != pLexNew->lexerID)) {
         WCHAR msg[256] = { L'\0' };
         StringCchPrintf(msg, COUNTOF(msg), L"Failed to set desired Lexer (#%i), got Lexer #%i!", pLexNew->lexerID, iNewLexer);
-        MsgBoxLastError(msg, ERROR_DLL_INIT_FAILED);
+        InfoBoxLastError(msg, ERROR_DLL_INIT_FAILED);
     }
 #endif
 
@@ -1570,7 +1769,7 @@ void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
     }
     Globals.iWhiteSpaceSize = iValue;
     //SciCall_SetWhiteSpaceSize(iValue);
-    SciCall_SetWhiteSpaceSize(MulDiv(Globals.iWhiteSpaceSize, SciCall_GetZoom(), 100)); // needs update on zoom
+    SciCall_SetWhiteSpaceSize(MulDiv(Globals.iWhiteSpaceSize, NP3_GetZoomPercent(), 100)); // needs update on zoom
 
     // whitespace colors
     rgb = RGB(0, 0, 0);
@@ -1762,7 +1961,10 @@ void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
 
     Style_SetInvisible(hwnd, false); // set fixed invisible style
 
-    SciCall_SetLayoutCache(SC_CACHE_PAGE); //~SC_CACHE_DOCUMENT ~ memory consumption !
+    // EditLoadFile() sets SC_CACHE_DOCUMENT for small files (<=2MB) — don't override that
+    if (Flags.bHugeFileLoadState) {
+        SciCall_SetLayoutCache(SC_CACHE_PAGE);
+    }
     SciCall_SetPositionCache(SciCall_GetPositionCache()); // clear - default=1024
 
     Sci_SetWrapModeEx(GET_WRAP_MODE());
@@ -1779,7 +1981,13 @@ void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
 
     Style_UpdateAllMargins(hwnd, true);
 
-    SciCall_SetIdleStyling(Flags.bHugeFileLoadState ? SC_IDLESTYLING_TOVISIBLE : idleStylingMode);
+    if (Flags.bHugeFileLoadState) {
+        SciCall_SetIdleStyling(SC_IDLESTYLING_TOVISIBLE);
+    } else if (SciCall_GetTextLength() > (2 * 1024 * 1024)) {
+        SciCall_SetIdleStyling(SC_IDLESTYLING_AFTERVISIBLE);
+    } else {
+        SciCall_SetIdleStyling(idleStylingMode);
+    }
 
     if (bFocusedView) {
         EditToggleView(hwnd);
@@ -1822,7 +2030,7 @@ void Style_FillRelatedStyles(HWND hwnd, const PEDITLEXER pLexer) {
 
         if (pLexer->lexerID == SCLEX_HTML && pLexer->Styles[i].iStyle8[0] == SCE_HJ_DEFAULT) {
             int iRelated[] = { SCE_HJ_COMMENT, SCE_HJ_COMMENTLINE, SCE_HJ_COMMENTDOC, SCE_HJ_KEYWORD, SCE_HJ_WORD, SCE_HJ_DOUBLESTRING,
-                SCE_HJ_SINGLESTRING, SCE_HJ_STRINGEOL, SCE_HJ_REGEX, SCE_HJ_NUMBER, SCE_HJ_SYMBOLS };
+                SCE_HJ_SINGLESTRING, SCE_HJ_STRINGEOL, SCE_HJ_REGEX, SCE_HJ_NUMBER, SCE_HJ_SYMBOLS, SCE_HJ_TEMPLATELITERAL };
             for (int j = 0; j < COUNTOF(iRelated); j++) {
                 Style_SetStyles(hwnd, iRelated[j], pLexer->Styles[i].szValue, fBaseFontSize);
             }
@@ -1830,7 +2038,7 @@ void Style_FillRelatedStyles(HWND hwnd, const PEDITLEXER pLexer) {
 
         if (pLexer->lexerID == SCLEX_HTML && pLexer->Styles[i].iStyle8[0] == SCE_HJA_DEFAULT) {
             int iRelated[] = { SCE_HJA_COMMENT, SCE_HJA_COMMENTLINE, SCE_HJA_COMMENTDOC, SCE_HJA_KEYWORD, SCE_HJA_WORD, SCE_HJA_DOUBLESTRING,
-                SCE_HJA_SINGLESTRING, SCE_HJA_STRINGEOL, SCE_HJA_REGEX, SCE_HJA_NUMBER, SCE_HJA_SYMBOLS };
+                SCE_HJA_SINGLESTRING, SCE_HJA_STRINGEOL, SCE_HJA_REGEX, SCE_HJA_NUMBER, SCE_HJA_SYMBOLS, SCE_HJA_TEMPLATELITERAL };
             for (int j = 0; j < COUNTOF(iRelated); j++) {
                 Style_SetStyles(hwnd, iRelated[j], pLexer->Styles[i].szValue, fBaseFontSize);
             }
@@ -1877,9 +2085,9 @@ void Style_FillRelatedStyles(HWND hwnd, const PEDITLEXER pLexer) {
                 SCE_HPHP_HSTRING_VARIABLE, SCE_HPHP_COMPLEX_VARIABLE, SCE_HJ_START, SCE_HJ_DEFAULT,
                 SCE_HJ_COMMENT, SCE_HJ_COMMENTLINE, SCE_HJ_COMMENTDOC, SCE_HJ_KEYWORD, SCE_HJ_WORD,
                 SCE_HJ_DOUBLESTRING, SCE_HJ_SINGLESTRING, SCE_HJ_STRINGEOL, SCE_HJ_REGEX, SCE_HJ_NUMBER,
-                SCE_HJ_SYMBOLS, SCE_HJA_START, SCE_HJA_DEFAULT, SCE_HJA_COMMENT, SCE_HJA_COMMENTLINE,
+                SCE_HJ_SYMBOLS, SCE_HJ_TEMPLATELITERAL, SCE_HJA_START, SCE_HJA_DEFAULT, SCE_HJA_COMMENT, SCE_HJA_COMMENTLINE,
                 SCE_HJA_COMMENTDOC, SCE_HJA_KEYWORD, SCE_HJA_WORD, SCE_HJA_DOUBLESTRING, SCE_HJA_SINGLESTRING,
-                SCE_HJA_STRINGEOL, SCE_HJA_REGEX, SCE_HJA_NUMBER, SCE_HJA_SYMBOLS, SCE_HB_START, SCE_HB_DEFAULT,
+                SCE_HJA_STRINGEOL, SCE_HJA_REGEX, SCE_HJA_NUMBER, SCE_HJA_SYMBOLS, SCE_HJA_TEMPLATELITERAL, SCE_HB_START, SCE_HB_DEFAULT,
                 SCE_HB_COMMENTLINE, SCE_HB_WORD, SCE_HB_IDENTIFIER, SCE_HB_STRING, SCE_HB_STRINGEOL,
                 SCE_HB_NUMBER, SCE_HBA_START, SCE_HBA_DEFAULT, SCE_HBA_COMMENTLINE, SCE_HBA_WORD,
                 SCE_HBA_IDENTIFIER, SCE_HBA_STRING, SCE_HBA_STRINGEOL, SCE_HBA_NUMBER, SCE_HP_START,
@@ -1958,7 +2166,7 @@ void Style_SetUrlHotSpot(HWND hwnd)
     // style for hotspot
     //~SciCall_StyleSetHotspot(_STYLE_GETSTYLEID(STY_URL_HOTSPOT), true);
     //~SciCall_SetHotspotActiveUnderline(false);
-    //~SciCall_SetHotspotSigleLine(true);
+    //~SciCall_SetHotspotSingleLine(true);
 }
 
 
@@ -2087,7 +2295,7 @@ void Style_HighlightCurrentLine(HWND hwnd, int iHiLitCurLn)
         iFrameSize = max_i(1, ScaleIntToDPI(hwnd, iFrameSize));
         Globals.iCaretOutLineFrameSize = iFrameSize;
         // SciCall_SetCaretLineFrame(iFrameSize);
-        SciCall_SetCaretLineFrame(MulDiv(Globals.iCaretOutLineFrameSize, SciCall_GetZoom(), 100)); // needs update on zoom
+        SciCall_SetCaretLineFrame(MulDiv(Globals.iCaretOutLineFrameSize, NP3_GetZoomPercent(), 100)); // needs update on zoom
     }
     else {
         SciCall_SetCaretLineFrame(0);
@@ -2422,48 +2630,118 @@ void Style_SetMargin(HWND hwnd, LPCWSTR lpszStyle) /// iStyle == STYLE_LINENUMBE
 //
 PEDITLEXER  Style_SniffShebang(char* pchText)
 {
-    if (StrCmpNA(pchText,"#!",2) == 0) {
-        char *pch = pchText + 2;
-        while (*pch == ' ' || *pch == '\t') {
-            pch++;
+    if (StrCmpNA(pchText, "#!", 2) != 0) {
+        return NULL;
+    }
+    char* p = pchText + 2;
+
+    // Skip whitespace after "#!"
+    while (*p == ' ' || *p == '\t') {
+        ++p;
+    }
+
+    // Read first token (interpreter path)
+    char* tokStart = p;
+    while (*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+        ++p;
+    }
+    char* tokEnd = p;
+
+    // Find basename of first token (after last '/' or '\')
+    char* bn = tokStart;
+    for (char* s = tokStart; s < tokEnd; ++s) {
+        if (*s == '/' || *s == '\\') {
+            bn = s + 1;
         }
-        while (*pch && *pch != ' ' && *pch != '\t' && *pch != '\r' && *pch != '\n') {
-            pch++;
+    }
+
+    // If basename is "env", skip optional flags (e.g. "-S") and re-read the interpreter token
+    int const bnLen = (int)(tokEnd - bn);
+    if (bnLen == 3 && StrCmpNIA(bn, "env", 3) == 0) {
+        while (*p == ' ' || *p == '\t') {
+            ++p;
         }
-        if ((pch - pchText) >= 3 && StrCmpNA(pch-3,"env",3) == 0) {
-            while (*pch == ' ') {
-                pch++;
+        // Skip POSIX flags like "-S", "-vS"
+        while (*p == '-') {
+            while (*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+                ++p;
             }
-            while (*pch && *pch != ' ' && *pch != '\t' && *pch != '\r' && *pch != '\n') {
-                pch++;
+            while (*p == ' ' || *p == '\t') {
+                ++p;
             }
         }
-        if ((pch - pchText) >= 3 && StrCmpNIA(pch - 3, "php", 3) == 0) {
-            return(&lexHTML);
+        // Read interpreter token after env [flags]
+        tokStart = p;
+        while (*p && *p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+            ++p;
         }
-        if ((pch - pchText) >= 4 && StrCmpNIA(pch - 4, "perl", 4) == 0) {
-            return(&lexPL);
+        tokEnd = p;
+        bn = tokStart;
+        for (char* s = tokStart; s < tokEnd; ++s) {
+            if (*s == '/' || *s == '\\') {
+                bn = s + 1;
+            }
         }
-        if ((pch - pchText) >= 6 && StrCmpNIA(pch - 6, "python", 6) == 0) {
-            return(&lexPY);
+    }
+
+    // Strip trailing version suffix: digits, dots, dashes (e.g. python3.11 -> python, Rscript-4.3 -> Rscript)
+    char* bnEnd = tokEnd;
+    while (bnEnd > bn) {
+        char const c = *(bnEnd - 1);
+        if ((c >= '0' && c <= '9') || c == '.' || c == '-') {
+            --bnEnd;
+        } else {
+            break;
         }
-        if ((pch - pchText) >= 3 && StrCmpNA(pch - 3, "tcl", 3) == 0) {
-            return(&lexTCL);
-        }
-        if ((pch - pchText) >= 4 && StrCmpNA(pch - 4, "wish", 4) == 0) {
-            return(&lexTCL);
-        }
-        if ((pch - pchText) >= 5 && StrCmpNA(pch - 5, "tclsh", 5) == 0) {
-            return(&lexTCL);
-        }
-        if ((pch - pchText) >= 2 && StrCmpNA(pch - 2, "sh", 2) == 0) {
-            return(&lexBASH);
-        }
-        if ((pch - pchText) >= 4 && StrCmpNA(pch - 4, "ruby", 4) == 0) {
-            return(&lexRUBY);
-        }
-        if ((pch - pchText) >= 4 && StrCmpNA(pch - 4, "node", 4) == 0) {
-            return(&lexJS);
+    }
+    int const nameLen = (int)(bnEnd - bn);
+    if (nameLen <= 0) {
+        return NULL;
+    }
+
+    static const struct {
+        const char* name;
+        PEDITLEXER  lexer;
+    } interps[] = {
+        { "python",     &lexPY     },
+        { "perl",       &lexPL     },
+        { "ruby",       &lexRUBY   },
+        { "php",        &lexHTML   },
+        { "node",       &lexJS     },
+        { "nodejs",     &lexJS     },
+        { "deno",       &lexJS     },
+        { "bun",        &lexJS     },
+        { "tclsh",      &lexTCL    },
+        { "wish",       &lexTCL    },
+        { "tcl",        &lexTCL    },
+        { "bash",       &lexBASH   },
+        { "zsh",        &lexBASH   },
+        { "ksh",        &lexBASH   },
+        { "dash",       &lexBASH   },
+        { "ash",        &lexBASH   },
+        { "fish",       &lexBASH   },
+        { "tcsh",       &lexBASH   },
+        { "csh",        &lexBASH   },
+        { "sh",         &lexBASH   },
+        { "luajit",     &lexLUA    },
+        { "lua",        &lexLUA    },
+        { "gawk",       &lexAwk    },
+        { "mawk",       &lexAwk    },
+        { "nawk",       &lexAwk    },
+        { "awk",        &lexAwk    },
+        { "rscript",    &lexR      },
+        { "littler",    &lexR      },
+        { "powershell", &lexPS     },
+        { "pwsh",       &lexPS     },
+        { "julia",      &lexJulia  },
+        { "dart",       &lexDart   },
+        { "nimrod",     &lexNim    },
+        { "nim",        &lexNim    },
+    };
+    for (int i = 0; i < COUNTOF(interps); ++i) {
+        int const ilen = (int)StringCchLenA(interps[i].name, 0);
+        if (nameLen == ilen && StrCmpNIA(bn, interps[i].name, ilen) == 0) {
+            return interps[i].lexer;
         }
     }
     return NULL;
@@ -2476,18 +2754,37 @@ PEDITLEXER  Style_SniffShebang(char* pchText)
 //
 PEDITLEXER Style_MatchLexer(LPCWSTR lpszMatch, bool bCheckNames)
 {
+    // Normalize: strip trailing Emacs/Vim mode suffixes ("-mode", "-script", "-major-mode", "-minor-mode")
+    // so values like "python-mode", "c++-mode", "markdown-mode" reduce to "python", "c++", "markdown".
+    WCHAR wchNorm[MICRO_BUFFER];
+    StringCchCopy(wchNorm, COUNTOF(wchNorm), lpszMatch);
+    static const WCHAR* const stripSuffixes[] = {
+        L"-major-mode", L"-minor-mode", L"-script", L"-mode"
+    };
+    for (int i = 0; i < COUNTOF(stripSuffixes); ++i) {
+        size_t const sfxLen = StringCchLen(stripSuffixes[i], 0);
+        size_t const matchLen = StringCchLen(wchNorm, 0);
+        if (matchLen > sfxLen) {
+            LPCWSTR const tail = wchNorm + matchLen - sfxLen;
+            if (StrCmpI(tail, stripSuffixes[i]) == 0) {
+                wchNorm[matchLen - sfxLen] = L'\0';
+                break;
+            }
+        }
+    }
+
     if (bCheckNames) {
-        int const cch = (int)StringCchLen(lpszMatch, 0);
-        if (cch >= 3) {
+        int const cch = (int)StringCchLen(wchNorm, 0);
+        if (cch >= 2) {
             for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
-                if (StrCmpNI(g_pLexArray[iLex]->pszName, lpszMatch, cch) == 0) {
+                if (StrCmpNI(g_pLexArray[iLex]->pszName, wchNorm, cch) == 0) {
                     return (g_pLexArray[iLex]);
                 }
             }
         }
-    } else if (StrIsNotEmpty(lpszMatch)) {
+    } else if (StrIsNotEmpty(wchNorm)) {
         for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
-            if (Style_StrHasAttribute(g_pLexArray[iLex]->szExtensions, lpszMatch)) {
+            if (Style_StrHasAttribute(g_pLexArray[iLex]->szExtensions, wchNorm)) {
                 return g_pLexArray[iLex];
             }
         }
@@ -2498,35 +2795,72 @@ PEDITLEXER Style_MatchLexer(LPCWSTR lpszMatch, bool bCheckNames)
 
 //=============================================================================
 //
-//  Style_RegExMatchLexer()
+//  Style_WildcardMatchLexer()
 //
-PEDITLEXER Style_RegExMatchLexer(LPCWSTR lpszFileName)
+//  Match the bare filename against any wildcard or literal-filename entries
+//  in each schema's FileNameExtensions list. An entry qualifies for this
+//  pass if it contains '*', '?', or '.' — anything else is a plain-extension
+//  token handled by Style_MatchLexer().
+//
+//  Uses Win32 PathMatchSpecW (case-insensitive, supports * and ?). Entries
+//  beginning with '\' (legacy PCRE2 syntax) are skipped — see _LoadLexerFileExtensions
+//  for the matching strip-on-load that keeps user INIs clean.
+//
+PEDITLEXER Style_WildcardMatchLexer(LPCWSTR lpszFileName)
 {
-    if (StrIsNotEmpty(lpszFileName)) {
+    if (StrIsEmpty(lpszFileName)) {
+        return NULL;
+    }
 
-        char chFilePath[XHUGE_BUFFER] = { '\0' };
-        WideCharToMultiByteEx(CP_UTF8, 0, lpszFileName, -1, chFilePath, COUNTOF(chFilePath), NULL, NULL);
+    for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
+        const WCHAR *p = g_pLexArray[iLex]->szExtensions;
+        while (p && *p) {
+            // skip leading separators and whitespace
+            while (*p == L';' || *p == L' ' || *p == L'\t') {
+                ++p;
+            }
+            if (!*p) {
+                break;
+            }
+            // find end of this entry
+            const WCHAR *e = p;
+            while (*e && *e != L';') {
+                ++e;
+            }
+            // trim trailing whitespace
+            const WCHAR *eTrim = e;
+            while (eTrim > p && (eTrim[-1] == L' ' || eTrim[-1] == L'\t')) {
+                --eTrim;
+            }
 
-        for (int iLex = 0; iLex < COUNTOF(g_pLexArray); ++iLex) {
-            const WCHAR *p = g_pLexArray[iLex]->szExtensions;
-            do {
-                const WCHAR* f = StrChr(p, L'\\');
-                const WCHAR* e = f;
-                if (f) {
-                    e = StrChr(f, L';');
-                    if (!e) {
-                        e = f + StringCchLen(f, 0);
-                    }
-                    ++f; // exclude '\'
-                    char regexpat[HUGE_BUFFER] = { '\0' };
-                    WideCharToMultiByte(CP_UTF8, 0, f, (int)(e-f), regexpat, (int)COUNTOF(regexpat), NULL, NULL);
-
-                    if (OnigRegExFind(regexpat, chFilePath, false, SciCall_GetEOLMode(), NULL) >= 0) {
-                        return g_pLexArray[iLex];
-                    }
-                }
+            // Skip legacy '\regex' entries (post-cutover; ignored, not matched).
+            if (*p == L'\\') {
                 p = e;
-            } while (p != NULL);
+                continue;
+            }
+
+            // Classify: an entry containing *, ?, or . is a PathMatchSpec pattern.
+            // Bare alphanumeric tokens are plain extensions handled elsewhere.
+            bool isPattern = false;
+            for (const WCHAR *c = p; c < eTrim; ++c) {
+                if (*c == L'*' || *c == L'?' || *c == L'.') {
+                    isPattern = true;
+                    break;
+                }
+            }
+            if (isPattern) {
+                WCHAR pat[STYLE_EXTENSIONS_BUFFER];
+                size_t copyLen = (size_t)(eTrim - p);
+                if (copyLen >= COUNTOF(pat)) {
+                    copyLen = COUNTOF(pat) - 1;
+                }
+                CopyMemory(pat, p, copyLen * sizeof(WCHAR));
+                pat[copyLen] = L'\0';
+                if (PathMatchSpecW(lpszFileName, pat)) {
+                    return g_pLexArray[iLex];
+                }
+            }
+            p = e;
         }
     }
     return NULL;
@@ -2550,7 +2884,7 @@ bool Style_HasLexerForExt(const HPATHL hpath)
         }
     }
     if (!bFound && Path_IsNotEmpty(hpath)) {
-        bFound = Style_RegExMatchLexer(Path_FindFileName(hpath));
+        bFound = Style_WildcardMatchLexer(Path_FindFileName(hpath));
     }
     return bFound;
 }
@@ -2610,9 +2944,9 @@ bool Style_SetLexerFromFile(HWND hwnd, const HPATHL hpath)
 
     LPCWSTR lpszFileName = Path_FindFileName(hpath);
 
-    // check for filename regex match
+    // check for filename wildcard / literal-filename match
     if (!bFound && s_bAutoSelect && Path_IsNotEmpty(hpath)) {
-        pLexSniffed = Style_RegExMatchLexer(lpszFileName);
+        pLexSniffed = Style_WildcardMatchLexer(lpszFileName);
         if (pLexSniffed) {
             pLexNew = pLexSniffed;
             bFound = true;
@@ -2930,7 +3264,7 @@ bool Style_GetFileFilterStr(LPWSTR lpszFilter, int cchFilter, LPWSTR lpszDefExt,
     WCHAR filterAll[80] = { L'\0' };
     GetLngString(IDS_MUI_FILTER_ALL, filterAll, COUNTOF(filterAll));
 
-    WCHAR  filterDef[EXTENTIONS_FILTER_BUFFER] = { L'\0' };
+    WCHAR  filterDef[EXTENSIONS_FILTER_BUFFER] = { L'\0' };
     WCHAR ext[64] = { L'\0' };
     WCHAR append[80] = { L'\0' };
     bool bCurExtIncl = false;
@@ -3387,6 +3721,50 @@ void Style_AppendWeightAttribute(LPWSTR lpszWeight, int cchSize, int fontWeight)
 
 //=============================================================================
 //
+//  Style_StrGetStretchValue()
+//
+bool Style_StrGetStretchValue(LPCWSTR lpszStyle, int* stretch)
+{
+    int fontStretch = SC_STRETCH_NORMAL;
+    bool bFound = false;
+    for (int i = FS_IDX_ULTRACONDENSED; i <= FS_IDX_ULTRAEXPANDED; ++i) {
+        if (Style_StrHasAttribute(lpszStyle, FontStretches[i].wname)) {
+            fontStretch = FontStretches[i].stretch;
+            bFound = true;
+            break;
+        }
+    }
+    if (bFound) {
+        *stretch = fontStretch;
+    }
+    return bFound;
+}
+
+
+//=============================================================================
+//
+//  Style_AppendStretchAttribute()
+//
+void Style_AppendStretchAttribute(LPWSTR lpszStyle, int cchSize, int fontStretch)
+{
+    if (fontStretch == SC_STRETCH_NORMAL) {
+        return; // normal is default, no need to append
+    }
+    const WCHAR *pFontStretch = NULL;
+    for (int i = FS_IDX_ULTRACONDENSED; i <= FS_IDX_ULTRAEXPANDED; ++i) {
+        if (fontStretch == FontStretches[i].stretch) {
+            pFontStretch = FontStretches[i].wname;
+            break;
+        }
+    }
+    if (pFontStretch) {
+        AppendStyle(lpszStyle, cchSize, pFontStretch);
+    }
+}
+
+
+//=============================================================================
+//
 //  Style_StrGetColor()
 //
 bool Style_StrGetColor(LPCWSTR lpszStyle, COLOR_LAYER layer, COLORALPHAREF* rgba, COLORALPHAREF* rgbaOrig, bool useDefault)
@@ -3604,6 +3982,26 @@ void Style_CopyStyles_IfNotDefined(LPCWSTR lpszStyleSrc, LPWSTR lpszStyleDest, i
     }
     if (pFontWeight) {
         AppendStyle(szTmpStyle, COUNTOF(szTmpStyle), pFontWeight);
+    }
+
+    // Font Stretch
+    const WCHAR *pFontStretch = NULL;
+    for (int idx = FS_IDX_ULTRACONDENSED; idx <= FS_IDX_ULTRAEXPANDED; ++idx) {
+        if (Style_StrHasAttribute(lpszStyleDest, FontStretches[idx].wname)) {
+            pFontStretch = FontStretches[idx].wname;
+            break;
+        }
+    }
+    if (!bIsFontDefInDestination && !pFontStretch) {
+        for (int idx = FS_IDX_ULTRACONDENSED; idx <= FS_IDX_ULTRAEXPANDED; ++idx) {
+            if (Style_StrHasAttribute(lpszStyleSrc, FontStretches[idx].wname)) {
+                pFontStretch = FontStretches[idx].wname;
+                break;
+            }
+        }
+    }
+    if (pFontStretch) {
+        AppendStyle(szTmpStyle, COUNTOF(szTmpStyle), pFontStretch);
     }
 
     if (Style_StrHasAttribute(lpszStyleDest, FontEffects[FE_ITALIC])) {
@@ -3825,7 +4223,8 @@ bool Style_SelectFont(HWND hwnd, LPWSTR lpszStyle, int cchStyle, LPCWSTR sLexerN
     int const iFontHeight = PointSizeToFontHeight(fFontSize, hdc);
     ReleaseDC(hwnd, hdc);
 
-    int const iFontStretch = 0; // with calculated automatically
+    int iFontStretch = SC_STRETCH_NORMAL;
+    Style_StrGetStretchValue(lpszStyle, &iFontStretch);
     bool const bIsUnderline = Style_StrHasAttribute(lpszStyle, FontEffects[FE_UNDERLINE]);
     bool const bIsStrikeout = Style_StrHasAttribute(lpszStyle, FontEffects[FE_STRIKEOUT]);
 
@@ -3842,7 +4241,7 @@ bool Style_SelectFont(HWND hwnd, LPWSTR lpszStyle, int cchStyle, LPCWSTR sLexerN
     LOGFONT lf = { 0 };
     lf.lfCharSet = (BYTE)iCharSet;
     lf.lfHeight = iFontHeight;
-    lf.lfWidth = iFontStretch;
+    lf.lfWidth = 0; // let system calculate character width
     lf.lfWeight = iFontWeight;
     lf.lfItalic = (BYTE)(BOOL)bIsItalic;
     lf.lfUnderline = (BYTE)(BOOL)bIsUnderline;
@@ -3947,6 +4346,11 @@ bool Style_SelectFont(HWND hwnd, LPWSTR lpszStyle, int cchStyle, LPCWSTR sLexerN
 
     if (lf.lfWeight != FontWeights[FW_IDX_REGULAR].weight) {
         Style_AppendWeightAttribute(szNewStyle, COUNTOF(szNewStyle), lf.lfWeight);
+    }
+
+    // persist stretch (ChooseFont dialog doesn't modify it, so round-trip the original)
+    if (iFontStretch != SC_STRETCH_NORMAL) {
+        Style_AppendStretchAttribute(szNewStyle, COUNTOF(szNewStyle), iFontStretch);
     }
 
     if (lf.lfItalic) {
@@ -4116,6 +4520,13 @@ void Style_SetStyles(HWND hwnd, const int iStyle, LPCWSTR lpszStyle, const float
         SciCall_StyleSetWeight(iStyle, SC_WEIGHT_NORMAL);
     }
 
+    // Font Stretch
+    if (Style_StrGetStretchValue(lpszStyle, &iValue)) {
+        SciCall_StyleSetStretch(iStyle, iValue);
+    } else if (bIsDefaultStyle) {
+        SciCall_StyleSetStretch(iStyle, SC_STRETCH_NORMAL);
+    }
+
     // Italic
     SciCall_StyleSetItalic(iStyle, Style_StrHasAttribute(lpszStyle, FontEffects[FE_ITALIC]));
 
@@ -4260,7 +4671,7 @@ void Style_GetStyleDisplayName(PEDITSTYLE pStyle, LPWSTR lpszName, int cchName)
 //
 int Style_GetLexerIconId(PEDITLEXER plex)
 {
-    WCHAR pszFile[STYLE_EXTENTIONS_BUFFER << 1];
+    WCHAR pszFile[STYLE_EXTENSIONS_BUFFER << 1];
 
     LPCWSTR pszExtensions = StrIsNotEmpty(plex->szExtensions) ? plex->szExtensions : plex->pszDefExt;
     StringCchCopy(pszFile, COUNTOF(pszFile), L"*.");
@@ -4367,10 +4778,10 @@ static bool  _ApplyDialogItemText(HWND hwnd, PEDITLEXER pDlgLexer, PEDITSTYLE pD
     bool bChgNfy = false;
     bool bForce = false;
 
-    WCHAR szBuf[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = { L'\0' };
+    WCHAR szBuf[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = { L'\0' };
     GetDlgItemText(hwnd, IDC_STYLEEDIT, szBuf, COUNTOF(szBuf));
     // normalize
-    WCHAR szBufNorm[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = { L'\0' };
+    WCHAR szBufNorm[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = { L'\0' };
     Style_CopyStyles_IfNotDefined(szBuf, szBufNorm, COUNTOF(szBufNorm));
 
     if (StringCchCompareXI(szBufNorm, pDlgStyle->szValue) != 0) {
@@ -4455,7 +4866,7 @@ INT_PTR CALLBACK Style_CustomizeSchemesDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
     static bool       bWarnedNoIniFile = false;
     static int        iDMHighliteContrast = 75;
 
-    static WCHAR      tchTmpBuffer[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+    static WCHAR      tchTmpBuffer[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
     static UT_array  *pStylesBackup = NULL;
 
     switch (umsg) {
@@ -4556,7 +4967,7 @@ INT_PTR CALLBACK Style_CustomizeSchemesDlgProc(HWND hwnd, UINT umsg, WPARAM wPar
         pCurrentStyle = &(pCurrentLexer->Styles[STY_DEFAULT]);
         iCurStyleIdx  = STY_DEFAULT;
 
-        SendDlgItemMessage(hwnd, IDC_STYLEEDIT, EM_LIMITTEXT, max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER) - 1, 0);
+        SendDlgItemMessage(hwnd, IDC_STYLEEDIT, EM_LIMITTEXT, max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER) - 1, 0);
 
         MakeBitmapButton(hwnd, IDC_PREVSTYLE, IDB_PREV, -1, -1);
         MakeBitmapButton(hwnd, IDC_NEXTSTYLE, IDB_NEXT, -1, -1);
@@ -4901,7 +5312,7 @@ CASE_WM_CTLCOLOR_SET:
             //ImageList_EndDrag();
             HTREEITEM htiTarget = TreeView_GetDropHilight(hwndTV);
             if (htiTarget) {
-                WCHAR tchCopy[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+                WCHAR tchCopy[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
                 TreeView_SelectDropTarget(hwndTV, NULL);
                 GetDlgItemText(hwnd, IDC_STYLEEDIT, tchCopy, COUNTOF(tchCopy));
                 TreeView_Select(hwndTV, htiTarget, TVGN_CARET);
@@ -5019,7 +5430,7 @@ CASE_WM_CTLCOLOR_SET:
 
         case IDC_STYLEEDIT: {
             if (HIWORD(wParam) == EN_CHANGE) {
-                WCHAR tch[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENTIONS_BUFFER)] = {L'\0'};
+                WCHAR tch[max(BUFSIZE_STYLE_VALUE, STYLE_EXTENSIONS_BUFFER)] = {L'\0'};
 
                 GetDlgItemText(hwnd, IDC_STYLEEDIT, tch, COUNTOF(tch));
 
