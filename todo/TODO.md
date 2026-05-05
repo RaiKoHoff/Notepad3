@@ -206,7 +206,7 @@
 ### Navigation
 - [ ] **(Q3) Navigate Backward/Forward** - VS Code-like history navigation
 - [ ] **(Q2) Go to Block Start/End** - Jump to enclosing block
-- [ ] **(Q2) Brace Find Enhancement** - Search backward for nearest brace when not at one
+- [x] **(Q2) Brace Find Enhancement** - Search backward for nearest brace when not at one  - ✅ IMPLEMENTED
   - Issue: [#4863](https://github.com/rizonesoft/Notepad3/issues/4863)
 - [ ] **(Q2) Go to Sibling Block** - Navigate between sibling code blocks
 - [ ] **(Q2) Touchpad Horizontal Scroll** - Direct touchpad left/right scrolling
