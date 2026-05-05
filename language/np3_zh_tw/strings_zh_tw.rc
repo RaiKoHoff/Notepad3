@@ -208,6 +208,8 @@ BEGIN
                              "找不到 URL 指定路徑！"
     IDS_MUI_URL_OPEN_FILE    "\n按住 Alt 同時點選以開啟檔案"
     IDS_MUI_URL_OPEN_BROWSER "\n按住 Ctrl 同時點選以在瀏覽器中開啟連結"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "已啟用維持檔案最後修改時間功能\n\n本選項將在目前工作階段期間生效"
     IDS_MUI_OUT_OFF_OCCMRK   "書籤/高亮標記已用完！"

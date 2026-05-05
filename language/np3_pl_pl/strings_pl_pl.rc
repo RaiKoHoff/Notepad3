@@ -208,6 +208,8 @@ BEGIN
                              "URL nie znaleziono określonej ścieżki!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Kliknij, aby otworzyć plik"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Kliknij, aby otworzyć link w przeglądarce"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Włączono zachowanie znacznika czasu w modyfikacji pliku\nTa opcja pozostanie dla tej sesji!"
     IDS_MUI_OUT_OFF_OCCMRK   "Kończą się znaczniki występowania (Zakładka/Podświetlenie)!"

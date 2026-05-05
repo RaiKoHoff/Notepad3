@@ -208,6 +208,8 @@ BEGIN
                              "Указанный в URL путь не найден!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click, чтобы открыть файл"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click, чтобы открыть ссылку в браузере"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Сохранение исходной метки времени изменения файла включено\nЭта опция останется включенной для текущей сессии!"
     IDS_MUI_OUT_OFF_OCCMRK   "Маркеры вхождения (закладка/отметка) на исходе!"

@@ -208,6 +208,8 @@ BEGIN
                              "Азначаны ва URL шлях не знойдзены!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click, каб адкрыць файл"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click, каб адкрыць спасылку ў браўзеры"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Захоўванне зыходняй часаадзнакі змянення файла ўключана\nГэта опцыя застанецца ўключанай для гэтай сесіі!"
     IDS_MUI_OUT_OFF_OCCMRK   "Маркеры ўваходжанняў (закладка/падсвечванне) на зыходзе!"

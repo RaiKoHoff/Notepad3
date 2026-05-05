@@ -12464,6 +12464,26 @@ void ShowWrapAroundCallTip(bool forwardSearch)
 
 //=============================================================================
 //
+//  ShowBraceMatchCallTip()
+//
+void ShowBraceMatchCallTip(DocPos pos, UINT idsMsg)
+{
+    static char chToolTip[80<<2] = { '\0' };
+    int const   delayClr = Settings2.WrapAroundTooltipTimeout;
+    if (delayClr >= (_MQ_TIMER_CYCLE << 3)) {
+        WCHAR wchToolTip[80] = { L'\0' };
+        GetLngString(idsMsg, wchToolTip, COUNTOF(wchToolTip));
+        WideCharToMultiByte(Encoding_SciCP, 0, wchToolTip, -1, chToolTip, (int)COUNTOF(chToolTip), NULL, NULL);
+        SciCall_CallTipShow(pos, chToolTip);
+        _DelayClearCallTip(delayClr);
+    } else {
+        Sci_CallTipCancelEx();
+    }
+}
+
+
+//=============================================================================
+//
 //  PasteBoardTimerProc()
 //
 void CALLBACK PasteBoardTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {

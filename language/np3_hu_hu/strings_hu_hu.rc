@@ -208,6 +208,8 @@ BEGIN
                              "Az URL-ben megadott útvonal nem létezik!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Kattintás a fájl megnyitásához"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Kattintás a böngészőben való megnyitáshoz"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Az eredeti fájl módosítási idejeének megőrzése opció be van kapcsolva\nA beállítás így marad erre a munkamenetre!"
     IDS_MUI_OUT_OFF_OCCMRK   "Elfogytak a találatjelölők (Könyvjelző/Kiemelés)!"

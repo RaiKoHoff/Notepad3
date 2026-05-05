@@ -208,6 +208,8 @@ BEGIN
                              "Angiven URL-sökväg existerar redan!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klicka för att öppna fil"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klicka för att öppna länken i webbläsaren"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Bevarande av tidsstämpel för filmodifiering är aktiverad\nInställningen är giltig för denna session!"
     IDS_MUI_OUT_OFF_OCCMRK   "Inga fler markeringar (bokmärke/markering)!"

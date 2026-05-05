@@ -208,6 +208,8 @@ BEGIN
                              "URL opgegeven pad niet gevonden!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik om het bestand te openen"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik om de link in de browser te openen"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Tijdstempel originele bestandswijziging behouden\nDeze optie blijft gedurende deze sessie actief!"
     IDS_MUI_OUT_OFF_OCCMRK   "Er zijn geen andere markeringen van voorvallen (Bladwijzer/Markering)!"

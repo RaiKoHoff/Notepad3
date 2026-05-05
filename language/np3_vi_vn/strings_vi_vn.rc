@@ -208,6 +208,8 @@ BEGIN
                              "Không thể tìm thấy đường dẫn URL đã chỉ định!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt+Click để mở tệp"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl+Click để mở liên kết trong trình duyệt"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Có thể bảo tồn dấu thời gian sửa đổi tệp gốc\nTùy chọn này sẽ giữ nguyên trong phiên này!"
     IDS_MUI_OUT_OFF_OCCMRK   "Không đủ dấu đánh dấu (dấu trang/nổi bật)!"

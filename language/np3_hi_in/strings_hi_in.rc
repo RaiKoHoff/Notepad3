@@ -208,6 +208,8 @@ BEGIN
                              "URL निर्दिष्ट स्थान मौजूद नहीं है!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + फ़ाईल खोलने के लिए क्लिक करें"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + ब्राउज़र में लिंक खोलने के लिए क्लिक करें"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "फ़ाईल परिवर्तन का मौलिक समय संरक्षण सक्षम है\nयह विकल्प इस सत्र के लिए बना रहेगा!"
     IDS_MUI_OUT_OFF_OCCMRK   "उपस्तिथि चिन्हक खत्म हो रहे है (बुकमार्क/हाइलाइट)!"
