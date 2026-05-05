@@ -346,7 +346,7 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 
 IDS_MUI_STYLEEDIT_HELP "\
 파일 이름 확장자는 ';'로 구분해야 합니다\r\n\
-'*'、'?'、'.' を含むエントリは、ファイル名全体（ワイルドカード）に一致します:\r\n\
+'*', '?' 또는 '.'가 포함된 항목은 전체 파일 이름 (와일드카드)과 일치합니다:\\r\n\
    Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 스타일 형식:\r\n\
 글꼴:이름; 크기:[+/-]nn.mm; 굵게; 기울임; 밑줄;\r\n\
