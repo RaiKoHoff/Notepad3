@@ -62,13 +62,13 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_LEX_DEF_TXT         "Common Base"
+    IDS_LEX_DEF_TXT         "Κοινή βάση"
     IDS_LEX_WEB_SRC         "Web Source Code"
     IDS_LEX_XML_DOC         "XML Document"
     IDS_LEX_CSS_STYLE       "CSS Style Sheets"
     IDS_LEX_PRISM_CSV       "CSV Prism"
-    IDS_LEX_CPP_SRC         "C/C++ Source Code"
-    IDS_LEX_CSHARP_SRC      "C# Source Code"
+    IDS_LEX_CPP_SRC         "C/C++ πηγαίος κώδικας"
+    IDS_LEX_CSHARP_SRC      "C# πηγαίος κώδικας"
     IDS_LEX_RESOURCE_SCR    "Resource Script"
     IDS_LEX_MAKEFILES       "Makefiles"
 END
@@ -78,19 +78,19 @@ BEGIN
     IDS_LEX_VB_SCR          "VBScript"
     IDS_LEX_VIS_BAS         "Visual Basic"
     IDS_LEX_J_SCR           "JavaScript"
-    IDS_LEX_JAVA_SRC        "Java Source Code"
-    IDS_LEX_PASCAL_SRC      "Pascal Source Code"
+    IDS_LEX_JAVA_SRC        "Java πηγαίος κώδικας"
+    IDS_LEX_PASCAL_SRC      "Pascal πηγαίος κώδικας"
     IDS_LEX_ASM_SCR         "Assembly Script"
     IDS_LEX_PERL_SCR        "Perl Script"
     IDS_LEX_CONF            "Configuration Files"
-    IDS_LEX_BATCH           "Batch Files"
-    IDS_LEX_DIFF            "Diff Files"
+    IDS_LEX_BATCH           "Batch αρχεία"
+    IDS_LEX_DIFF            "Diff αρχεία"
     IDS_LEX_SQL             "SQL Query"
     IDS_LEX_PYTHON          "Python Script"
     IDS_LEX_APC_CFG         "Apache Config Files"
     IDS_LEX_PWRSHELL        "PowerShell Script"
-    IDS_LEX_D_SRC           "D Source Code"
-    IDS_LEX_GO_SRC          "Go Source Code"
+    IDS_LEX_D_SRC           "D πηγαίος κώδικας"
+    IDS_LEX_GO_SRC          "Go πηγαίος κώδικας"
 END
 
 STRINGTABLE
@@ -120,17 +120,17 @@ BEGIN
     IDS_LEX_YAML            "YAML"
     IDS_LEX_COFFEE_SCR      "Coffeescript"
     IDS_LEX_MATLAB          "MATLAB"
-    IDS_LEX_NIM_SRC         "Nim Source Code"
+    IDS_LEX_NIM_SRC         "Nim πηγαίος κώδικας"
     IDS_LEX_R_STAT          "R-S-SPlus Statistics Code"
-    IDS_LEX_RUST_SRC        "Rust Source Code"
+    IDS_LEX_RUST_SRC        "Rust πηγαίος κώδικας"
     IDS_LEX_AHKL            "AutoHotkey_L Script"
-    IDS_LEX_TEXT_FILES      "Text Files"
+    IDS_LEX_TEXT_FILES      "Αρχεία απλού κειμένου"
     IDS_LEX_TOML_CFG        "TOML"
-    IDS_LEX_DART_SRC        "Dart Source Code"
-    IDS_LEX_KOTLIN_SRC      "Kotlin Source Code"
+    IDS_LEX_DART_SRC        "Dart πηγαίος κώδικας"
+    IDS_LEX_KOTLIN_SRC      "Kotlin πηγαίος κώδικας"
     IDS_LEX_JULIA_SCR       "Julia Script"
     IDS_LEX_KIX_SCR         "KiXtart Script"
-    IDS_LEX_FORTRAN         "Fortran Source Code"
+    IDS_LEX_FORTRAN         "Fortran πηγαίος κώδικας"
 END
 
 STRINGTABLE
@@ -143,7 +143,7 @@ END
 STRINGTABLE
 BEGIN
     IDS_LEX_STD_STYLE       "Default Style"
-    IDS_LEX_STD_MARGIN      "Margins and Line Numbers"
+    IDS_LEX_STD_MARGIN      "Περιθώρια και αριθμοί γραμμών"
     IDS_LEX_STD_BRACE       "Matching Braces (Indicator)"
     IDS_LEX_STD_BRACE_FAIL  "Matching Braces Error (Indicator)"
 END
@@ -177,10 +177,10 @@ BEGIN
     IDS_LEX_STD_BKMRK       "Bookmarks and Folding (Colours, Size)"
     IDS_LEX_2ND_BKMRK       "2nd Bookmarks and Folding (Colours, Size)"
     IDS_LEX_STR_Default     "Default"
-    IDS_LEX_STR_Comment     "Comment"
+    IDS_LEX_STR_Comment     "Σχόλιο"
     IDS_LEX_STR_Keyword     "Keyword"
     IDS_LEX_STR_Identifier  "Identifier"
-    IDS_LEX_STR_Number      "Number"
+    IDS_LEX_STR_Number      "Αριθμός"
     IDS_LEX_STR_String      "String"
     IDS_LEX_STR_Operator    "Operator"
     IDS_LEX_STR_PreProc     "Preprocessor"
@@ -192,13 +192,13 @@ STRINGTABLE
 BEGIN
     IDS_LEX_STR_63136       "HTML Tag"
     IDS_LEX_STR_63137       "HTML Unknown Tag"
-    IDS_LEX_STR_63138       "HTML Attribute"
+    IDS_LEX_STR_63138       "HTML Ιδιότητα"
     IDS_LEX_STR_63139       "HTML Unknown Attribute"
-    IDS_LEX_STR_63140       "HTML Value"
+    IDS_LEX_STR_63140       "HTML Τιμή"
     IDS_LEX_STR_63141       "HTML String"
     IDS_LEX_STR_63142       "HTML Other Inside Tag"
-    IDS_LEX_STR_63143       "HTML Comment"
-    IDS_LEX_STR_63144       "HTML Entity"
+    IDS_LEX_STR_63143       "HTML Σχόλιο"
+    IDS_LEX_STR_63144       "HTML Οντότητα"
     IDS_LEX_STR_63145       "XML Identifier"
     IDS_LEX_STR_63146       "ASP Start Tag"
     IDS_LEX_STR_63147       "CDATA"
@@ -211,11 +211,11 @@ END
 STRINGTABLE
 BEGIN
     IDS_LEX_STR_63152       "PHP Keyword"
-    IDS_LEX_STR_63153       "PHP Number"
+    IDS_LEX_STR_63153       "PHP Αριθμός"
     IDS_LEX_STR_63154       "PHP Variable"
     IDS_LEX_STR_63155       "PHP String Variable"
     IDS_LEX_STR_63156       "PHP Complex Variable"
-    IDS_LEX_STR_63157       "PHP Comment"
+    IDS_LEX_STR_63157       "PHP Σχόλιο"
     IDS_LEX_STR_63158       "PHP Operator"
     IDS_LEX_STR_63159       "JS Default"
     IDS_LEX_STR_63160       "JS Comment"
@@ -265,7 +265,7 @@ BEGIN
     IDS_LEX_STR_63196       "Tag-Attribute"
     IDS_LEX_STR_63197       "Pseudo-Class"
     IDS_LEX_STR_63198       "Unknown Pseudo-Class"
-    IDS_LEX_STR_63199       "CSS Property"
+    IDS_LEX_STR_63199       "CSS Ιδιότητα"
 END
 
 STRINGTABLE
@@ -324,16 +324,16 @@ BEGIN
     IDS_LEX_STR_63243       "Quoted Identifier"
     IDS_LEX_STR_63244       "String Triple Double Quotes"
     IDS_LEX_STR_63245       "String Triple Single Quotes"
-    IDS_LEX_STR_ClassName   "Class Name"
-    IDS_LEX_STR_FctName     "Function Name"
+    IDS_LEX_STR_ClassName   "Όνομα κλάσης"
+    IDS_LEX_STR_FctName     "Όνομα συνάρτησης"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_LEX_STR_IpAdr       "IP Address"
-    IDS_LEX_STR_Var         "Variable"
+    IDS_LEX_STR_IpAdr       "Διεύθυνση IP"
+    IDS_LEX_STR_Var         "Μεταβλητή"
     IDS_LEX_STR_Cmdlet      "Cmdlet"
-    IDS_LEX_STR_Alias       "Alias"
+    IDS_LEX_STR_Alias       "Συνώνυμο"
     IDS_LEX_STR_63252       "Parsing Error"
     IDS_LEX_STR_Prototyp    "Prototype"
     IDS_LEX_STR_63254       "Format Identifier"
