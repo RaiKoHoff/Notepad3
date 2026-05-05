@@ -95,7 +95,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "Przywróć z pliku\tF5",                     IDM_FILE_REVERT
-        MENUITEM "&Ignoruj zmienność plików",                      CMD_IGNORE_FILE_VARS
+        MENUITEM "&Ignoruj zmiany w treści plików",                      CMD_IGNORE_FILE_VARS
         POPUP "&Kodowanie"
         BEGIN
             POPUP "&Przywróć z pliku jako"
@@ -115,9 +115,9 @@ BEGIN
             BEGIN
                 MENUITEM "&ANSI (przestarzałe kodowanie)",                          IDM_ENCODING_ANSI
                 MENUITEM "&Unicode (uniwersalne mapowanie)",                       IDM_ENCODING_UNICODE
-                MENUITEM "Unicode (j.w. typu &Big Endian)",            IDM_ENCODING_UNICODEREV
+                MENUITEM "Unicode (jw. typu &Big Endian)",            IDM_ENCODING_UNICODEREV
                 MENUITEM "UTF-&8 (zalecany standard W3C)\tShift+F8",               IDM_ENCODING_UTF8
-                MENUITEM "UTF-8 (j.w. z &sygnaturą BOM)",             IDM_ENCODING_UTF8SIGN
+                MENUITEM "UTF-8 (jw. z &sygnaturą BOM)",             IDM_ENCODING_UTF8SIGN
                 MENUITEM SEPARATOR
                 MENUITEM "&Więcej kodowań...\tF9",         IDM_ENCODING_SELECT
             END
@@ -488,7 +488,7 @@ BEGIN
         MENUITEM "Rozwiąż do &ścieżek UNC",                    IDM_SET_RESOLVE_UNC_PATHS
         POPUP "Funkcja klawisza ESC"
         BEGIN
-            MENUITEM "Żadna",                                       IDM_SET_NOESCFUNC
+            MENUITEM "Brak funkcji",                                       IDM_SET_NOESCFUNC
             MENUITEM "&Minimalizuj Notepad3",                       IDM_SET_ESCMINIMIZE
             MENUITEM "Zamknij Notepad3",                            IDM_SET_ESCEXIT
         END
@@ -590,7 +590,7 @@ BEGIN
             MENUITEM "Wielka litera zdania",          CMD_CTX_SENTENCECASE
         END
         MENUITEM SEPARATOR
-        MENUITEM "Zmień bieżącą zakładkę",                     IDM_VIEW_TOGGLE_CURRENT_FOLD
+        MENUITEM "Przełącz bieżącą zakładkę",                     IDM_VIEW_TOGGLE_CURRENT_FOLD
         MENUITEM SEPARATOR
         MENUITEM "Otwórz Web Action 1",                       CMD_WEBACTION1
         MENUITEM "Otwórz Web Action 2",                       CMD_WEBACTION2
