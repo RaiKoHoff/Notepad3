@@ -208,6 +208,8 @@ BEGIN
                              "Η καθορισμένη διαδρομή URL δεν βρέθηκε!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Κλικ για άνοιγμα του αρχείου"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Κλικ για άνοιγμα του συνδέσμου στον περιηγητή"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Η διατήρηση της αρχικής χρονοσήμανσης μεταβολής του αρχείου είναι ενεργοποιημένη\nΑυτή η επιλογή θα παραμείνει για αυτή την σύνοδο!"
     IDS_MUI_OUT_OFF_OCCMRK   "Δεν υπάρχουν άλλοι δείκτες εμφάνισης (Σελιδοδείκτης/Επισήμανση)!"

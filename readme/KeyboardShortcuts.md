@@ -238,8 +238,8 @@ A complete reference for the shortcuts wired into Notepad3 (`src/Notepad3.rc` ac
 | `F4` | Replace next | NP2 |
 | `Ctrl+G` | Goto line / column dialog | NP2 |
 | `Ctrl+Shift+F` | Search in files (grepWin) | (orig-NP2: "Recode as default") |
-| `Ctrl+B` | Find matching brace | NP2 |
-| `Ctrl+Shift+B` | Select to matching brace | NP2 |
+| `Ctrl+B` | **Find matching brace** — if the caret is at a brace `()[]{}` jump to its match; if not at a brace, jump to the nearest enclosing opening brace. If a brace-block selection is active, the caret toggles between the two brace endpoints while preserving the selection. Shows a calltip if no match or no enclosing brace exists. | NP2+ |
+| `Ctrl+Shift+B` | **Select to matching brace** — selects the brace pair enclosing the caret (inclusive of both braces). Repeated presses expand the selection outward one nesting level at a time. Pressing when the caret is at the closing brace of the current selection pivots the caret to the opening brace (same selection, reversed direction); pressing again when at the opening brace expands to the next outer pair. Shows a calltip if no match or no enclosing brace exists. | NP2+ |
 | `Ctrl+Alt+F2` | Expand selection to next match | (orig-NP2: `F2`) |
 | `Ctrl+Alt+Shift+F2` | Expand selection to previous match | (orig-NP2: `Shift+F2`) |
 

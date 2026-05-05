@@ -98,6 +98,7 @@ void ParseCommandLine();
 bool CheckAutoLoadMostRecent();
 void ShowZoomCallTip();
 void ShowWrapAroundCallTip(bool forwardSearch);
+void ShowBraceMatchCallTip(DocPos pos, UINT idsMsg);
 
 void   NP3_ZoomIn();
 void   NP3_ZoomOut();

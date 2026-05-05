@@ -208,6 +208,8 @@ BEGIN
                              "Jalur URL yang dituju tidak ditemukan!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik untuk membuka berkas"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik untuk membuka tautan di browser"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Mempertahankan berkas dari Modifikasi Stempel Waktu telah diaktifkan\nOpsi ini hanya akan berlangsung untuk sesi ini saja!"
     IDS_MUI_OUT_OFF_OCCMRK   "Penanda Pengulangan Kata telah habis (Markah/Sorotan)!"

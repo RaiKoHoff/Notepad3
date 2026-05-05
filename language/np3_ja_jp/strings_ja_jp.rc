@@ -208,6 +208,8 @@ BEGIN
                              "URL で指定されたパスが見つかりません!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + クリック : ファイルを開きます"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + クリック : ブラウザーでリンクを開きます"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "元ファイルの更新日時のままにします\nこのセッションでのみ有効となります"
     IDS_MUI_OUT_OFF_OCCMRK   "単語出現マーカーが枯渇しています (しおり/強調表示)!"

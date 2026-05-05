@@ -208,6 +208,8 @@ BEGIN
                              "Chemin spécifié par l'URL introuvable !"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Clic pour ouvrir le fichier"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Clic pour ouvrir le lien dans le navigateur"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Préservation de l'horodatage de modification original du fichier activée\nCette option restera active pour cette session !"
     IDS_MUI_OUT_OFF_OCCMRK   "Il n'y a pas d'autres marqueurs d'occurrence (Signet/Surlignage) !"

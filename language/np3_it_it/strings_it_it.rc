@@ -208,6 +208,8 @@ BEGIN
                              "Il percorso specificato nella URL non è stato trovato!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click per aprire il file"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click per aprire il link nel browser"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Conservazione della data di ultima modifica originale abilitata\nQuesta opzione rimarrà attiva per questa sessione!"
     IDS_MUI_OUT_OFF_OCCMRK   "Marcatori occorrenza in esaurimento (Segnalibro/evidenziatura)!"

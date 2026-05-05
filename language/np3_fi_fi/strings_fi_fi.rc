@@ -208,6 +208,8 @@ BEGIN
                              "URL määriteltyä polkua ei löydy!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Avaa tiedosto klikkaamalla"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Avaa linkki selaimessa klikkaamalla"
+    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
+    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Alkuperäisen tiedoston muokkausaikaleiman säilyttäminen käytössä\nVaihtoehto säilyy tämän istunnon ajan!"
     IDS_MUI_OUT_OFF_OCCMRK   "Esiintymämerkit loppumassa (kirjanmerkki/korostus)!"
