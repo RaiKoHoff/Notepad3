@@ -96,12 +96,12 @@ BEGIN
     CONTROL         "Ταίριασμα μόνο α&ρχής λέξης",IDC_FINDSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,61,108,10
     CONTROL         "&Μετασχ. ανάστρ. καθέτων",IDC_FINDTRANSFORMBS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,73,100,10
     CONTROL         "&Αναζ. κανονικής έκφρασης",IDC_FINDREGEXP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,85,102,10
-    CONTROL         "Η τελεία &ταιριάζει με αλλαγές γραμμής",IDC_DOT_MATCH_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,96,94,10
+    CONTROL         "Η τελεία και ως αλλαγή γραμμής",IDC_DOT_MATCH_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,96,94,10
     CONTROL         "Χωρίς επανέναρ&ξη",IDC_NOWRAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,37,75,10
     CONTROL         "&Κλείσιμο μετά την εύρεση",IDC_FINDCLOSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,49,97,10
     CONTROL         "Σήμανση εμ&φανίσεων",IDC_ALL_OCCURRENCES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,61,84,10
     CONTROL         "Αυξητική αναζήτηση", IDC_INST_INCR_SEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,73,73,10
-    CONTROL         "Αναζ. με μπα&λαντέρ",IDC_WILDCARDSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,85,77,10
+    CONTROL         "Αναζ. με υποκατάσταση",IDC_WILDCARDSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,85,77,10
     CONTROL         "Λειτ. &διαφάνειας σε απώλεια εστίασης",IDC_TRANSPARENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,118,138,10
     DEFPUSHBUTTON   "&Εύρεση επόμ",IDOK,216,7,60,14
     PUSHBUTTON      "Εύρεση &προηγ",IDC_FINDPREV,216,24,60,14
@@ -130,12 +130,12 @@ BEGIN
     CONTROL         "Ταίριασμα μόνο α&ρχής λέξης",IDC_FINDSTART,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,90,108,10
     CONTROL         "&Μετασχ. ανάστρ. καθέτων",IDC_FINDTRANSFORMBS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,102,100,10
     CONTROL         "&Αναζ. κανονικής έκφρασης",IDC_FINDREGEXP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,114,102,10
-    CONTROL         "Dot &matches line-breaks",IDC_DOT_MATCH_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,124,94,10
+    CONTROL         "Η τελεία και ως αλλαγή γραμμής",IDC_DOT_MATCH_ALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,124,94,10
     CONTROL         "Χωρίς επανέναρ&ξη",IDC_NOWRAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,66,75,10
     CONTROL         "&Κλείσιμο μετά αντικ/ση",IDC_FINDCLOSE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,78,89,10
     CONTROL         "Σήμανση εμ&φανίσεων",IDC_ALL_OCCURRENCES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,90,84,10
-    CONTROL         "Incremental Search", IDC_INST_INCR_SEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,102,73,10
-    CONTROL         "Αναζ. με μπα&λαντέρ",IDC_WILDCARDSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,114,77,10
+    CONTROL         "Αυξητική αναζήτηση", IDC_INST_INCR_SEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,102,73,10
+    CONTROL         "Αναζ. με υποκατάσταση",IDC_WILDCARDSEARCH,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,125,114,77,10
     CONTROL         "Λειτ. &διαφάνειας σε απώλεια εστίασης",IDC_TRANSPARENT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,144,138,10
     DEFPUSHBUTTON   "&Εύρεση επόμ",IDOK,216,7,60,14
     PUSHBUTTON      "Εύρεση &προηγ",IDC_FINDPREV,216,23,60,14
@@ -282,7 +282,7 @@ BEGIN
     CONTROL         "Αποκ&λειστικό κλείδωμα αρχείου", IDC_RADIO_BTN_E,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,7,55,120,10
     CONTROL         "Επαναφ&ορά εάν ανοίξει ένα νέο αρχείο", IDC_CHECK_BOX_A,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,72,145,10
     CONTROL         "Κατα&γραφή εποπτείας", IDC_CHECK_BOX_B,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,86,120,10
-    LTEXT           "File Check Interval [ms]",IDC_LINE_TEXT,7,102,120,10
+    LTEXT           "Περίοδος ελέγχου αρχείου [ms]",IDC_LINE_TEXT,7,102,120,10
     EDITTEXT        IDC_FILE_CHECK_INTERVAL,127,100,50,12,ES_AUTOHSCROLL | ES_NUMBER
     DEFPUSHBUTTON   "&Εντάξει",IDOK,127,7,50,14
     PUSHBUTTON      "Ά&κυρο",IDCANCEL,127,24,50,14
@@ -319,9 +319,9 @@ BEGIN
     PUSHBUTTON      "Επ&αναφορά",IDC_STYLEDEFAULT,377,201,42,14
     PUSHBUTTON      "",IDC_PREVSTYLE,426,201,15,14,BS_BITMAP
     PUSHBUTTON      "",IDC_NEXTSTYLE,445,201,15,14,BS_BITMAP
-    LTEXT           "Dark-Mode Contrast(%):", IDC_STATIC2,181,222,80,8
+    LTEXT           "Αντίθεση σκουροχρωμίας(%):", IDC_STATIC2,181,222,80,8
     EDITTEXT        IDC_DARK_MODE_CONTRAST,265,221,24,12,ES_AUTOHSCROLL
-    LTEXT           "[0-6000] Default: 75%",IDC_STATIC3,300,222,80,8
+    LTEXT           "[0-6000] Προεπιλογή: 75%",IDC_STATIC3,300,222,80,8
     PUSHBUTTON      "Ει&σαγωγή...",IDC_IMPORT,181,240,50,14
     PUSHBUTTON      "Ε&ξαγωγή...",IDC_EXPORT,237,240,50,14
     DEFPUSHBUTTON   "&Εντάξει",IDOK,355,240,50,14
@@ -341,7 +341,7 @@ BEGIN
     LTEXT           "&Μέγεθος εσοχής:",IDC_STATIC2,7,30,59,8
     EDITTEXT        IDC_INDENT_DEPTH,71,27,30,14,ES_AUTOHSCROLL
     CONTROL         "Ει&σαγωγή στηλοθετών ως κενά διαστήματα",IDC_TAB_AS_SPC,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,47,170,10
-    CONTROL         "Tab/Shift-Tab always indents",IDC_TAB_BACKTAB_INDENTS_ALWAYS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,59,150,10
+    CONTROL         "Πάντα εσοχή με Tab/Shift-Tab",IDC_TAB_BACKTAB_INDENTS_ALWAYS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,59,150,10
     CONTROL         "Aναδιαμόρφωση εσοχής με το πλήκτρο &Τab",IDC_TAB_INDENTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,71,170,10
     CONTROL         "Aναδιαμ/ση εσοχής με το πλήκτρο &Βackspace",IDC_BACKTAB_INDENTS,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,83,160,10
@@ -537,7 +537,7 @@ BEGIN
     LTEXT           "${0I}",IDC_MODLNS_CNTLN0_ZEROFLD,30,92,17,8
     LTEXT           "Συνεχείς αριθμοί (με αρχή το 0)",IDC_STATIC5,57,92,110,8
     LTEXT           "${0L+I+N}", IDC_MODLNS_TINYEXPR_ALL,12,102,35,8
-    LTEXT           "${<expr>} defines math formulas",IDC_STATIC6,57,102,124,8
+    LTEXT           "${<expr>} ορίζει μαθηματικούς τύπους",IDC_STATIC6,57,102,124,8
 END
 
 IDD_MUI_INSERTTAG DIALOGEX 0, 0, 182, 70
