@@ -4235,15 +4235,18 @@ LRESULT MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     int i = 0;
 
-    if (Encoding_IsUNICODE_REVERSE(Encoding_GetCurrent())) {
-        i = IDM_ENCODING_UNICODEREV;
-    } else if (Encoding_IsUNICODE(Encoding_GetCurrent())) {
-        i = IDM_ENCODING_UNICODE;
-    } else if (Encoding_IsUTF8_SIGN(Encoding_GetCurrent())) {
+    cpi_enc_t const iCurEnc = Encoding_GetCurrent();
+    // test most-specific first: UTF-8 variants also carry NCP_UNICODE, so they
+    // must be checked before Encoding_IsUNICODE() to avoid being shadowed.
+    if (Encoding_IsUTF8_SIGN(iCurEnc)) {
         i = IDM_ENCODING_UTF8SIGN;
-    } else if (Encoding_MaybeUTF8(Encoding_GetCurrent())) {
+    } else if (Encoding_MaybeUTF8(iCurEnc)) {
         i = IDM_ENCODING_UTF8;
-    } else if (Encoding_IsSystemANSI_CP(Encoding_GetCurrent())) {
+    } else if (Encoding_IsUNICODE_REVERSE(iCurEnc)) {
+        i = IDM_ENCODING_UNICODEREV;
+    } else if (Encoding_IsUNICODE(iCurEnc)) {
+        i = IDM_ENCODING_UNICODE;
+    } else if (Encoding_IsSystemANSI_CP(iCurEnc)) {
         i = IDM_ENCODING_ANSI;
     } else {
         i = -1;
@@ -10844,7 +10847,11 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
         }
 
         SendMessage(Globals.hwndStatus, WM_SETREDRAW, TRUE, 0);
-        InvalidateRect(Globals.hwndStatus, NULL, FALSE);
+        // bErase=TRUE: SB_SETPARTS may have shifted part boundaries; without a
+        // background erase the control's own separator pixels at OLD positions
+        // linger (ghost separators / artefacts at segment starts after file
+        // load or new/clear). WS_EX_COMPOSITED keeps this flicker-free.
+        InvalidateRect(Globals.hwndStatus, NULL, TRUE);
 
     }
     // --------------------------------------------------------------------------

@@ -40,6 +40,7 @@
 #include <windows.h>
 
 #include <commctrl.h>
+#include <objbase.h>     // STDMETHOD — gates PRINTDLGEX / PRINTPAGERANGE in commdlg.h
 #include <commdlg.h>
 #include <string_view>
 
@@ -74,81 +75,6 @@ static void _StatusUpdatePrintPage(int iPageNum)
 
 //=============================================================================
 //
-// LPPRINTHOOKPROC _LPPrintHookProc()
-//
-static UINT_PTR CALLBACK _LPPrintHookProc(HWND hwnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uiMsg) {
-
-    case WM_INITDIALOG: {
-
-        SetDialogIconNP3(hwnd);
-        InitWindowCommon(hwnd, true);
-
-#ifdef D_NP3_WIN10_DARK_MODE
-        if (UseDarkMode()) {
-            SetExplorerTheme(GetDlgItem(hwnd, IDOK));
-            SetExplorerTheme(GetDlgItem(hwnd, IDCANCEL));
-            SetExplorerTheme(GetDlgItem(hwnd, 0x401));
-            int const ctl[] = { chx1, rad1, rad2, rad3, grp1, grp2, grp4, cmb4 };
-            for (int i : ctl) {
-                SetWindowTheme(GetDlgItem(hwnd, i), L"", L""); // remove theme for BS_AUTORADIOBUTTON
-            }
-        }
-#endif
-
-        SendMessage(hwnd, WM_THEMECHANGED, 0, 0);
-    }
-    break;
-
-    case WM_DPICHANGED:
-        UpdateWindowLayoutForDPI(hwnd, (RECT*)lParam, LOWORD(wParam));
-        break;
-
-#ifdef D_NP3_WIN10_DARK_MODE
-
-    CASE_WM_CTLCOLOR_SET:
-        return SetDarkModeCtlColors((HDC)wParam, UseDarkMode());
-        break;
-
-    case WM_SETTINGCHANGE:
-        if (IsDarkModeSupported() && IsColorSchemeChangeMessage(lParam)) {
-            SendMessage(hwnd, WM_THEMECHANGED, 0, 0);
-        }
-        break;
-
-    case WM_THEMECHANGED:
-        if (IsDarkModeSupported()) {
-            bool const darkModeEnabled = CheckDarkModeEnabled();
-            AllowDarkModeForWindowEx(hwnd, darkModeEnabled);
-            RefreshTitleBarThemeColor(hwnd);
-
-            int const buttons[] = { IDOK, IDCANCEL, 0x401 };
-            for (int button : buttons) {
-                HWND const hBtn = GetDlgItem(hwnd, button);
-                AllowDarkModeForWindowEx(hBtn, darkModeEnabled);
-                SendMessage(hBtn, WM_THEMECHANGED, 0, 0);
-            }
-            UpdateWindowEx(hwnd);
-        }
-        break;
-
-#endif
-
-    case WM_COMMAND:
-        if (IsYesOkay(wParam)) {
-        }
-        break;
-
-    default:
-        break;
-    }
-    return FALSE;
-}
-
-
-//=============================================================================
-//
 //  EditPrint() - Code from SciTE
 //
 extern "C" bool EditPrint(HWND hwnd,LPCWSTR pszDocTitle,LPCWSTR pszPageFormat)
@@ -161,22 +87,25 @@ extern "C" bool EditPrint(HWND hwnd,LPCWSTR pszDocTitle,LPCWSTR pszPageFormat)
     constexpr COLORREF const colorBlack = RGB(0x00, 0x00, 0x00);
     constexpr COLORREF const colorWhite = RGB(0xFF, 0xFF, 0xFF);
 
-    PRINTDLG pdlg = { sizeof(PRINTDLG), nullptr, nullptr, nullptr, nullptr,
-                      0, 0, 0, 0, 0, 0, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr
-                    };
+    // Modern Common Print Dialog (Win2000+, property-sheet host).
+    // PRINTDLGEX has no nFromPage/nToPage; page ranges live in lpPageRanges.
+    // Single-range to match the existing downstream loop behaviour.
+    PRINTPAGERANGE pageRanges[1] = { { 1, 0xffffU } };
 
-    pdlg.hwndOwner = GetParent(hwnd);
-    pdlg.hInstance = Globals.hInstance;
-    pdlg.Flags = PD_ENABLEPRINTHOOK | PD_USEDEVMODECOPIES | PD_ALLPAGES | PD_RETURNDC;
-    pdlg.nFromPage = 1;
-    pdlg.nToPage = 1;
-    pdlg.nMinPage = 1;
-    pdlg.nMaxPage = 0xffffU;
-    pdlg.nCopies = 1;
-    pdlg.hDC = nullptr;
-    pdlg.hDevMode = hDevMode;
-    pdlg.hDevNames = hDevNames;
-    pdlg.lpfnPrintHook = _LPPrintHookProc;
+    PRINTDLGEX pdlg = { 0 };
+    pdlg.lStructSize    = sizeof(PRINTDLGEX);
+    pdlg.hwndOwner      = GetParent(hwnd);
+    pdlg.hDevMode       = hDevMode;
+    pdlg.hDevNames      = hDevNames;
+    pdlg.hDC            = nullptr;
+    pdlg.Flags          = PD_USEDEVMODECOPIES | PD_ALLPAGES | PD_RETURNDC | PD_NOCURRENTPAGE;
+    pdlg.nPageRanges    = 0;        // no preset ranges; user picks land here
+    pdlg.nMaxPageRanges = ARRAYSIZE(pageRanges);
+    pdlg.lpPageRanges   = pageRanges;
+    pdlg.nMinPage       = 1;
+    pdlg.nMaxPage       = 0xffffU;
+    pdlg.nCopies        = 1;
+    pdlg.nStartPage     = START_PAGE_GENERAL;
 
     DocPos const startPos = SciCall_GetSelectionStart();
     DocPos const endPos = SciCall_GetSelectionEnd();
@@ -188,16 +117,24 @@ extern "C" bool EditPrint(HWND hwnd,LPCWSTR pszDocTitle,LPCWSTR pszPageFormat)
     }
 
     // |= 0 - Don't display dialog box, just use the default printer and options
-    pdlg.Flags |= (Flags.PrintFileAndLeave == 1) ? PD_RETURNDEFAULT : 0;
+    if (Flags.PrintFileAndLeave == 1) {
+        pdlg.Flags |= PD_RETURNDEFAULT;
+    }
 
-    if (!PrintDlg(&pdlg)) {
-        return true; // False means error...
+    HRESULT const hr = PrintDlgEx(&pdlg);
+    if (FAILED(hr) || (pdlg.dwResultAction == PD_RESULT_CANCEL)) {
+        return true;
     }
 
     hDevMode = pdlg.hDevMode;
     hDevNames = pdlg.hDevNames;
 
     HDC const hdc = pdlg.hDC;
+
+    // Resolve the (single) page range; downstream code reads these instead of
+    // the legacy nFromPage/nToPage fields, which PRINTDLGEX does not have.
+    DWORD const dwPageFrom = (pdlg.nPageRanges > 0) ? pdlg.lpPageRanges[0].nFromPage : 1U;
+    DWORD const dwPageTo   = (pdlg.nPageRanges > 0) ? pdlg.lpPageRanges[0].nToPage   : 0xffffU;
 
     // Get printer resolution
     POINT ptDpi;
@@ -406,7 +343,7 @@ extern "C" bool EditPrint(HWND hwnd,LPCWSTR pszDocTitle,LPCWSTR pszPageFormat)
 
     while (lengthPrinted < lengthDoc) {
         bool printPage = (!(pdlg.Flags & PD_PAGENUMS) ||
-                          ((pageNum >= pdlg.nFromPage) && (pageNum <= pdlg.nToPage)));
+                          (((DWORD)pageNum >= dwPageFrom) && ((DWORD)pageNum <= dwPageTo)));
 
         StringCchPrintf(pageString,COUNTOF(pageString),pszPageFormat,pageNum);
 
@@ -491,7 +428,7 @@ extern "C" bool EditPrint(HWND hwnd,LPCWSTR pszDocTitle,LPCWSTR pszPageFormat)
         }
         pageNum++;
 
-        if ((pdlg.Flags & PD_PAGENUMS) && (pageNum > pdlg.nToPage)) {
+        if ((pdlg.Flags & PD_PAGENUMS) && ((DWORD)pageNum > dwPageTo)) {
             break;
         }
     }
