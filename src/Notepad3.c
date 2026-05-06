@@ -1879,6 +1879,9 @@ static VOID CALLBACK _DeferMinimizeTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEv
     if (IsAsyncKeyDown(VK_CONTROL)) {
         return; // user held Ctrl during the deferral window — keep window visible
     }
+    if (!SciCall_CanPaste()) {
+        return; // clipboard has nothing pasteable — keep window visible so the user can act
+    }
     _StartupMinimizeMainWnd(hwnd);
 }
 
