@@ -208,8 +208,8 @@ BEGIN
                              "Il percorso specificato nella URL non è stato trovato!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Click per aprire il file"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Click per aprire il link nel browser"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Mancata corrispondenza parentesi graffe"
+    IDS_MUI_NO_ENCLOSING_BRACE "Manca parentesi graffa di chiusura"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Conservazione della data di ultima modifica originale abilitata\nQuesta opzione rimarrà attiva per questa sessione!"
     IDS_MUI_OUT_OFF_OCCMRK   "Marcatori occorrenza in esaurimento (Segnalibro/evidenziatura)!"
@@ -345,13 +345,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-Le estensioni devono essere separate con ';'\r\n\
+Le estensioni nomi file devono essere separate con ';'\r\n\
 Voci contenenti '*', '?' or '.' corrispondono al nome file completo (carattere jolly):\r\n\
    Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 Formato stile:\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-Le proprietà di Stile possono essere copiate con copia e incolla o trascinamento\
+Le proprietà di stile possono essere copiate con copia e incolla o trascinamento\
 "
 
 END
