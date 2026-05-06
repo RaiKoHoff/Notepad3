@@ -208,8 +208,8 @@ BEGIN
                              "¡Ruta especificada por URL no encontrada!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Cliquear para abrir el archivo"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Cliquear para abrir el enlace en navegador"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Llaves desiguales"
+    IDS_MUI_NO_ENCLOSING_BRACE "Sin llave de cierre"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Conservar la marca de tiempo de modificación del archivo original habilitada\n¡Esta opción permanecerá para esta sesión!"
     IDS_MUI_OUT_OFF_OCCMRK   "¡No hay más marcadores de ocurrencia (Marcador/Resaltar)!"
