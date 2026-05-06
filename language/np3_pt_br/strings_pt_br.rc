@@ -208,8 +208,8 @@ BEGIN
                              "Caminho especificado pelo URL não encontrado!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Clique para abrir o arquivo"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Clique para abrir o link no navegador"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Colchete não correspondente"
+    IDS_MUI_NO_ENCLOSING_BRACE "Sem colchete de fechamento"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Preservação do Timestamp original de Modificação de Arquivo habilitado\nEsta opção ficará ativa durante esta sessão!"
     IDS_MUI_OUT_OFF_OCCMRK   "Ficando sem marcadores de ocorrência (Marcador/Destacado)!"

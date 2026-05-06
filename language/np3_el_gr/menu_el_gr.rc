@@ -154,7 +154,7 @@ BEGIN
     END
     POPUP "&Επεξεργασία"
     BEGIN
-        MENUITEM "Document &Read Only"            IDM_VIEW_READONLY
+        MENUITEM "&Έγγραφο μόνο για ανάγνωση"     IDM_VIEW_READONLY
         MENUITEM SEPARATOR
         MENUITEM "Αναίρε&ση\tCtrl+Z",             IDM_EDIT_UNDO
         MENUITEM "Επανάλη&ψη ενέργειας\tCtrl+Y",  IDM_EDIT_REDO
@@ -206,7 +206,7 @@ BEGIN
             MENUITEM "Κα&τάργηση κενών γραμμών\tAlt+R",                            IDM_EDIT_REMOVEEMPTYLINES
             MENUITEM "Κατάργηση γρα&μμών με διαστήματα\tCtrl+Alt+B",               IDM_EDIT_REMOVEBLANKLINES
         END
-        POPUP "Adva&nced"
+        POPUP "Προ&χωρημένα"
         BEGIN
             MENUITEM "&Εσοχή",                                      IDM_EDIT_INDENT
             MENUITEM "&Κατάργηση εσοχής",                           IDM_EDIT_UNINDENT
@@ -465,7 +465,7 @@ BEGIN
         MENUITEM "&Καθολική προεπιλεγμένη γραμματοσειρά...\tAlt+F12",          IDM_VIEW_FONT
         MENUITEM "Προεπιλ. γραμ/σειρά τρέχοντος &συνδυασμού...\tCtrl+Alt+F12", IDM_VIEW_CURRENTSCHEME
         MENUITEM SEPARATOR
-        MENUITEM "Σκούρα λειτουργία των Windows",                              IDM_VIEW_WIN_DARK_MODE
+        MENUITEM "Σκούρα χρώματα",                                             IDM_VIEW_WIN_DARK_MODE
     END
     POPUP "&Ρυθμίσεις"
     BEGIN
@@ -475,11 +475,11 @@ BEGIN
         MENUITEM "Ρυθμίσεις &μεγάλης γραμμής...",                   IDM_SET_LONGLINESETTINGS
         MENUITEM "Αυτόματη εσ&οχή κειμένου",                        IDM_SET_AUTOINDENTTEXT
         MENUITEM "Αυτόματο κλείσιμο &εισαγωγικών",                  IDM_SET_AUTOCLOSEQUOTES
-        MENUITEM "Αυτόματο κλείσιμο αγκυλών",                       IDM_SET_AUTOCLOSEBRACKETS
+        MENUITEM "&Αυτόματο κλείσιμο αγκυλών",                      IDM_SET_AUTOCLOSEBRACKETS
         MENUITEM "Αυτόματο κλείσιμο Η&ΤΜL/XML\tCtrl+Shift+H",       IDM_SET_AUTOCLOSETAGS
         MENUITEM "Αυτόματη συμπλήρωση λέ&ξεων",                     IDM_SET_AUTOCOMPLETEWORDS
         MENUITEM "Α&υτόμ. συμπλήρωση λέξεων-κλειδιών του Lexer",    IDM_SET_AUTOCLEXKEYWORDS
-        MENUITEM "Εναλλακτικοί &διαχωριστές λέξεων	Ctrl+Alt+A",          IDM_SET_ALTERNATE_WORD_SEPS
+        MENUITEM "Εναλλακτικοί δια&χωριστές λέξεων\tCtrl+Alt+A",    IDM_SET_ALTERNATE_WORD_SEPS
         MENUITEM SEPARATOR
         MENUITEM "Μόνο μία παρουσία ανά &αρχείο",                   IDM_SET_SINGLEFILEINSTANCE
         MENUITEM "Ειδοποίηση μετα&βολής αρχείου...\tAlt+F5",        IDM_SET_CHANGENOTIFY
@@ -494,8 +494,8 @@ BEGIN
         END
         MENUITEM "Αποθήκευση π&ριν την εκτέλεση εργαλείων",   IDM_SET_SAVEBEFORERUNNINGTOOLS
         MENUITEM "Υπολογισμός μικροσκοπικών εκ&φράσεων",      IDM_SET_EVALTINYEXPRONSEL
-        MENUITEM "Ενεργοποίηση Πολλαπλής επιλογής",           IDM_SET_MULTIPLE_SELECTION
-        POPUP "Default &Directory"
+        MENUITEM "Ενεργοποίηση πολλαπλής επιλογής",           IDM_SET_MULTIPLE_SELECTION
+        POPUP "Προεπιλεγμένος κατάλογος"
         BEGIN
             MENUITEM "Ορισμός στον &φάκελο τρέχοντος αρχείου",  IDM_SET_DEFAULTDIR
             MENUITEM "&Επαναφορά στο προεπιλεγμένο",                 IDM_SET_DEFAULTDIR_RESET
@@ -552,7 +552,7 @@ BEGIN
     END
     POPUP "&Βοήθεια"
     BEGIN
-        MENUITEM "&Ηλεκτρονική τεκμηρίωση\tF1",           IDM_HELP_ONLINEDOCUMENTATION
+        MENUITEM "&Εγχειρίδιο χρήσης\tF1",                IDM_HELP_ONLINEDOCUMENTATION
         MENUITEM SEPARATOR
         MENUITEM "&Εκκίνηση εργαλείου διαχείρισης...",    IDM_HELP_ADMINEXE
         MENUITEM "Έ&λεγχος ιστότοπου για ενημερώσεις",    IDM_HELP_UPDATEWEBSITE

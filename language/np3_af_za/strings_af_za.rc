@@ -208,8 +208,8 @@ BEGIN
                              "URL gespesifiseerde pad nie gevind nie!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik om die lêer oop te maak"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik om skakel in leser oop te maak"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Ongelyke hakies"
+    IDS_MUI_NO_ENCLOSING_BRACE "Geen sluitingshakie"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Die behoud van die oorspronklike tydstempel vir lêerveranderings is geaktiveer\nHierdie opsie bly vir hierdie sessie!"
     IDS_MUI_OUT_OFF_OCCMRK   "Die optredemarkers raak op (Bookmerk/Merk)!"

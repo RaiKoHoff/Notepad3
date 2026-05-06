@@ -219,7 +219,7 @@ END
 
 STRINGTABLE
 BEGIN
-    IDS_MUI_ASK_SAVE        "將修改儲存到:\n%s?"
+    IDS_MUI_ASK_SAVE        "將修改儲存到：\n%s 嗎？"
     IDS_MUI_ASK_REVERT      "還原檔案到上次儲存的狀態嗎？"
     IDS_MUI_ASK_RECODE      "更改編碼並重新載入嗎？\n\n警告：所有未儲存的修改將遺失"
     IDS_MUI_ASK_CREATE      "檔案「%s」未找到。是否建立一個新的檔案？"
@@ -345,13 +345,13 @@ Notepad3 /v d:\\temp\\Test.txt\r\n\
 "
 
 IDS_MUI_STYLEEDIT_HELP "\
-副檔名必須以 ; 隔開\r\n\
+副檔名必須以「;」隔開\r\n\
 包含「*」、「?」或「.」的條目符合完整檔案名稱（通配符）：\r\n\
    Makefile*;CMakeLists.txt;test_*.py\r\n\r\n\
 樣式格式：\r\n\
 font:Name; size:[+/-]nn.mm; bold; italic; underline;\r\n\
 fore:#ffffff; back:#bbbbbb; eolfilled; indic_gradient\r\n\r\n\
-樣式屬性可以複製貼上或拖放\r\n\r\n[預覽] 按鈕不會套用修改\
+樣式屬性可以複製貼上或拖放\
 "
 
 END
