@@ -36,19 +36,23 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.504.(build_#) (2026-05-04)
+Current BETA Version 7.26.507.(build_#) (2026-05-07)
 ========================================================
 
 --------------------------------------------------------
 NEW:
 --------------------------------------------------------
 [.xxx.x]- .
+[.507.1]- Hex/binary status-bar output modes with click-to-copy and binary literal input (TIN) (#5834).
+[.507.1]- Matching braces (Ctrl+B and with selection Ctrl+Shift+B) inside blocks (#5819).
 [.504.1]- Add homebrew JSON5 lexer (#5796).
 
 --------------------------------------------------------
 CHANGES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.507.1]- Polish "Page Setup..." dialog (#5834).
+[.507.1]- Extend navigation documentation (#5834).
 [.504.1]- Moving all *.txt files to Docs folder (for Setup, PAF and Portable) (#5811).
 [.504.1]- InfBoxLng for saving files (#5806).
 [.504.1]- Github actions: no build on doc change only (#5798).
@@ -60,7 +64,10 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
-[.504.1]- hardening of INI file handling for multi instances workflows (#5810).
+[.507.1]- Minor fixes for change-history navigation (#5834).
+[.507.1]- Skip paste board minimizing if nothing to paste (#5831).
+[.507.1]- Modern print dialog, fixing minor issues (#5831).
+[.504.1]- Hardening of INI file handling for multi instances workflows (#5810).
 [.504.1]- MRU file history, bookmark, caret pos, selection maintenance (#5810).
 [.504.1]- Find/replace pattern history (#5808).
 [.504.1]- Buffer handling consistency (#5806).
