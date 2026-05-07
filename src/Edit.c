@@ -10072,27 +10072,61 @@ void  EditSetBookmarkList(HWND hwnd, LPCWSTR pszBookMarks)
 
 #define NOT_FOUND_LN ((DocLn)-1)
 
-static int _RespectLastSearch(const int bitmask, const DocLn iLine)
-{
-    static int   _LastSearchBitmask = BOOKMARK_BITMASK();
-    static DocLn _LastSearchStart = NOT_FOUND_LN;
+// Sticky-state for F2/Shift+F2 dual bookmark/change-history navigation.
+// Module-scope so EditBookmarkResetNavigation can clear them on document load
+// and EditBookmarkAdjustNavigation can shift the line index across edits.
+static int   s_LastSearchBitmask = BOOKMARK_BITMASK();
+static DocLn s_LastSearchStart   = NOT_FOUND_LN;
 
-    if (iLine == _LastSearchStart) {
-        if (bitmask & _LastSearchBitmask) {
-            return _LastSearchBitmask;           // respect last found bitmask
-        }
-    }
-    if (bitmask & BOOKMARK_BITMASK()) {
-        _LastSearchBitmask = BOOKMARK_BITMASK(); // BOOKMARKS got prio
-    }
-    else {
-        _LastSearchBitmask = bitmask ? bitmask : BOOKMARK_BITMASK();
-    }
-    _LastSearchStart = iLine; 
-    return _LastSearchBitmask;
+
+void EditBookmarkResetNavigation(void)
+{
+    s_LastSearchBitmask = BOOKMARK_BITMASK();
+    s_LastSearchStart   = NOT_FOUND_LN;
 }
 
 
+void EditBookmarkAdjustNavigation(const DocLn modLine, const DocLn linesAdded)
+{
+    if (s_LastSearchStart == NOT_FOUND_LN) {
+        return;
+    }
+    if (modLine <= s_LastSearchStart) {
+        DocLn const shifted = s_LastSearchStart + linesAdded;
+        if (shifted < 0) {
+            // Sticky line was removed by the deletion: drop sticky state.
+            s_LastSearchStart = NOT_FOUND_LN;
+        }
+        else {
+            s_LastSearchStart = shifted;
+        }
+    }
+}
+
+
+static int _RespectLastSearch(const int bitmask, const DocLn iLine)
+{
+    if (iLine == s_LastSearchStart) {
+        if (bitmask & s_LastSearchBitmask) {
+            return s_LastSearchBitmask;           // respect last found bitmask
+        }
+    }
+    if (bitmask & BOOKMARK_BITMASK()) {
+        s_LastSearchBitmask = BOOKMARK_BITMASK(); // BOOKMARKS got prio
+    }
+    else {
+        s_LastSearchBitmask = bitmask ? bitmask : BOOKMARK_BITMASK();
+    }
+    s_LastSearchStart = iLine;
+    return s_LastSearchBitmask;
+}
+
+
+// Linear-scan fallback for change-history markers.
+// Scintilla's SCI_MARKERNEXT walks LineMarkers only (scintilla/src/PerLine.cxx).
+// Change-history markers (IDs 21-24) live in the separate change-history machinery
+// and are reported via SCI_MARKERGET per-line but are NOT in LineMarkers, so we
+// must linear-scan when the bitmask requests them.
 static inline DocLn _MarkerNext(const DocLn iLine, const int bitmask)
 {
     if (bitmask & CHANGE_HISTORY_MARKER_BITMASK()) {
@@ -10112,6 +10146,8 @@ void EditBookmarkNext(HWND hwnd, DocLn iLine)
 {
     UNREFERENCED_PARAMETER(hwnd);
 
+    DocLn const iStartLn = iLine;   // immune to consecutive-marker-skip mutation below
+
     int   bitmask = _RespectLastSearch(SciCall_MarkerGet(iLine), iLine);
     DocLn iNextLine = _MarkerNext(iLine + 1, bitmask);
 
@@ -10122,14 +10158,14 @@ void EditBookmarkNext(HWND hwnd, DocLn iLine)
         }
     }
 
-    if ((iNextLine == NOT_FOUND_LN) && (iLine > 0)) {
+    if ((iNextLine == NOT_FOUND_LN) && (iStartLn > 0)) {
         iNextLine = _MarkerNext(0, bitmask); // wrap around
     }
 
     if (iNextLine == NOT_FOUND_LN) { // find any bookmark
         bitmask = ALL_MARKERS_BITMASK();
         iNextLine = _MarkerNext(iLine + 1, bitmask);
-        if ((iNextLine == NOT_FOUND_LN) && (iLine > 0)) {
+        if ((iNextLine == NOT_FOUND_LN) && (iStartLn > 0)) {
             iNextLine = _MarkerNext(0, bitmask); // wrap around
         }
     }
@@ -10137,7 +10173,7 @@ void EditBookmarkNext(HWND hwnd, DocLn iLine)
     if (iNextLine == NOT_FOUND_LN) {  // find change history marker
         bitmask = CHANGE_HISTORY_MARKER_BITMASK();
         iNextLine = _MarkerNext(iLine + 1, bitmask);
-        if ((iNextLine == NOT_FOUND_LN) && (iLine > 0)) {
+        if ((iNextLine == NOT_FOUND_LN) && (iStartLn > 0)) {
             iNextLine = _MarkerNext(0, bitmask); // wrap around
         }
     }
@@ -10152,6 +10188,7 @@ void EditBookmarkNext(HWND hwnd, DocLn iLine)
 //
 //  EditBookmarkPrevious()
 //
+// Linear-scan fallback for change-history markers; see _MarkerNext above.
 static inline DocLn _MarkerPrevious(const DocLn iLine, const int bitmask)
 {
     if (bitmask & CHANGE_HISTORY_MARKER_BITMASK()) {
@@ -10170,6 +10207,7 @@ void EditBookmarkPrevious(HWND hwnd, DocLn iLine)
     UNREFERENCED_PARAMETER(hwnd);
 
     DocLn const docLnCount = SciCall_GetLineCount();
+    DocLn const iStartLn = iLine;   // immune to consecutive-marker-skip mutation below
 
     int bitmask = _RespectLastSearch(SciCall_MarkerGet(iLine), iLine);
     iLine = (iLine <= 0) ? docLnCount + 1 : iLine;
@@ -10182,14 +10220,14 @@ void EditBookmarkPrevious(HWND hwnd, DocLn iLine)
         }
     }
 
-    if ((iPrevLine == NOT_FOUND_LN) && (iLine < docLnCount)) {
+    if ((iPrevLine == NOT_FOUND_LN) && (iStartLn < docLnCount)) {
         iPrevLine = _MarkerPrevious(docLnCount, bitmask); // wrap around
     }
 
     if (iPrevLine == NOT_FOUND_LN) { // find any bookmark
         bitmask = ALL_MARKERS_BITMASK();
         iPrevLine = _MarkerPrevious(iLine - 1, bitmask);
-        if ((iPrevLine == NOT_FOUND_LN) && (iLine < docLnCount)) {
+        if ((iPrevLine == NOT_FOUND_LN) && (iStartLn < docLnCount)) {
             iPrevLine = _MarkerPrevious(docLnCount, bitmask); // wrap around
         }
     }
@@ -10197,7 +10235,7 @@ void EditBookmarkPrevious(HWND hwnd, DocLn iLine)
     if (iPrevLine == NOT_FOUND_LN) { // find change history marker
         bitmask = CHANGE_HISTORY_MARKER_BITMASK();
         iPrevLine = _MarkerPrevious(iLine - 1, bitmask);
-        if ((iPrevLine == NOT_FOUND_LN) && (iLine < docLnCount)) {
+        if ((iPrevLine == NOT_FOUND_LN) && (iStartLn < docLnCount)) {
             iPrevLine = _MarkerPrevious(docLnCount, bitmask); // wrap around
         }
     }

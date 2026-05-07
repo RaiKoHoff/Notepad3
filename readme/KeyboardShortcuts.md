@@ -423,6 +423,101 @@ A compact summary of the function-key family (most frequent collisions):
 
 ---
 
+## Cheatsheet — caret & view navigation
+
+A single-stop reference for moving the caret, scrolling the view, and jumping between document landmarks. Repeats keys already listed in the topical sections above so the cheatsheet stands alone. Notepad3 inherits Scintilla's default keymap unchanged (no `SCI_ASSIGNCMDKEY` overrides), so the standard caret bindings below all work even though they are not part of Notepad3's accelerator table.
+
+### Caret movement (basics)
+
+| Shortcut | Action |
+|---|---|
+| `←` / `→` | Char left / right |
+| `↑` / `↓` | Line up / down |
+| `Home` / `End` | Line start / end |
+| `Ctrl+Home` / `Ctrl+End` | Document start / end |
+| `PageUp` / `PageDown` | Page up / down |
+| `Shift+`*movement* | Extend selection in that direction |
+| `Ctrl+Shift+`*movement* | Extend selection by word / document chunk |
+
+### Word navigation
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+←` / `Ctrl+→` | Caret one word left / right |
+| `Ctrl+Backspace` | Delete word before caret |
+| `Ctrl+Del` | Delete word after caret |
+| `Ctrl+Alt+A` | Toggle **Accelerated Word Navigation** (see below) |
+| `Ctrl+Space` | Select word at caret (full line if word already selected) |
+| `Ctrl+Shift+Space` | Multi-select all matches of word at caret |
+
+**Accelerated Word Navigation** (`Ctrl+Alt+A`) merges punctuation into the word-character set, so word-jump keys (`Ctrl+←`, `Ctrl+→`, `Ctrl+Backspace`, `Ctrl+Del`) skip whole code tokens at once.
+
+Example — caret stops in `foo->bar.baz` walking with `Ctrl+→`:
+
+- off: `foo` &nbsp;|&nbsp; `->` &nbsp;|&nbsp; `bar` &nbsp;|&nbsp; `.` &nbsp;|&nbsp; `baz`   (5 stops)
+- on:  `foo->bar.baz`   (1 stop)
+
+Fine-tune which characters still break words via `[Settings2] ExtendedWhiteSpaceChars=` — see [`config/Configuration.md`](config/Configuration.md). The toggle is persisted in `[Settings] AccelWordNavigation=`.
+
+### View / scroll
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+↑` / `Ctrl+↓` | Scroll one line up / down (caret stays put) |
+| `Ctrl+PgUp` / `Ctrl+PgDn` | Goto previous / next block (paragraph or fold) |
+| `Ctrl+Shift+PgUp` / `Ctrl+Shift+PgDn` | Select to previous / next block |
+| `Alt+PageUp` / `Alt+PageDown` | Paragraph navigation up / down |
+| `Ctrl+Alt+V` | Focused View — show only lines matching word/selection |
+| `Ctrl+G` | Goto line / column dialog |
+
+### Bookmarks & change history
+
+| Shortcut | Action |
+|---|---|
+| `F2` | Goto next bookmark — falls through to next change-history marker if no further bookmark is found (sticky) |
+| `Shift+F2` | Goto previous bookmark — same fallback |
+| `Ctrl+F2` | Toggle bookmark on current line |
+| `Alt+F2` | Clear all bookmarks |
+
+If the document has no bookmarks (or none ahead of the caret in the search direction), `F2` / `Shift+F2` walk **change-history markers** instead — modified, saved, and reverted lines shown in the change-history margin (see *View → Change History*). Once a press has landed the caret on a change-history marker, repeated presses keep walking change-history markers until you reach a bookmarked line.
+
+### Find navigation
+
+| Shortcut | Action |
+|---|---|
+| `F3` | Find next |
+| `Shift+F3` | Find previous |
+| `Ctrl+F3` | Find next occurrence of current selection |
+| `Ctrl+Shift+F3` | Find previous occurrence of current selection |
+| `F4` | Replace next |
+| `Ctrl+Alt+F2` | Expand selection to next match |
+| `Ctrl+Alt+Shift+F2` | Expand selection to previous match |
+| `Alt+A` | Toggle "mark all occurrences" of current word |
+
+### Brace navigation
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+B` | Find matching brace (or jump to nearest enclosing opening brace) |
+| `Ctrl+Shift+B` | Select to matching brace; repeated presses expand the selection outward one nesting level at a time |
+
+### Folding
+
+| Shortcut | Action |
+|---|---|
+| `Alt+←` / `Alt+→` | Collapse / expand current fold |
+| `Alt+-` / `Alt++` | Jump to previous / next fold point |
+| `Ctrl+Alt+F` | Toggle all folds |
+
+### Selection-boundary jumps
+
+| Shortcut | Action |
+|---|---|
+| `Ctrl+,` | Jump caret to selection start |
+| `Ctrl+.` | Jump caret to selection end |
+
+---
+
 ## See also
 
 - [`faq/FAQ.md`](faq/FAQ.md) — *"Migrating from Notepad2"* lists every shortcut whose meaning was reassigned, plus the **why**.

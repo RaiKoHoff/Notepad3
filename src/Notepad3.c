@@ -8943,6 +8943,7 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
             }
             EditUpdateVisibleIndicators();
             if (scn->linesAdded != 0) {
+                EditBookmarkAdjustNavigation(SciCall_LineFromPosition(scn->position), scn->linesAdded);
                 if (Settings.SplitUndoTypingSeqOnLnBreak && (scn->linesAdded > 0)) {
                     if (!(iModType & (SC_PERFORMED_UNDO | SC_PERFORMED_REDO))) {
                         _SplitUndoTransaction();
@@ -11123,6 +11124,8 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
             return false;
         }
     }
+
+    EditBookmarkResetNavigation();
 
     if (!bReloadFile) {
         ResetEncryption();
