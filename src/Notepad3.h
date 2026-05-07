@@ -71,6 +71,7 @@ np3params, *LPnp3params;
 #define ID_AUTOSCROLLTIMER  (0xA004)        // Middle-Click Auto-Scroll
 #define ID_ATOMICSAVETIMER  (0xA005)        // Atomic Save Detection
 #define ID_DEFERMINIMIZETIMER (0xA006)      // Deferred minimize on /B + /I startup
+#define ID_TINYEXPRCOPYTIMER  (0xA007)      // TinyExpr status-bar single-click copy debounce
 
 
 //==== Reuse Window Lock Timeout ==============================================

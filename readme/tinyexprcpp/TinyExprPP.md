@@ -24,6 +24,44 @@ When *Evaluate TinyExpr on Selection* is enabled, selecting any text containing 
 
 **Multi-selection / rectangular selection** is supported — selected values are concatenated and evaluated as a single expression.
 
+#### Output modes — decimal · hexadecimal · binary
+
+The TinyExpr status field can display the result in three integer-result formats. The active mode applies to every subsequent evaluation, and is **process-local** — it resets to *decimal* on the next Notepad3 launch.
+
+| Mode | Example output | Notes |
+|------|----------------|-------|
+| Decimal *(default)* | `15`, `3.14`, `Inf` | Existing format; integers use up to 21 significant digits, floats `%.8G`. |
+| Hexadecimal | `0xF`, `0xFF`, `0xFFFFFFFF` | Uppercase, no padding. |
+| Binary | `0b1111`, `0b11111111` | Lowercase `b` prefix, no padding. |
+
+In hex / binary, fractional results are rounded to the nearest integer (round-half-away-from-zero). Negative values are shown in **two's-complement** (`-1` → `0xFFFFFFFF` / 32 ones). Values outside the supported integer range, `NaN`, and `Inf` fall back to the decimal `%.8G` representation for that single evaluation.
+
+**Effective bit width** is chosen at runtime via `te_supports_64bit()` — currently 32 bits on the standard MSVC build (where the parser's `double` has a 53-bit mantissa). The display widens automatically to 64 bits if the parser is ever rebuilt with a 64-bit-precise numeric type.
+
+**Empty selection placeholder** also reflects the active mode: `--`, `0x--`, or `0b--`.
+
+**Parse error indicator** carries the same prefix: a syntax error at column N is shown as `^[N]` (decimal), `0x^[N]` (hex), or `0b^[N]` (binary).
+
+#### Status-bar gestures on the TinyExpr field
+
+| Gesture | Action |
+|---------|--------|
+| **Single left-click** | Copies the currently displayed result (in the active mode) to the clipboard. The copy is debounced by the system double-click interval, so a follow-up double-click cancels the copy. |
+| **Double-click** | Cycles output mode: *Decimal → Hexadecimal → Binary → Decimal …* The status field refreshes immediately. |
+| **Right-click** | Standard status-bar context menu (unchanged). |
+
+#### Binary input
+
+Expressions may also **use** binary literals `0b…` (or `0B…`), in addition to the always-supported decimal, scientific, and hex (`0x…`) literals. They round-trip the binary output mode:
+
+```
+0b101010=?            → 42
+0xFF + 0b1=?          → 256
+BITAND(0b1100, 0b1010)=?  → 8
+```
+
+Binary literals are recognized only at token-start positions, so identifiers like `var0b1` are not affected.
+
 ### 3. Go to Line / Column Dialog
 
 The **Go to Line** dialog (Ctrl+G) accepts expressions, not just numbers:
@@ -76,8 +114,11 @@ The Dark Mode highlight contrast value in the Customize Schemes dialog accepts e
 | Decimal | `3.14` | 3.14 |
 | Leading dot | `.5` | 0.5 |
 | Hexadecimal | `0x1F` | 31 |
+| Binary | `0b101010` | 42 |
 | Scientific | `1e3` | 1000 |
 | Negative scientific | `2.5e-2` | 0.025 |
+
+> Binary literals (`0b…` / `0B…`) are a Notepad3 extension on top of TinyExpr++ — they are rewritten to decimal before the parser sees them.
 
 ### Operators (by Precedence)
 
@@ -265,9 +306,11 @@ SQRT(3^2 + 4^2)=?        → 5
 
 ```
 0xFF=?                    → 255
+0b101010=?                → 42
 2^16 - 1=?               → 65535
 BITLSHIFT(1, 20)=?       → 1048576  (1 MB in bytes)
 BITAND(0xF0, 0x3C)=?     → 48
+BITAND(0b1100, 0b1010)=? → 8
 ```
 
 ### Line Numbering (Modify Lines Dialog)

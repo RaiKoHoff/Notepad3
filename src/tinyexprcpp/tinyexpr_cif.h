@@ -54,6 +54,12 @@ double te_eval(te_expr *n);
  * Safe to call on NULL pointers. */
 void te_free(te_expr *n);
 
+/* Returns 1 if the parser's internal numeric type can represent uint64_t
+ * without loss of precision, 0 otherwise.
+ * (For the default `double` te_type the answer is 0; bitwise ops are
+ * therefore limited to ~52 bits in practice.) */
+int te_supports_64bit(void);
+
 
 /* ---- NP3-specific utility functions (inline) ---- */
 

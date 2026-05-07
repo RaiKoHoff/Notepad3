@@ -188,8 +188,8 @@
 - [ ] **(Q2) LaTeX Input Method** - LaTeX character insertion (`\alpha` → α)
 - [x] **(Q2) Base64 Encode/Decode** - ✅ IMPLEMENTED via `IDM_EDIT_BASE64ENCODE/DECODE`
 - [ ] **(Q1) Insert Unicode Control Characters** - LRM, RLM, ZWJ, ZWNJ, etc.
-- [ ] **(Q2) Number Base Conversion** - Binary/Decimal/Octal/Hex
-  - Issue: [#5059](https://github.com/rizonesoft/Notepad3/issues/5059) - TinyExpr output in hex/binary
+- [x] **(Q2) Number Base Conversion** - Binary/Decimal/Octal/Hex - ✅ IMPLEMENTED
+  - Issue: [#5059](https://github.com/rizonesoft/Notepad3/issues/5059) - TinyExpr output in hex/binary - ⚠ Validation ❗
 - [ ] **(Q2) Character Map Conversions** - Fullwidth↔Halfwidth, CJK transforms (`LCMapStringEx`)
 - [ ] **(Q3) Code Compress/Pretty** - Minify/beautify code
   - Issue: [#5515](https://github.com/rizonesoft/Notepad3/issues/5515) - JSON format, compress, escape/unescape

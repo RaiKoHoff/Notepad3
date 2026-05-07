@@ -17,6 +17,8 @@
 #include <climits>
 #include <clocale>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <limits>
 #include <set>
 #include <string>
@@ -73,6 +75,66 @@ static void te_cif_configure_separators(te_parser &parser)
 }
 
 // ---------------------------------------------------------------------------
+// Pre-pass: rewrite C-style binary literals `0b<bits>` (or `0B<bits>`) to their
+// decimal equivalent, since TinyExpr++ tokenizes via std::strtod which only
+// accepts `0x` (hex) and decimal/scientific. Hex is left alone (parser handles
+// it). Octal is not rewritten — TinyExpr++ has no concept of octal literals
+// either, but binary is the only base we currently emit on output, so input
+// parity here matters most.
+//
+// Detection rule: `0b` is recognized as a binary literal only when it begins
+// at a token-start position (start-of-string, after whitespace, an operator,
+// `(`, `,`, `;`, etc.). Inside a variable name (e.g. `var0b1`) it is left as-is.
+// ---------------------------------------------------------------------------
+static std::string te_cif_rewrite_binary_literals(const char *expression)
+{
+    std::string out;
+    if (!expression) {
+        return out;
+    }
+    out.reserve(std::strlen(expression));
+
+    bool numStart = true; // expression start counts as a token boundary
+    const unsigned char *p = reinterpret_cast<const unsigned char *>(expression);
+    while (*p) {
+        if (numStart && p[0] == '0' && (p[1] == 'b' || p[1] == 'B') &&
+            (p[2] == '0' || p[2] == '1')) {
+            const unsigned char *digits = p + 2;
+            const unsigned char *end    = digits;
+            unsigned long long   value  = 0;
+            while (*end == '0' || *end == '1') {
+                if (end - digits < 64) { // silently clamp at 64 bits
+                    value = (value << 1) | static_cast<unsigned long long>(*end - '0');
+                }
+                ++end;
+            }
+            char buf[32];
+            std::snprintf(buf, sizeof(buf), "%llu", value);
+            out.append(buf);
+            p        = end;
+            numStart = false;
+            continue;
+        }
+        unsigned char const c = *p;
+        out.push_back(static_cast<char>(c));
+        switch (c) {
+        case '+': case '-': case '*': case '/': case '%': case '^':
+        case '(': case ',': case ';':
+        case '<': case '>': case '=': case '!':
+        case '|': case '&': case ':':
+        case ' ': case '\t': case '\n': case '\r':
+            numStart = true;
+            break;
+        default:
+            numStart = false;
+            break;
+        }
+        ++p;
+    }
+    return out;
+}
+
+// ---------------------------------------------------------------------------
 // Helper: map TinyExpr++ error state to old 1-based error position
 // Old convention: 0 = success, >= 1 = 1-based error position
 // ---------------------------------------------------------------------------
@@ -107,9 +169,10 @@ double te_interp(const char *expression, te_int_t *error)
     te_parser parser;
     te_cif_add_compat_functions(parser);
     te_cif_configure_separators(parser);
+    std::string const rewritten = te_cif_rewrite_binary_literals(expression);
     double result;
     try {
-        result = parser.evaluate(expression);
+        result = parser.evaluate(rewritten);
     }
     catch (...) {
         if (error) {
@@ -161,8 +224,9 @@ void *te_compile(const char *expression, const void *variables, int var_count, t
             ctx->parser.set_variables_and_functions(std::move(cppVars));
         }
 
-        // Compile and evaluate once to check for errors
-        (void)ctx->parser.evaluate(expression);
+        // Compile and evaluate once to check for errors. Rewrite 0b… literals first.
+        std::string const rewritten = te_cif_rewrite_binary_literals(expression);
+        (void)ctx->parser.evaluate(rewritten);
 
         if (!ctx->parser.success()) {
             if (error) {
@@ -207,6 +271,13 @@ void te_free(void *n)
     if (n) {
         delete static_cast<te_cif_handle *>(n);
     }
+}
+
+// Reports whether the parser's te_type can represent uint64_t losslessly.
+// te_parser::supports_64bit() is constexpr; the optimizer will inline the constant.
+int te_supports_64bit(void)
+{
+    return te_parser::supports_64bit() ? 1 : 0;
 }
 
 } // extern "C"
