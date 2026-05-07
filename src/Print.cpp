@@ -487,6 +487,9 @@ static UINT_PTR CALLBACK _LPSetupHookProc(HWND hwnd, UINT uiMsg, WPARAM wParam, 
             SetExplorerTheme(GetDlgItem(hwnd, IDCANCEL));
             SetExplorerTheme(GetDlgItem(hwnd, IDC_PRINTER));
             int const ctl[] = { 30, 31, 32, 33, 34, cmb2, cmb3, 1037, 1038, 1056, 1057, 1072, 1073, 1074, 1075, 1076, 1089, 1090,
+                                1102, 1103, 1104, 1105,         // margin labels
+                                1155, 1156, 1157, 1158,         // margin edits
+                                1080, 1081, 1082,               // preview rects
                                 IDC_STATIC, IDC_STATIC2, IDC_STATIC3, IDC_STATIC4, IDC_STATIC5, IDC_STATIC6
                               };
             for (int i : ctl) {
@@ -496,7 +499,7 @@ static UINT_PTR CALLBACK _LPSetupHookProc(HWND hwnd, UINT uiMsg, WPARAM wParam, 
 #endif
 
         UDACCEL const acc[1] = { { 0, 10 } };
-        SendDlgItemMessage(hwnd, 30, EM_LIMITTEXT, 32, 0);
+        SendDlgItemMessage(hwnd, 30, EM_LIMITTEXT, 4, 0);
         SendDlgItemMessage(hwnd, 31, UDM_SETACCEL, 1, (WPARAM)acc);
         SendDlgItemMessage(hwnd, 31, UDM_SETRANGE32, NP3_MIN_ZOOM_PERCENT, NP3_MAX_ZOOM_PERCENT);
         SendDlgItemMessage(hwnd, 31, UDM_SETPOS32, 0, Settings.PrintZoom);
@@ -579,11 +582,15 @@ CASE_WM_CTLCOLOR_SET:
             AllowDarkModeForWindowEx(hwnd, darkModeEnabled);
             RefreshTitleBarThemeColor(hwnd);
 
-            int const buttons[] = { IDOK, IDCANCEL, IDC_PRINTER };
-            for (int button : buttons) {
-                HWND const hBtn = GetDlgItem(hwnd, button);
-                AllowDarkModeForWindowEx(hBtn, darkModeEnabled);
-                SendMessage(hBtn, WM_THEMECHANGED, 0, 0);
+            int const ctl[] = { IDOK, IDCANCEL, IDC_PRINTER,
+                                30, 31, 32, 33, 34,         // custom: zoom, spin, header, footer, color
+                                1137, 1138,                 // standard: paper size, source combos
+                                1155, 1156, 1157, 1158      // standard: margin edits
+                              };
+            for (int id : ctl) {
+                HWND const hCtl = GetDlgItem(hwnd, id);
+                AllowDarkModeForWindowEx(hCtl, darkModeEnabled);
+                SendMessage(hCtl, WM_THEMECHANGED, 0, 0);
             }
             UpdateWindowEx(hwnd);
         }
@@ -595,7 +602,6 @@ CASE_WM_CTLCOLOR_SET:
             BOOL bError = FALSE;
             auto const iZoom = static_cast<int>(SendDlgItemMessage(hwnd, 31, UDM_GETPOS32, 0, (LPARAM)&bError));
             Settings.PrintZoom = bError ? Defaults.PrintZoom : iZoom;
-            /*int const iFontSize = (int)*/ SendDlgItemMessage(hwnd, 41, UDM_GETPOS32, 0, (LPARAM)&bError);
             Settings.PrintHeader = static_cast<int>(SendDlgItemMessage(hwnd, 32, CB_GETCURSEL, 0, 0));
             Settings.PrintFooter = static_cast<int>(SendDlgItemMessage(hwnd, 33, CB_GETCURSEL, 0, 0));
             Settings.PrintColorMode = static_cast<int>(SendDlgItemMessage(hwnd, 34, CB_GETCURSEL, 0, 0));

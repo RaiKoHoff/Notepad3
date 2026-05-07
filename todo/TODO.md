@@ -27,19 +27,19 @@
   - Issue: [#5060](https://github.com/rizonesoft/Notepad3/issues/5060)
   - Fix: When `/m` is used without 'R' flag, explicitly clear SCFIND_REGEXP to force text mode
 - [x] **(Q3) Replace GetOpenFileNameW with IFileOpenDialog** - Modern file dialog API
-  - [ ] **Test on Windows Server 2022 and higer** - ⚠ Validation❗
   - Issues: [#5066](https://github.com/rizonesoft/Notepad3/issues/5066), [#5080](https://github.com/rizonesoft/Notepad3/issues/5080)
   - Fixes crash on Windows Server 2022 (STATUS_STACK_BUFFER_OVERRUN in ntdll.dll)
   - See [research/server2022-file-dialog-crash.md](research/server2022-file-dialog-crash.md)
+  - [ ] **Test on Windows Server 2022 and higer** - ⚠ Validation❗
 - [x] **(Q1) BUG: Cannot save settings without folder** - ✅ FIXED
   - Issue: [#5075](https://github.com/rizonesoft/Notepad3/issues/5075)
   - Fix: Changed `CreateDirectoryW` to `SHCreateDirectoryExW` to create all intermediate directories
 - [ ] **(Q2) BUG: Replace dialog full-width caching** - Second replace uses wrong character
   - Issue: [#4268](https://github.com/rizonesoft/Notepad3/issues/4268)
   - CJK full-width replacement cached incorrectly
-- [x] **(Q2) BUG: Initial window position not working** - Position settings ignored
-  - [x] **To be analyzed - works as designed ???** - ⚠ Validation ❗
+- [x] **(Q2) BUG: Initial window position not working** - Position settings ignored - ✅ FIXED
   - Issue: [#4725](https://github.com/rizonesoft/Notepad3/issues/4725)
+  - [ ] **To be analyzed - works as designed ???** - ⚠ Validation ❗
 - [ ] **(Q2) BUG: Minipath options don't save** - FullRowSelect/TrackSelect broken
   - Issue: [#4116](https://github.com/rizonesoft/Notepad3/issues/4116)
 - [x] **(Q1) BUG: Monitoring log not saved** - ✅ FIXED
@@ -49,23 +49,21 @@
   - Issue: [#5050](https://github.com/rizonesoft/Notepad3/issues/5050)
 - [x] **(Q1) BUG: Find/Replace patterns not updating** - Dropdown not refreshed immediately - ✅ FIXED
   - Issue: [#5134](https://github.com/rizonesoft/Notepad3/issues/5134)
-- [ ] **(Q3) BUG: Multiple file positions not saved** - Only last file's bookmarks/caret preserved
+- [x] **(Q3) BUG: Multiple file positions not saved** - Only last file's bookmarks/caret preserved - ✅ FIXED
   - Issue: [#5151](https://github.com/rizonesoft/Notepad3/issues/5151)
 - [ ] **(Q3) BUG: grepWinNP3 crash** - Right-click search results crashes
   - Issue: [#5158](https://github.com/rizonesoft/Notepad3/issues/5158)
 - [x] **(Q2) BUG: PHP comment toggle** - Ctrl+Q not working in Web Source Code - ✅ FIXED
   - Issue: [#5163](https://github.com/rizonesoft/Notepad3/issues/5163)
-- [ ] **(Q2) BUG: AltGr shortcut conflict** - Can't type `}` `@` on non-US keyboards
+- [/] **(Q2) CHR: Ctrl+LAlt+V is used by NP3 - AltGr+V works** - Can't type `}` `@` on non-US keyboards - ❌ WON'T CHANGE
   - Issue: [#5220](https://github.com/rizonesoft/Notepad3/issues/5220)
 - [x] **(Q1) BUG: Mouse scroll settings not updated** - ✅ FIXED
   - Issue: [#5223](https://github.com/rizonesoft/Notepad3/issues/5223)
   - Fix: Forward `WM_SETTINGCHANGE` to Scintilla to refresh cached scroll parameters
 - [x] **(Q2) BUG: File lock held too long on save** - Blocks FileSystemWatcher - ✅ FIXED
-  - [ ] **Needs validation**
-  - Issue: [#5301](https://github.com/rizonesoft/Notepad3/issues/5301)
+  - Issue: [#5301](https://github.com/rizonesoft/Notepad3/issues/5301) - ⚠ Validation❗
 - [x] **(Q2) BUG: Folder handle leak** - Can't rename/delete folders with opened files
-  - [ ] **Needs testing** - ⚠ Validation❗
-  - Issue: [#5342](https://github.com/rizonesoft/Notepad3/issues/5342)
+  - Issue: [#5342](https://github.com/rizonesoft/Notepad3/issues/5342) - ⚠ Validation❗
 - [x] **(Q1) BUG: Black line in Language menu** - ✅ FIXED
   - Issue: [#5361](https://github.com/rizonesoft/Notepad3/issues/5361)
   - Fix: Removed `WM_UAHNCPAINTMENUPOPUP` from message interception - was using wrong window handle
@@ -132,8 +130,7 @@
 
 - [ ] (Q1) Documentation updates
 - [x] **(Q2) Long Path Support** - Support paths >260 characters (Win10+) - ✅ FIXED
-  - Issue: [#3580](https://github.com/rizonesoft/Notepad3/issues/3580)
-  - [ ] **Should be fixed** - ⚠ Validation ❗
+  - Issue: [#3580](https://github.com/rizonesoft/Notepad3/issues/3580)  - ⚠ Validation ❗
 
 - [ ] **(Q3) Additional Syntax Highlighting** - New language lexers
   - Haskell: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Lexilla `LexHaskell.cxx`
@@ -154,7 +151,7 @@
 - [ ] **(Q2) Custom Hyperlink Schemes** - User-defined URL protocol recognition
   - ed2k:// links: [#5405](https://github.com/rizonesoft/Notepad3/issues/5405)
   - Customizable via INI settings
-- [ ] **(Q2) Smarter URL Recognition** - Improve URL boundary detection
+- [x] **(Q2) Smarter URL Recognition** - Improve URL boundary detection - ✅ FIXED
   - Issue: [#5464](https://github.com/rizonesoft/Notepad3/issues/5464)
   - Don't include trailing `'` when URL is quoted
 - [ ] **(Q3) Display Hidden Characters** - Show invisible/control characters
@@ -173,13 +170,14 @@
     - this will be out of scope, if not supported by lexers itself
 - [ ] **(Q3) Custom Keyboard Shortcuts** - User-configurable shortcut keys
   - Issue: [#595](https://github.com/rizonesoft/Notepad3/issues/595)
+  - [x] Workaround: Use Microsoft PowerToys's Keyboard-Manager to redirect
 
-## Open Discussions 
+## Open Discussions
 
 - [ ] **(Q2) BUG: Highlight current line broken** - Settings not respected (regression)
   - Issue: [#5270](https://github.com/rizonesoft/Notepad3/issues/5270)
   - **This is a discussion, about limited line highlite rule language in schema definition **
-- [x] **(Q3) BUG: Regex replace issue** - Verify if still present - ✅ FIXED
+- [x] **(Q3) QUE: Regex replace issue** - Verify if still present - ✅ FIXED
   - Issue: [#3531](https://github.com/rizonesoft/Notepad3/issues/3531)
   - Was no Bug but bad RegEx pattern design (expectation vs. what regex really does)
 
@@ -190,8 +188,8 @@
 - [ ] **(Q2) LaTeX Input Method** - LaTeX character insertion (`\alpha` → α)
 - [x] **(Q2) Base64 Encode/Decode** - ✅ IMPLEMENTED via `IDM_EDIT_BASE64ENCODE/DECODE`
 - [ ] **(Q1) Insert Unicode Control Characters** - LRM, RLM, ZWJ, ZWNJ, etc.
-- [ ] **(Q2) Number Base Conversion** - Binary/Decimal/Octal/Hex
-  - Issue: [#5059](https://github.com/rizonesoft/Notepad3/issues/5059) - TinyExpr output in hex/binary
+- [x] **(Q2) Number Base Conversion** - Binary/Decimal/Octal/Hex - ✅ IMPLEMENTED
+  - Issue: [#5059](https://github.com/rizonesoft/Notepad3/issues/5059) - TinyExpr output in hex/binary - ⚠ Validation ❗
 - [ ] **(Q2) Character Map Conversions** - Fullwidth↔Halfwidth, CJK transforms (`LCMapStringEx`)
 - [ ] **(Q3) Code Compress/Pretty** - Minify/beautify code
   - Issue: [#5515](https://github.com/rizonesoft/Notepad3/issues/5515) - JSON format, compress, escape/unescape
@@ -205,9 +203,12 @@
 
 ### Navigation
 - [ ] **(Q3) Navigate Backward/Forward** - VS Code-like history navigation
-- [ ] **(Q2) Go to Block Start/End** - Jump to enclosing block
+  - Remark: maybe description of change-history navigation is a start.
 - [x] **(Q2) Brace Find Enhancement** - Search backward for nearest brace when not at one  - ✅ IMPLEMENTED
-  - Issue: [#4863](https://github.com/rizonesoft/Notepad3/issues/4863)
+  - Issue: [#4863](https://github.com/rizonesoft/Notepad3/issues/4863) - ⚠ Validation ❗
+- [ ] **(Q2) Go to Block Start/End** - Jump to enclosing block
+  - [x] Fixed by Bracket navigation, incl. Selection
+  - [ ] No solution for Python-like "Block by Indent" navigation
 - [ ] **(Q2) Go to Sibling Block** - Navigate between sibling code blocks
 - [ ] **(Q2) Touchpad Horizontal Scroll** - Direct touchpad left/right scrolling
   - Issue: [#3468](https://github.com/rizonesoft/Notepad3/issues/3468)
@@ -246,6 +247,7 @@
 - [ ] **(Q1) Increment/Decrement Number** - Modify number at cursor (Ctrl+Alt++/-)
 - [ ] **(Q2) Show Hex View** - Display hex representation of selection
 - [ ] **(Q1) CSV Options Dialog** - Configure CSV delimiter/qualifier
+  - [x] CSV Rainbow Lexer (home-brew) has an auto-detect-delimiter
 - [ ] **(Q3) Large File Mode** - Optimized mode for files >2GB
   - Issue: [#4699](https://github.com/rizonesoft/Notepad3/issues/4699) - Disable mark occurrences for large files
   - Issue: [#4954](https://github.com/rizonesoft/Notepad3/issues/4954) - Can't open files >4GB

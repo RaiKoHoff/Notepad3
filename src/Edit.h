@@ -132,6 +132,8 @@ void EditSetBookmarkList(HWND hwnd,LPCWSTR pszBookMarks);
 void EditBookmarkNext(HWND hwnd, const DocLn iLine);
 void EditBookmarkPrevious(HWND hwnd, const DocLn iLine);
 void EditBookmarkToggle(HWND hwnd, const DocLn ln, const int modifiers);
+void EditBookmarkResetNavigation(void);
+void EditBookmarkAdjustNavigation(const DocLn modLine, const DocLn linesAdded);
 void EditMarkAllOccurrences(HWND hwnd, bool bForceClear);
 void EditFoldMarkedLineRange(HWND hwnd, bool bHideLines);
 void EditBookMarkLineRange(HWND hwnd);

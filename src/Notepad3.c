@@ -212,6 +212,19 @@ static bool      s_bUndoRedoScroll = false;
 static double   s_dExpression = 0.0;
 static te_int_t s_iExprError  = -1;
 
+// TinyExpr++ output mode (process-local, cycled by double-click on STATUS_TINYEXPR)
+typedef enum TE_OUT_MODE_T {
+    TE_OUT_DEC = 0,
+    TE_OUT_HEX = 1,
+    TE_OUT_BIN = 2,
+    TE_OUT_MODE_COUNT = 3,
+} TE_OUT_MODE_T;
+
+static TE_OUT_MODE_T s_iTinyExprOutMode = TE_OUT_DEC;
+
+static LPCWSTR const s_pszTinyExprModePrefixW[TE_OUT_MODE_COUNT] = { L"", L"0x", L"0b" };
+static LPCSTR  const s_pszTinyExprModePrefixA[TE_OUT_MODE_COUNT] = {  "",  "0x",  "0b" };
+
 static char*    s_SelectionBuffer = NULL;
 
 //~static CONST WCHAR *const s_ToolbarWndClassName = L"NP3_TOOLBAR_CLASS";
@@ -598,8 +611,102 @@ static inline void ResetFileObservationData(const bool bResetEvt) {
 #define TE_FMTA  "%.8G"
 #define TE_FMTW  L"%.8G"
 
+// Bounds for safe double -> signed-integer cast. (double)INT_MAX/INT64_MAX may
+// round UP to the next power of two, so use literals strictly below 2^31 / 2^63.
+#define TE_INT64_DBL_MAX (9.2233720368547758E+18)
+#define TE_INT32_DBL_MAX (2.147483648E+9)
+
+// Returns 32 or 64 — the bit width used for HEX/BIN two's-complement display.
+// Tracks te_parser::supports_64bit() (constexpr in C++): with the default
+// `double` te_type this is 32; if Notepad3 ever switches to long double or
+// another 64-bit-precise type, it widens to 64 automatically.
+static int _TinyExprBitWidth(void)
+{
+    static int s_width = 0;
+    if (s_width == 0) {
+        s_width = te_supports_64bit() ? 64 : 32;
+    }
+    return s_width;
+}
+
+static double _TinyExprIntBound(void)
+{
+    return (_TinyExprBitWidth() >= 64) ? TE_INT64_DBL_MAX : TE_INT32_DBL_MAX;
+}
+
+static void _FormatBinA(LPSTR pszDest, size_t cchDest, unsigned __int64 u, int width)
+{
+    // "0b" prefix + up to `width` bits + NUL.
+    if (cchDest < 4) {
+        if (cchDest > 0) {
+            pszDest[0] = '\0';
+        }
+        return;
+    }
+    pszDest[0] = '0';
+    pszDest[1] = 'b';
+    if (u == 0) {
+        pszDest[2] = '0';
+        pszDest[3] = '\0';
+        return;
+    }
+    int hi = width - 1;
+    while (hi > 0 && ((u >> hi) & 1ULL) == 0ULL) {
+        --hi;
+    }
+    size_t pos = 2;
+    for (int b = hi; b >= 0 && pos + 1 < cchDest; --b) {
+        pszDest[pos++] = (char)('0' + (int)((u >> b) & 1ULL));
+    }
+    pszDest[pos] = '\0';
+}
+
+static void _FormatBinW(LPWSTR pszDest, size_t cchDest, unsigned __int64 u, int width)
+{
+    if (cchDest < 4) {
+        if (cchDest > 0) {
+            pszDest[0] = L'\0';
+        }
+        return;
+    }
+    pszDest[0] = L'0';
+    pszDest[1] = L'b';
+    if (u == 0) {
+        pszDest[2] = L'0';
+        pszDest[3] = L'\0';
+        return;
+    }
+    int hi = width - 1;
+    while (hi > 0 && ((u >> hi) & 1ULL) == 0ULL) {
+        --hi;
+    }
+    size_t pos = 2;
+    for (int b = hi; b >= 0 && pos + 1 < cchDest; --b) {
+        pszDest[pos++] = (WCHAR)(L'0' + (int)((u >> b) & 1ULL));
+    }
+    pszDest[pos] = L'\0';
+}
+
 void TinyExprToStringA(LPSTR pszDest, size_t cchDest, const double dExprEval)
 {
+    if ((s_iTinyExprOutMode != TE_OUT_DEC) && isfinite(dExprEval) && (fabs(dExprEval) < _TinyExprIntBound())) {
+        int const              width = _TinyExprBitWidth();
+        __int64 const          i64   = (__int64)llround(dExprEval);
+        unsigned __int64       u     = (unsigned __int64)i64;
+        if (width < 64) {
+            u &= ((1ULL << width) - 1ULL); // truncate to the supported width
+        }
+        if (s_iTinyExprOutMode == TE_OUT_HEX) {
+            if (width >= 64) {
+                StringCchPrintfA(pszDest, cchDest, "0x%llX", u);
+            } else {
+                StringCchPrintfA(pszDest, cchDest, "0x%X", (unsigned int)u);
+            }
+        } else { // TE_OUT_BIN
+            _FormatBinA(pszDest, cchDest, u, width);
+        }
+        return;
+    }
     double       intpart = 0.0;
     double const fracpart = modf(dExprEval, &intpart);
     if ((fabs(fracpart) < TE_ZERO) && (fabs(intpart) < 1.0E+21)) {
@@ -613,6 +720,24 @@ void TinyExprToStringA(LPSTR pszDest, size_t cchDest, const double dExprEval)
 
 void TinyExprToString(LPWSTR pszDest, size_t cchDest, const double dExprEval)
 {
+    if ((s_iTinyExprOutMode != TE_OUT_DEC) && isfinite(dExprEval) && (fabs(dExprEval) < _TinyExprIntBound())) {
+        int const              width = _TinyExprBitWidth();
+        __int64 const          i64   = (__int64)llround(dExprEval);
+        unsigned __int64       u     = (unsigned __int64)i64;
+        if (width < 64) {
+            u &= ((1ULL << width) - 1ULL);
+        }
+        if (s_iTinyExprOutMode == TE_OUT_HEX) {
+            if (width >= 64) {
+                StringCchPrintf(pszDest, cchDest, L"0x%llX", u);
+            } else {
+                StringCchPrintf(pszDest, cchDest, L"0x%X", (unsigned int)u);
+            }
+        } else { // TE_OUT_BIN
+            _FormatBinW(pszDest, cchDest, u, width);
+        }
+        return;
+    }
     double       intpart = 0.0;
     double const fracpart = modf(dExprEval, &intpart);
     if ((fabs(fracpart) < TE_ZERO) && (fabs(intpart) < 1.0E+21)) {
@@ -621,6 +746,28 @@ void TinyExprToString(LPWSTR pszDest, size_t cchDest, const double dExprEval)
     else {
         StringCchPrintf(pszDest, cchDest, TE_FMTW, dExprEval);
     }
+}
+// ----------------------------------------------------------------------------
+
+// One-shot debounce timer: NM_CLICK on STATUS_TINYEXPR arms this; if NM_DBLCLK fires
+// within GetDoubleClickTime() ms, the dblclk handler kills the timer so we don't
+// copy on a double-click. Otherwise the timer fires once and copies the formatted result.
+static VOID CALLBACK TinyExprCopyTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    UNREFERENCED_PARAMETER(uMsg);
+    UNREFERENCED_PARAMETER(dwTime);
+    KillTimer(hwnd, idEvent); // one-shot
+
+    char chExpr[80] = { '\0' };
+    if (s_iExprError == 0) {
+        TinyExprToStringA(chExpr, COUNTOF(chExpr), s_dExpression);
+    } else if (s_iExprError > 0) {
+        StringCchPrintfA(chExpr, COUNTOF(chExpr), "%s^[" TE_INT_FMT "]",
+                         s_pszTinyExprModePrefixA[s_iTinyExprOutMode], s_iExprError);
+    } else {
+        return; // nothing meaningful to copy
+    }
+    SciCall_CopyText((DocPos)StringCchLenA(chExpr, COUNTOF(chExpr)), chExpr);
 }
 // ----------------------------------------------------------------------------
 
@@ -877,6 +1024,7 @@ static void _CleanUpResources(const HWND hwnd, bool bIsInitialized)
         KillTimer(hwnd, ID_LOGROTATETIMER);
         KillTimer(hwnd, ID_AUTOSAVETIMER);
         KillTimer(hwnd, ID_PASTEBOARDTIMER);
+        KillTimer(hwnd, ID_TINYEXPRCOPYTIMER);
     }
 
     if (Globals.pStdDarkModeIniStyles) {
@@ -8943,6 +9091,7 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
             }
             EditUpdateVisibleIndicators();
             if (scn->linesAdded != 0) {
+                EditBookmarkAdjustNavigation(SciCall_LineFromPosition(scn->position), scn->linesAdded);
                 if (Settings.SplitUndoTypingSeqOnLnBreak && (scn->linesAdded > 0)) {
                     if (!(iModType & (SC_PERFORMED_UNDO | SC_PERFORMED_REDO))) {
                         _SplitUndoTransaction();
@@ -9357,8 +9506,14 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                         PostWMCommand(hwnd, eol_cmd);
                     }
                 }
-            } 
+            }
             break;
+
+            case STATUS_TINYEXPR:
+                // Defer the copy by one double-click interval so a follow-up dblclk
+                // (which cycles output mode) cancels it instead of copying first.
+                SetTimer(hwnd, ID_TINYEXPRCOPYTIMER, GetDoubleClickTime(), TinyExprCopyTimerProc);
+                break;
 
             default:
                 result = FALSE;
@@ -9405,17 +9560,11 @@ LRESULT MsgNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
                 PostWMCommand(hwnd, IDM_VIEW_SCHEME);
                 break;
 
-            case STATUS_TINYEXPR: {
-                char chExpr[80] = { '\0' };
-                if (s_iExprError == 0) {
-                    TinyExprToStringA(chExpr, COUNTOF(chExpr), s_dExpression);
-                } else if (s_iExprError > 0) {
-                    StringCchPrintfA(chExpr, COUNTOF(chExpr), "^[" TE_INT_FMT "]", s_iExprError);
-                    SciCall_CopyText((DocPos)StringCchLenA(chExpr, COUNTOF(chExpr)), chExpr);
-                }
-                SciCall_CopyText((DocPos)StringCchLenA(chExpr, COUNTOF(chExpr)), chExpr);
-            }
-            break;
+            case STATUS_TINYEXPR:
+                KillTimer(hwnd, ID_TINYEXPRCOPYTIMER); // cancel pending single-click copy
+                s_iTinyExprOutMode = (TE_OUT_MODE_T)((s_iTinyExprOutMode + 1) % TE_OUT_MODE_COUNT);
+                UpdateStatusbar(true);
+                break;
 
             default:
                 result = FALSE;
@@ -10581,12 +10730,11 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
 
     // try calculate expression of selection
     if (g_iStatusbarVisible[STATUS_TINYEXPR]) {
-        static WCHAR tchExpression[32] = { L'\0' };
+        static WCHAR tchExpression[80] = { L'\0' }; // fits "0b" + 64 bits + NUL with headroom
         static te_int_t s_iExErr          = -3;
         s_dExpression = 0.0;
-        tchExpression[0] = L'-';
-        tchExpression[1] = L'-';
-        tchExpression[2] = L'\0';
+        StringCchPrintf(tchExpression, COUNTOF(tchExpression), L"%s--",
+                        s_pszTinyExprModePrefixW[s_iTinyExprOutMode]);
 
         if (Settings.EvalTinyExprOnSelection) {
             if (bIsSelCharCountable) {
@@ -10620,7 +10768,8 @@ static void  _UpdateStatusbarDelayed(bool bForceRedraw)
         if (!s_iExprError) {
             TinyExprToString(tchExpression, COUNTOF(tchExpression), s_dExpression);
         } else if (s_iExprError > 0) {
-            StringCchPrintf(tchExpression, COUNTOF(tchExpression), L"^[" _W(TE_INT_FMT) L"]", s_iExprError);
+            StringCchPrintf(tchExpression, COUNTOF(tchExpression), L"%s^[" _W(TE_INT_FMT) L"]",
+                            s_pszTinyExprModePrefixW[s_iTinyExprOutMode], s_iExprError);
         }
 
         if (bForceRedraw || (!s_iExprError || (s_iExErr != s_iExprError))) {
@@ -11123,6 +11272,8 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
             return false;
         }
     }
+
+    EditBookmarkResetNavigation();
 
     if (!bReloadFile) {
         ResetEncryption();
