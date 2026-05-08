@@ -1558,13 +1558,15 @@ WININFO GetFactoryDefaultWndPos(HWND hwnd, const int flagsPos)
     winfo.zoom = 100;
     winfo.dpi = dpi;
 
-    // extend by DWM invisible border so visible content fills work area
-    int const border = GetSystemMetrics(SM_CXPADDEDBORDER);
-    int const sframe = GetSystemMetrics(SM_CXSIZEFRAME);
-    winfo.x += border;
-    winfo.y += border;
-    winfo.cx += (border + sframe);
-    winfo.cy += (border + sframe);
+    // extend by DWM invisible border so visible content fills work area;
+    // the top has no invisible margin (title bar sits at window.top).
+    // Win11 DWM offset is < SM_CXPADDEDBORDER + SM_CXSIZEFRAME by ~SM_CXBORDER per side.
+    int const dwmMargin = GetSystemMetrics(SM_CXPADDEDBORDER) +
+                          GetSystemMetrics(SM_CXSIZEFRAME) -
+                          2 * GetSystemMetrics(SM_CXBORDER);
+    winfo.x  -= dwmMargin;
+    winfo.cx += 2 * dwmMargin;
+    winfo.cy += dwmMargin;   // bottom only
 
     return winfo;
 }
