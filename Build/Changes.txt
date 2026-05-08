@@ -36,7 +36,7 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.507.(build_#) (2026-05-07)
+Current BETA Version 7.26.508.(build_#) (2026-05-08)
 ========================================================
 
 --------------------------------------------------------
@@ -64,6 +64,7 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.508.1]- Small correction of factory default position (#5836).
 [.507.1]- Minor fixes for change-history navigation (#5834).
 [.507.1]- Skip paste board minimizing if nothing to paste (#5831).
 [.507.1]- Modern print dialog, fixing minor issues (#5831).
