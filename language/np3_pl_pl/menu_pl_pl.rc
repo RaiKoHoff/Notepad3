@@ -95,7 +95,7 @@ BEGIN
         END
         MENUITEM SEPARATOR
         MENUITEM "Przywróć z pliku\tF5",                     IDM_FILE_REVERT
-        MENUITEM "&Ignoruj zmiany w treści plików",                      CMD_IGNORE_FILE_VARS
+        MENUITEM "&Nie monitoruj zmian w treści plików",                      CMD_IGNORE_FILE_VARS
         POPUP "&Kodowanie"
         BEGIN
             POPUP "&Przywróć z pliku jako"
