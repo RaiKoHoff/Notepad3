@@ -267,7 +267,7 @@ msgstr "GREPWIN"
 
 #. Resource IDs: (156)
 msgid "If enabled, a backup folder is created inside the folder that's searched/replaced in, and the files are backed up into that folder"
-msgstr "En mapp med en säkerhetskopia skapas innuti mappen du söker i, och filer säkerhetskopieras skapas för filerna till denna mapp"
+msgstr "En mapp med en säkerhetskopia skapas inuti mappen du söker i, och filer säkerhetskopieras skapas för filerna till denna mapp"
 
 #. Resource IDs: (1050)
 msgid "Include binary files"
@@ -535,11 +535,11 @@ msgstr "Text efter ersättning:"
 
 #. Resource IDs: (1053)
 msgid "Treat files as UTF8"
-msgstr "Behandlar filer som UTF8"
+msgstr "Behandla filer som UTF8"
 
 #. Resource IDs: (1054)
 msgid "Treat files as binary"
-msgstr "Behandla filer som binär"
+msgstr "Behandla filer som binära"
 
 #. Resource IDs: (172)
 #, c-format
