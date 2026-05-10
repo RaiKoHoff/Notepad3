@@ -169,7 +169,7 @@ BEGIN
         MENUITEM "Ta bort\tDel",                                     IDM_EDIT_CLEAR
         MENUITEM SEPARATOR
         MENUITEM "Rensa urklipp",                                   IDM_EDIT_CLEARCLIPBOARD
-        MENUITEM "Växla &klippbordsövervakning",  IDM_EDIT_TOGGLE_PASTEBOARD
+        MENUITEM "Växla &urklippsövervakning",  IDM_EDIT_TOGGLE_PASTEBOARD
         MENUITEM SEPARATOR
         POPUP "Ord"
                 BEGIN
@@ -347,13 +347,13 @@ BEGIN
     BEGIN
         MENUITEM "Automatiskt radbyte\tCtrl+W",                     IDM_VIEW_WORDWRAP
         MENUITEM "Markering för långa rader\tCtrl+Alt+L",           IDM_VIEW_LONGLINEMARKER
-        MENUITEM "Indragsguide\tCtrl+Shift+G",                      IDM_VIEW_SHOWINDENTGUIDES
+        MENUITEM "Stödlinjer för indrag\tCtrl+Shift+G",                      IDM_VIEW_SHOWINDENTGUIDES
         MENUITEM SEPARATOR
-        MENUITEM "Visa radbrytsindikator\tCtrl+Shift+7",            IDM_VIEW_WORDWRAPSYMBOLS
+        MENUITEM "Visa radbrytningssymboler\tCtrl+Shift+7",            IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Visa blanksteg\tCtrl+Shift+8",                    IDM_VIEW_SHOWBLANKS
         MENUITEM "Visa radslut\tCtrl+Shift+9",                      IDM_VIEW_SHOWEOLS
         MENUITEM SEPARATOR
-        POPUP "Ändra historiemarkör"
+        POPUP "Markör för ändringshistorik"
         BEGIN
             MENUITEM "Icke-ändring markörer",                   IDM_VIEW_CHGHIST_NONE
             MENUITEM "Visa endast i marginal",                  IDM_VIEW_CHGHIST_MARGIN
@@ -462,8 +462,8 @@ BEGIN
         MENUITEM "Välj syntaxschema...\tF12",                       IDM_VIEW_SCHEME
         MENUITEM "Andra gemensamma bas\tShift+F12",                 IDM_VIEW_USE2NDDEFAULT
         MENUITEM SEPARATOR
-        MENUITEM "Global font...\tAlt+F12",                         IDM_VIEW_FONT
-        MENUITEM "Aktuell font för valt schema...\tCtrl+Alt+F12",   IDM_VIEW_CURRENTSCHEME
+        MENUITEM "Globalt standardteckensnitt...\tAlt+F12",                         IDM_VIEW_FONT
+        MENUITEM "Teckensnitt för valt schema...\tCtrl+Alt+F12",   IDM_VIEW_CURRENTSCHEME
         MENUITEM SEPARATOR
         MENUITEM "Windows mörkt läge",                               IDM_VIEW_WIN_DARK_MODE
     END
@@ -478,7 +478,7 @@ BEGIN
         MENUITEM "Stäng parenteser automatiskt",                    IDM_SET_AUTOCLOSEBRACKETS
         MENUITEM "Stäng HTML/XML automatiskt\tCtrl+Shift+H",        IDM_SET_AUTOCLOSETAGS
         MENUITEM "Komplettera ord automatiskt",                      IDM_SET_AUTOCOMPLETEWORDS
-        MENUITEM "Komplettera Lexer-&Key-Words automatiskt",        IDM_SET_AUTOCLEXKEYWORDS
+        MENUITEM "Komplettera lexernyckelord automatiskt",        IDM_SET_AUTOCLEXKEYWORDS
         MENUITEM "Alternativa ordavgränsare\tCtrl+Alt+A",           IDM_SET_ALTERNATE_WORD_SEPS
         MENUITEM SEPARATOR
         MENUITEM "Bara en instans per fil",                         IDM_SET_SINGLEFILEINSTANCE
@@ -493,7 +493,7 @@ BEGIN
             MENUITEM "Avsluta Notepad3",                            IDM_SET_ESCEXIT
         END
         MENUITEM "Spara innan verktyg används",                     IDM_SET_SAVEBEFORERUNNINGTOOLS
-        MENUITEM "Räkna ut Tiny-E&xpressions",                      IDM_SET_EVALTINYEXPRONSEL
+        MENUITEM "Beräkna små uttryck",                      IDM_SET_EVALTINYEXPRONSEL
         MENUITEM "Aktivera multimarkering",                       IDM_SET_MULTIPLE_SELECTION
         POPUP "Standardkatalog"
         BEGIN
