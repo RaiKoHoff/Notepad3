@@ -78,7 +78,7 @@ EDITLEXER lexJulia =
         { { SCE_JULIA_TYPEOPERATOR }, IDS_LEX_STR_TypeOp, L"Type Operator", L"fore:#950095", L"" },
         { { SCE_JULIA_IDENTIFIER }, IDS_LEX_STR_Identifier, L"Identifier", L"fore:#00007B", L"" },
         { { SCE_JULIA_SYMBOL }, IDS_LEX_STR_Symbol, L"Symbol", L"fore:#C0A030", L"" },
-        { { SCE_JULIA_MACRO }, IDS_LEX_STR_63280, L"Macro Def", L"fore:#0080FF", L"" },
+        { { SCE_JULIA_MACRO }, IDS_LEX_STR_MacroDef, L"Macro Def", L"fore:#0080FF", L"" },
         { { SCE_JULIA_DOCSTRING }, IDS_LEX_STR_63259, L"Comment Doc", L"fore:#808080", L"" },
         { { MULTI_STYLE(SCE_JULIA_STRINGINTERP, SCE_JULIA_STRINGLITERAL, 0, 0) }, IDS_LEX_STR_LitStrg, L"Literal String", L"fore:#B000B0", L"" },
         { { MULTI_STYLE(SCE_JULIA_COMMAND, SCE_JULIA_COMMANDLITERAL, 0, 0) }, IDS_LEX_STR_Cmd, L"Command", L"bold; fore:#0000DD", L"" },

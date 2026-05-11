@@ -8,7 +8,8 @@ KEYWORDLIST KeyWords_JAVA =
     "abstract assert boolean break byte case catch char class const "
     "continue default do double else enum extends final finally float for future generic goto if implements "
     "import inner instanceof int interface long native new null outer package private protected public rest "
-    "return short static super switch synchronized this throw throws transient try var void volatile while",
+    "return short static super switch synchronized this throw throws transient try var void volatile while"
+    " strictfp",
     // Secondary keywords
     "@Deprecated @Documented @FlaskyTest @Inherited @JavascriptInterface @LargeTest @MediumTest @Override "
     "@Retention @SmallTest @Smoke @Supress @SupressLint @SupressWarnings @Target @TargetApi @TestTarget "
@@ -19,7 +20,8 @@ KEYWORDLIST KeyWords_JAVA =
     "hideinitializer htmlinclude htmlonly if image include ingroup internal invariant interface latexonly li line link "
     "mainpage name namespace nosubgrouping note overload p page par param param[in] param[out] post pre "
     "ref relates remarks return retval sa section see showinitializer since skip skipline struct subsection "
-    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup",
+    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup"
+    " file fn hideinitializer",
     // Global classes and typedefs
     "",
     // Preprocessor definitions

@@ -4,7 +4,14 @@
 
 KEYWORDLIST KeyWords_VB =
 {
-    NP3_LEXER_VB_KEYWORD_LIST,
+    NP3_LEXER_VB_KEYWORD_LIST
+    " base binary csbyte cuint culng cushort custom defbool defbyte defcur defdate defdbl defdec defint deflng defobj defsng defstr defvar endif input isfalse isnot istrue len lock midb my narrowing of off operator partial print region sbyte seek text time trycast uinteger ulong ushort using widening",
+    // User slot 1
+    "",
+    // User slot 2
+    "",
+    // User slot 3
+    "",
     NULL,
 };
 

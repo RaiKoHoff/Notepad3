@@ -5,7 +5,8 @@
 KEYWORDLIST KeyWords_MATLAB =
 {
     "break case catch continue else elseif end for function global if otherwise persistent return "
-    "switch try while",
+    "switch try while"
+    " __FILE__ __LINE__ classdef do end_try_catch end_unwind_protect endclassdef endenumeration endevents endfor endfunction endif endmethods endparfor endproperties endswitch endwhile enumeration events get methods parfor properties set static until unwind_protect unwind_protect_cleanup",
     NULL,
 };
 

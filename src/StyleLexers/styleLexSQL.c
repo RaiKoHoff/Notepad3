@@ -66,25 +66,32 @@ KEYWORDLIST KeyWords_SQL =
     "undo_buffer_size undofile unicode uninstall union unique unknown unlock until update upgrade usage use "
     "use_frm user user_resources using utc_date utc_time utc_timestamp vacuum validation value values "
     "variables vcpu view virtual visible wait warnings week weight_string when whenever where while window "
-    "with within without work wrapper write x509 xa xid xml xor year_month zerofill",
+    "with within without work wrapper write x509 xa xid xml xor year_month zerofill"
+    " %declare %default absolute alias are arrange array assertion authid binary_integer body breadth bulk catalog char_base class collect compress conf constant constraints constructor corresponding current_role currval cycle dense depth deref destroy destructor dictionary domain elsif end-exec equals eval extends extract flatten floor forall generate heap indicator initialize input interface java large lateral limited macro map matches max min minus mlslabel module more naturaln nclob nextval nocopy number_base object ocirowid off onschema opaque operation operator output package pad parallel parameter parameters partialscan pctfree percent pls_integer positive positiven postfix prefix preorder private raw record reduce ref referencing relative rownum rowtype scope scroll search section separate sets ship space specifictype sqlcode sqlerrm state statement stddev stderr stdin stdout structure subtype successful sum sync sysdate tablesample terminate through timezone_hour timezone_minute transform translation treat uid under uniquejoin unnest validate varchar2 variable variance views zone",
 // Database Objects (keywords2)
     "",
 // PLDoc (kw_pldoc)
-    "",
+    ""
+    " author deprecated param see since todo",
 // SQL*Plus (kw_sqlplus)
-    "",
+    ""
+    " abs acos addduration archive array_contains asin atan attribute bagtostring bagtotuple bin bloom buildbloom cbrt ceil concat concat_ws context_ngrams conv copy cos cosh count count_star currenttime date_add date_sub datediff daysbetween degrees del diff endswith equalsignorecase exp find_in_set floor format_number from_unixtime from_utc_timestamp get_json_object getday gethour getmillisecond getminute getmonth getsecond getweek getweekyear getyear hex hoursbetween in_file indexof instr isempty last_index_of lcfirst length ln locate log log10 log2 lower lpad ltrim map_keys map_values max millisecondsbetween min minutesbetween monthsbetween negative ngrams oserror parse_url pi plucktuple pmod positive pow printf quit radians rand random regex_extract regex_extract_all regex_search regexp_extract regexp_replace round round_to rpad secondsbetween sentences sign sin sinh sort_array space split sprintf sqlerror sqrt startswith startup store str_to_map strsplit strsplittobag substr substring subtract subtractduration sum tan tanh to_date to_utc_timestamp tobag todate tokenize tomap tomilliseconds top tostring totuple tounixtime translate trim ucfirst unhex uniqueid unix_timestamp upper weekofyear weeksbetween yearsbetween",
 // User Keywords 1 (kw_user1)
     "bigint binary bit blob bool boolean byte char character clob date datetime day dec decimal double enum "
     "fixed float float4 float8 hour int int1 int2 int3 int4 int8 integer json long mediumint minute month "
     "native nchar numeric nvarchar real second serial signed smallint text time timestamp tinyint unsigned "
-    "varbinary varchar varcharacter varying year",
+    "varbinary varchar varcharacter varying year"
+    " cat cd clear copyfromlocal copytolocal cp dbms_output.disable dbms_output.enable dbms_output.get_line dbms_output.get_lines dbms_output.new_line dbms_output.put dbms_output.put_line du dump fs illustrate ls mkdir mv pig pwd quit rm rmf run sh",
 // (MySQL) (kw_user2)
     "geomcollection geometry geometrycollection linestring longblob longtext mediumblob mediumtext "
-    "multilinestring multipoint multipolygon point polygon tinyblob tinytext",
+    "multilinestring multipoint multipolygon point polygon tinyblob tinytext"
+    " archive assert autocommit bucket clustered clusterstatus cogroup collection compactions compute concatenate dbproperties define defined delimited dependency detail directories distribute elem_type expression fileformat foreach formatted functions hold_ddltime idxproperties inpath inputdriver inputformat items jar key_type location logical mapjoin materialized metadata minus msck no_drop norely noscan novalidate offline operator outputdriver outputformat overwrite partitioned plus pretty principals protection readonly recordreader recordwriter register rely rewrite roles sample semi serde serdeproperties sets shared show_database skewed sort sorted split statistics store stream streamtable summary tblproperties touch transactions unarchive uniontype unset uri utc validate value_type vectorization zone",
 // User Keywords 3
     ""
+    " accumulostorage array avrostorage bag bigdecimal biginteger bytearray chararray hbasestorage jsonloader jsonstorage map orcstorage pigdump pigstorage struct textloader timestamptz trevnistorage tuple utc_tmestamp utctimestamp",
 // User Keywords 4
-    "",
+    ""
+    " csv dayofweek days dow hours minutes months orc parquet rc seconds void weeks years",
     NULL,
 };
 
@@ -103,6 +110,10 @@ EDITLEXER lexSQL =
         { {SCE_SQL_QUOTEDIDENTIFIER}, IDS_LEX_STR_63243, L"Quoted Identifier", L"fore:#000080; back:#FFFFE2", L"" },
         { {SCE_SQL_NUMBER}, IDS_LEX_STR_Number, L"Number", L"fore:#A200A2", L"" },
         { {SCE_SQL_OPERATOR}, IDS_LEX_STR_Operator, L"Operator", L"bold; fore:#FF8000", L"" },
+        { {SCE_SQL_COMMENTDOC}, IDS_LEX_STR_DocCmt, L"Doc Comment", L"italic; fore:#808080", L"" },
+        { {SCE_SQL_COMMENTDOCKEYWORD}, IDS_LEX_STR_DocCmtKw, L"Doc Comment Keyword", L"bold; italic; fore:#608060", L"" },
+        { {SCE_SQL_QOPERATOR}, IDS_LEX_STR_QOper, L"Quoted Operator", L"bold; fore:#FF8000; back:#FFFFE2", L"" },
+        //{ {SCE_SQL_WORD2}, IDS_LEX_STR_Word, L"Keyword 2", L"", L"" },
         EDITLEXER_SENTINEL
     }
 };

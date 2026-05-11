@@ -26,7 +26,8 @@ static KEYWORDLIST KeyWords_Verilog = {
     "unsigned use uwire "
     "vectored "
     "wait wand weak0 weak1 while wire wor "
-    "xnor xor",
+    "xnor xor"
+    " alias always_comb always_ff always_latch assert assume before bind bins binsof bit break byte chandle class clocking const constraint context continue cover covergroup coverpoint cross dist do endclass endclocking endgroup endinterface endpackage endprogram endproperty endsequence enum expect export extends extern final first_match foreach forkjoin iff ignore_bins illegal_bins import inside int interface intersect join_any join_none local logic longint matches modport new null package packed priority program property protected pure rand randc randcase randsequence ref return sequence shortint shortreal solve static string struct super tagged this throughout timeprecision timeunit type typedef union unique var virtual void wait_order wildcard with within",
 
     // 1 Secondary keywords and identifiers
     "",
@@ -53,7 +54,8 @@ static KEYWORDLIST KeyWords_Verilog = {
     "$test$plusargs $time $timeformat $timeskew "
     "$ungetc $unsigned "
     "$value$plusargs "
-    "$width $writeb $writeh $write $writeo",
+    "$width $writeb $writeh $write $writeo"
+    " $acos $acosh $asin $asinh $assertfailoff $assertfailon $assertkill $assertnonvacuouson $assertoff $asserton $assertpassoff $assertpasson $assertvacuousoff $atan $atan2 $atanh $bits $bitstoshortreal $cast $ceil $changed $changed_gclk $changing_gclk $clog2 $cos $cosh $countones $coverage_control $coverage_get $coverage_get_max $coverage_merge $coverage_save $dimensions $dumpports $error $exit $exp $falling_gclk $fatal $fdisplayo $fell $fell_gclk $floor $fmonitoro $fstrobeb $fstrobeo $ftell $future_gclk $fwriteo $get_coverage $high $hypot $increment $info $isunbounded $isunknown $left $ln $load_coverage_db $log10 $low $onehot $onehot0 $past $past_gclk $pow $right $rising_gclk $root $rose $rose_gclk $sampled $set_coverage_db_name $sformatf $shortrealtobits $sin $sinh $size $sqrt $sscanf $stable $stable_gclk $steady_gclk $system $tan $tanh $typename $unit $unpacked_dimensions $urandom $urandom_range $warning $writememb $writememh",
 
     // 3 User defined tasks and identifiers
     "",

@@ -34,16 +34,22 @@ KEYWORDLIST KeyWords_INNO =
     "versioninfooriginalfilename versioninfoproductname versioninfoproducttextversion versioninfoproductversion "
     "versioninfotextversion versioninfoversion welcomefontname welcomefontsize windowresizable windowshowcaption "
     "windowstartmaximized windowvisible wizardimagealphaformat wizardimagefile wizardimagestretch wizardresizable "
-    "wizardsizepercent wizardsmallimagefile wizardstyle",
+    "wizardsizepercent wizardsmallimagefile wizardstyle"
+    " missingmessageswarning notrecognizedmessageswarning usepreviousprivileges",
     "afterinstall appusermodelid attribs beforeinstall check comment components copymode description destdir "
     "destname excludes extradiskspacerequired filename flags fontinstall groupdescription hotkey iconfilename "
     "iconindex infoafterfile infobeforefile key languages licensefile messagesfile minversion name "
     "onlybelowversion parameters permissions root runonceid section source statusmsg string subkey tasks "
-    "terminalservicesaware type types valuedata valuename valuetype workingdir",
+    "terminalservicesaware type types valuedata valuename valuetype workingdir"
+    " appusermodeltoastactivatorclsid externalsize",
     "append define dim elif else emit endif endsub error expr file for if ifdef ifexist ifndef ifnexist include "
-    "insert pragma sub undef",
+    "insert pragma sub undef"
+    " redim",
     "and begin break case const continue do downto else end except finally for function if not of or procedure "
-    "repeat then to try type until uses var while with",
+    "repeat then to try type until uses var while with"
+    " exit false on true",
+    // User slot 5
+    "",
     NULL,
 };
 

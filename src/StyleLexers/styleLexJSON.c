@@ -13,7 +13,8 @@ KEYWORDLIST KeyWords_JSON =
 
     // Second list reserved (upstream lexer uses two lists for JSON-LD; for
     // strict JSON it stays empty).
-    "",
+    ""
+    " @base @container @context @graph @id @index @language @list @reverse @set @type @value @vocab",
 
     NULL
 };

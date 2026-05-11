@@ -95,10 +95,10 @@ EDITLEXER lexKotlin =
         //{ {SCE_KOTLIN_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { { SCE_KOTLIN_WORD }, IDS_LEX_STR_Keyword, L"Keyword", L"fore:#0000FF", L"" },
 	    { { SCE_KOTLIN_ANNOTATION }, IDS_LEX_STR_Annot, L"Annotation", L"fore:#FF8000", L"" },
-	    { { SCE_KOTLIN_CLASS }, IDS_LEX_STR_63258, L"Class", L"fore:#0080FF", L"" },
+	    { { SCE_KOTLIN_CLASS }, IDS_LEX_STR_Class, L"Class", L"fore:#0080FF", L"" },
 	    { { SCE_KOTLIN_INTERFACE }, IDS_LEX_STR_Interface, L"Interface", L"bold; fore:#1E90FF", L"" },
 	    { { SCE_KOTLIN_ENUM }, IDS_LEX_STR_Enum, L"Enumeration", L"fore:#FF8000", L"" },
-	    { { MULTI_STYLE(SCE_KOTLIN_FUNCTION, SCE_KOTLIN_FUNCTION_DEFINITION, 0, 0) }, IDS_LEX_STR_63277, L"Function", L"fore:#A46000", L"" },
+	    { { MULTI_STYLE(SCE_KOTLIN_FUNCTION, SCE_KOTLIN_FUNCTION_DEFINITION, 0, 0) }, IDS_LEX_STR_Function, L"Function", L"fore:#A46000", L"" },
 	    { { MULTI_STYLE(SCE_KOTLIN_COMMENTBLOCK, SCE_KOTLIN_COMMENTLINE, 0, 0) }, IDS_LEX_STR_Comment, L"Comment", L"fore:#608060", L"" },
 	    { { MULTI_STYLE(SCE_KOTLIN_COMMENTBLOCKDOC, SCE_KOTLIN_COMMENTLINEDOC, 0, 0) }, IDS_LEX_STR_63259, L"Comment Doc", L"fore:#408080", L"" },
 	    { { SCE_KOTLIN_COMMENTDOCWORD }, IDS_LEX_STR_63371, L"Comment Doc Word", L"fore:#408080", L"" },
@@ -111,6 +111,7 @@ EDITLEXER lexKotlin =
 	    { { SCE_KOTLIN_NUMBER }, IDS_LEX_STR_Number, L"Number", L"fore:#FF0000", L"" },
 	    { { SCE_KOTLIN_VARIABLE }, IDS_LEX_STR_Var, L"Variable", L"fore:#9E4D2A", L"" },
 	    { { MULTI_STYLE(SCE_KOTLIN_OPERATOR, SCE_KOTLIN_OPERATOR2, 0, 0) }, IDS_LEX_STR_Operator, L"Operator", L"fore:#B000B0", L"" },
+	    { { SCE_KOTLIN_IDENTIFIER }, IDS_LEX_STR_Identifier, L"Identifier", L"", L"" },
         EDITLEXER_SENTINEL
     }
 };

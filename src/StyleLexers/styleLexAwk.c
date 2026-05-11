@@ -23,12 +23,13 @@ EDITLEXER lexAwk =
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_P_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { {SCE_P_WORD}, IDS_LEX_STR_Keyword, L"Keyword", L"bold; fore:#0000A0", L"" },
-        { {SCE_P_WORD}, IDS_LEX_STR_Keyword2nd, L"Keyword 2nd", L"bold; italic; fore:#6666FF", L"" },
+        { {SCE_P_WORD2}, IDS_LEX_STR_Keyword2nd, L"Keyword 2nd", L"bold; italic; fore:#6666FF", L"" },
         { {SCE_P_IDENTIFIER}, IDS_LEX_STR_Identifier, L"Identifier", L"", L"" },
         { {MULTI_STYLE(SCE_P_COMMENTLINE,SCE_P_COMMENTBLOCK,0,0)}, IDS_LEX_STR_Comment, L"Comment", L"fore:#808080", L"" },
         { {MULTI_STYLE(SCE_P_STRING,SCE_P_STRINGEOL,SCE_P_CHARACTER,0)}, IDS_LEX_STR_String, L"String", L"fore:#008000", L"" },
         { {SCE_P_NUMBER}, IDS_LEX_STR_Number, L"Number", L"fore:#C04000", L"" },
         { {SCE_P_OPERATOR}, IDS_LEX_STR_Operator, L"Operator", L"fore:#B000B0", L"" },
+        //{ {SCE_P_WORD2}, IDS_LEX_STR_Word, L"Keyword 2", L"", L"" },
         EDITLEXER_SENTINEL
     }
 };

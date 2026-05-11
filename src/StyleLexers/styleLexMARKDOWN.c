@@ -7,7 +7,7 @@ KEYWORDLIST KeyWords_MARKDOWN = EMPTY_KEYWORDLIST;
 
 EDITLEXER lexMARKDOWN =
 {
-    SCLEX_MARKDOWN, "markdown", IDS_LEX_MARKDOWN, L"Markdown", L"md; markdown; mdown; mkdn; mkd", L"",
+    SCLEX_MARKDOWN, "markdown", IDS_LEX_MARKDOWN, L"Markdown", L"md; markdown; mdown; mkdn; mkd; mdx; qmd", L"",
     &KeyWords_MARKDOWN, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_MARKDOWN_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
@@ -20,6 +20,7 @@ EDITLEXER lexMARKDOWN =
         { {SCE_MARKDOWN_HEADER4}, IDS_LEX_STR_63323, L"Header 4", L"bold; fore:#336193; eolfilled", L"" },
         { {SCE_MARKDOWN_HEADER5}, IDS_LEX_STR_63324, L"Header 5", L"bold; fore:#3F77B6; eolfilled", L"" },
         { {SCE_MARKDOWN_HEADER6}, IDS_LEX_STR_63325, L"Header 6", L"bold; fore:#5C8FC7; eolfilled", L"" },
+        { {SCE_MARKDOWN_HDRTEXT}, IDS_LEX_STR_HdrText, L"Header Text", L"bold; fore:#336193", L"" },
         { {SCE_MARKDOWN_PRECHAR}, IDS_LEX_STR_63326, L"Pre Char", L"fore:#00007F", L"" },
         { {SCE_MARKDOWN_ULIST_ITEM}, IDS_LEX_STR_63327, L"Unordered List", L"bold; fore:#0080FF", L"" },
         { {SCE_MARKDOWN_OLIST_ITEM}, IDS_LEX_STR_63268, L"Ordered List", L"bold; fore:#0080FF", L"" },

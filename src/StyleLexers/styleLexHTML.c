@@ -33,13 +33,15 @@ KEYWORDLIST KeyWords_HTML =
     "source span spellcheck src srcdoc srclang standby start step strike strong style sub submit summary sup "
     "tabindex table target tbody td template text textarea tfoot th thead time title topmargin tr track "
     "translate tt type typemustmatch u ul usemap valign value valuetype var version video vlink vspace wbr "
-    "width wrap xml xmlns",
+    "width wrap xml xmlns"
+    " abbrev accel ackno affiliation age allowfullscreen allowpaymentrequest allowtransparency alphabet anchor answer appendix appendixinfo application arch areaset areaspec arg articleinfo artpagenums assign attribution audiodata audioobject author authorblurb authorgroup authorinitials beep beginpage bgsound bibliocoverage bibliodiv biblioentry bibliography bibliographyinfo biblioid bibliomisc bibliomixed bibliomset bibliorelation biblioset bibliosource blink block blockinfo book bookinfo bottommargin bridge bridgehead callout calloutlist category caution chapter chapterinfo choice citation citebiblioid citerefentry citetitle city classname classsynopsis classsynopsisinfo cmdsynopsis co collab collabname colophon colspec computeroutput cond condition confdates confgroup confnum conformance confsponsor conftitle connecttimeout constant constraint constraintdef constructorsynopsis contour contractnum contractsponsor contrib copyright coref corpauthor corpname count country database dedication dest destexpr destructorsynopsis disconnect dtmf dtmfterm duration edition editor email emphasis endterm entry entrytbl enumerate envar epigraph equation errorcode errorname errortext errortype eventexpr example exceptionname expr expritem fax fetchtimeout field fieldsynopsis filename filled finalsilence firstname firstterm footnote footnoteref foreignphrase formalpara framespacing funcdef funcparams funcprototype funcsynopsis funcsynopsisinfo gender glossary glossaryinfo glossdef glossdiv glossentry glosslist glosssee glossseealso glossterm grammar graphic graphicco group guibutton guiicon guilabel guimenu guimenuitem guisubmenu hardware help highlights holder honorific htm imagedata imageobject imageobjectco important index indexdiv indexentry indexinfo indexterm informalequation informalexample informalfigure informaltable initial initializer inlineequation inlinegraphic inlinemediaobject interfacename invpartnumber isbn issn issuenum itemid itemizedlist itemref iteral itermset jobtitle keycap keycode keycombo keysym keyword keywordset legalnotice level lhs lineage lineannotation linkend listing listitem literallayout log lot lotentry lowsrc manvolnum markup marquee maxage maxstale maxtime medialabel mediaobject mediaobjectco member menuchoice message messageexpr methodname methodparam methods methodsynopsis mime minlength mm modal mode modespec modifier msg msgaud msgentry msgexplan msginfo msglevel msgmain msgorig msgrel msgset msgsub msgtext multicol namelist nextitem nobr noembed noinput nomatch nonce nonterminal note objectinfo olink onaddtrack onauxclick oncopy oncut ondragexit onenter onexit onlanguagechange onloadend onmouseenter onmouseleave onpaste onrejectionhandled onremovetrack ontoggle onunhandledrejection onwheel ooclass ooexception oointerface orderedlist orgdiv orgname os otheraddr othercredit othername ousebutton pagenums para paragraph paramdef parameter part partinfo partintro personblurb personname ph phone phoneme phrase pitch plaintext pob postcode preface prefaceinfo primary primaryie printhistory procedure production productionrecap productionset productname productnumber programlisting programlistingco prosody publisher publishername pubsnumber qandadiv qandaentry qandaset question quote range rate rb record refclass refdescriptor refentry refentryinfo refentrytitle reference referenceinfo referrerpolicy refmeta refmiscinfo refname refnamediv refpurpose refsect1 refsect1info refsect2 refsect2info refsect3 refsect3info refsection refsectioninfo refsynopsisdiv refsynopsisdivinfo releaseinfo remap remark replaceable reprompt returnvalue revdescription revhistory revision revisionflag revnumber revremark rhs rightmargin row rtc say-as sbr screen screenco screeninfo screenshot secondary secondaryie sect1 sect1info sect2 sect2info sect3 sect3info sect4 sect4info sect5 sect5info sectioninfo security see seealso seealsoie seeie seg seglistitem segmentedlist segtitle sentence seriesvolnums setindex setindexinfo setinfo sgmltag shortaffil shortcut sidebar sidebarinfo simpara simplelist simplemsgentry simplesect sizeexpr skiplist space spacer spanspec srcexpr srcset state status street structfield structname subdialog subject subjectset subjectterm subscript substeps subtitle superscript surname sv symbol synopfragment synopfragmentref synopsis systemitem term tertiary tertiaryie textdata textobject tgroup timeexpr timeout tip titleabbrev toc tocback tocchap tocentry tocfront toclevel1 toclevel2 toclevel3 toclevel4 toclevel5 tocpart token trademark transfer transferaudio ulink urn userinput userlevel varargs variablelist varlistentry varname vendor videodata videoobject voice volume volumenum vxml warning wordasword xml:lang xmp xref xreflabel year",
 // JavaScript keywords (sync with lexJS::KeyWords_JS)
     NP3_LEXER_JS_KEYWORD_LIST,
 // VBScript keywords
     NP3_LEXER_VB_KEYWORD_LIST,
 // Python keywords
-    "",
+    ""
+    " block doc endclass endexcept endfinally endtry inherit page",
 // PHP keywords
     "__callstatic __class__ __compiler_halt_offset__ __dir__ __file__ __function__ __get __halt_compiler __isset "
     "__line__ __method__ __namespace__ __set __sleep __trait__ __unset __wakeup abstract and argc argv array "
@@ -50,9 +52,11 @@ KEYWORDLIST KeyWords_HTML =
     "false final for foreach function global goto http_cookie_vars http_env_vars http_get_vars http_post_files "
     "http_post_vars http_server_vars if implements include include_once instanceof insteadof interface isset "
     "list namespace new not null old_function or parent php_self print private protected public require "
-    "require_once return static stdclass switch this throw trait true try unset use var virtual while xor",
+    "require_once return static stdclass switch this throw trait true try unset use var virtual while xor"
+    " __php_incomplete_class __property__ arithmeticerror assertionerror bool divisionbyzeroerror errorexception fn generator iterable match mixed never numeric parseerror php_user_filter resource self throwable typeerror",
 // SGML and DTD keywords
-    "",
+    ""
+    " ATTLIST DOCTYPE ELEMENT ENTITY NOTATION",
     NULL,
 };
 
@@ -74,6 +78,14 @@ EDITLEXER lexHTML =
         { {SCE_H_DEFAULT}, IDS_LEX_STR_63256, L"HTML Element Text", L"", L"" },
         { {MULTI_STYLE(SCE_H_XMLSTART,SCE_H_XMLEND,0,0)}, IDS_LEX_STR_63145, L"XML Identifier", L"bold; fore:#881280", L"" },
         { {SCE_H_SGML_DEFAULT}, IDS_LEX_STR_63237, L"SGML", L"fore:#881280", L"" },
+        { {SCE_H_SGML_COMMAND}, IDS_LEX_STR_SGMLCmd, L"SGML Command", L"bold; fore:#881280", L"" },
+        { {SCE_H_SGML_1ST_PARAM}, IDS_LEX_STR_SGMLParam, L"SGML 1st Param", L"fore:#A46000", L"" },
+        { {MULTI_STYLE(SCE_H_SGML_DOUBLESTRING,SCE_H_SGML_SIMPLESTRING,0,0)}, IDS_LEX_STR_SGMLStr, L"SGML String", L"fore:#3A6EA5", L"" },
+        { {SCE_H_SGML_ERROR}, IDS_LEX_STR_SGMLErr, L"SGML Error", L"fore:#FFFF00; back:#A00000; eolfilled", L"" },
+        { {SCE_H_SGML_SPECIAL}, IDS_LEX_STR_SGMLSpc, L"SGML Special", L"fore:#AA00AA", L"" },
+        { {SCE_H_SGML_ENTITY}, IDS_LEX_STR_SGMLEnt, L"SGML Entity", L"fore:#B000B0", L"" },
+        { {MULTI_STYLE(SCE_H_SGML_COMMENT,SCE_H_SGML_1ST_PARAM_COMMENT,0,0)}, IDS_LEX_STR_SGMLCmt, L"SGML Comment", L"italic; fore:#646464", L"" },
+        { {SCE_H_SGML_BLOCK_DEFAULT}, IDS_LEX_STR_SGMLBlk, L"SGML Block Default", L"", L"" },
         { {SCE_H_CDATA}, IDS_LEX_STR_63147, L"CDATA", L"fore:#646464", L"" },
         { {MULTI_STYLE(SCE_H_ASP,SCE_H_ASPAT,0,0)}, IDS_LEX_STR_63146, L"ASP Start Tag", L"bold; fore:#000080", L"" },
         //{ {SCE_H_SCRIPT}, L"Script", L"", L"" },

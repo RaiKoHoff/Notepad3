@@ -30,7 +30,8 @@ KEYWORDLIST KeyWords_AVS =
     "showtime sincresize skewrows spatialsoften spline16resize spline36resize spline64resize ssrc "
     "stackhorizontal stackvertical subtitle subtract supereq swapfields swapuv temporalsoften timestretch tone "
     "trim turn180 turnleft turnright tweak unalignedsplice utoy utoy8 version verticalreduceby2 vtoy vtoy8 "
-    "wavsource weave weavecolumns weaverows writefile writefileend writefileif writefilestart ytouv",
+    "wavsource weave weavecolumns weaverows writefile writefileend writefileif writefilestart ytouv"
+    " internalcachemt",
     // --- plugins ---
     "ablur addgrain addgrainc analyzelogo apparentfps asharp asobel assrender autoadjust autocrop autolevels "
     "average avstp_set_threads avxframecapture avxsubtitle awarp awarp4 awarpsharp awarpsharp2 backwardclense "
@@ -86,7 +87,8 @@ KEYWORDLIST KeyWords_AVS =
     "ttempsmooth ttempsmoothf tunsharp turn tweakhist undot unfilter unsharp unsharpmask userdefined2resizemt "
     "vaguedenoiser veed verticalcleaner videoscope vinverse vinverse2 vmaf vscnr2 vsdeblockpp7 "
     "vsdegrainmedian vseval vsimport vslghost vsmsharpen vsmsmooth vstbilateral vstcanny vstedgemask vstmm "
-    "vsttempsmooth w2xncnnvk waveform yadifmod2",
+    "vsttempsmooth w2xncnnvk waveform yadifmod2"
+    " agc_hdragc audiograph autoyuy2 avsrecursion bassaudiosource bicublinresize binarize blendfields blockbuster bordercontrol chromashift combmask contra ddcc dedgemask deflate descratch edgemask ediupsizer expand fastbicubicresize fastbilinearresize fastediupsizer fdecimate ffdshow ffmpegsource fitu2y fitv2y fity2u fity2uv fity2v frfun3b grapesmoother greedyhma guavacomb hysteresymask ibob improvesceneswitch inflate inpand interlacedresize interlacedwarpedresize interleaved2planar iscombedt logic lumafilter maskeddeinterlace maskedmerge maskedmix mctemporaldenoisepp moderatesharpen monitorfilter mpasource msu_fieldshiftfixer msu_frc mt mti mtsource mvanalyse mvblockfps mvchangecompensate mvcompensate mvdegrain1 mvdegrain2 mvdegrain3 mvdenoise mvdepan mvflow mvflowblur mvflowfps mvflowfps2 mvflowinter mvincrease mvmask mvrecalculate mvscdetection mvshow nicac3source nicdtssource niclpcmsource nicmpasource nicmpg123source nnedi2_rpow2 nomosmooth overlaymask peachsmoother planar2interleaved qtinput rawavsource rawsource reinterpolate411 removedust removegrainhd removetemporalgrain reversefielddominance rgb3dlut rgblut rgdeinterlace rgsdeinterlace sharpen2 smartdecimate smartdeinterlace smoothdeinterlace smoothuv soothess soxfilter sshiq stmedianfilter t3dlut tanisotropic tcanny tcombmask tcpserver tcpsource tedgemask temporalsmoother textsub tfieldblank tivtc tmaskblank tmaskedmerge tmaskedmerge3 tmm tmonitor unblock uncomb variableblur vobsub vqmcalc warpedresize warpsharp xsharpen yadif yadifmod yuy2lut yv12convolution yv12interlacedreduceby2 yv12interlacedselecttopfields yv12layer yv12lut yv12lutxy yv12substract yv12torgb24 yv12toyuy2",
     // --- functions ---
     "abs acos apply arrayadd arraydel arrayins arrayset arraysize asin assert atan atan2 averageb "
     "averagechromau averagechromav averageg averageluma averager bdifference bdifferencefromprevious "
@@ -202,7 +204,7 @@ EDITLEXER lexAVS =
         { {SCE_AVS_IDENTIFIER}, IDS_LEX_STR_Identifier, L"Identifier", L"bold; fore:#6E6E6E", L"" },
         { {SCE_AVS_FILTER}, IDS_LEX_STR_Filter, L"Filter", L"bold; fore:#3C3CFF", L"" },
         { {SCE_AVS_PLUGIN}, IDS_LEX_STR_Plugin, L"Plugin", L"bold; fore:#FF8040", L"" },
-        { {SCE_AVS_FUNCTION}, IDS_LEX_STR_63277, L"Function", L"fore:#9224FF", L"" },
+        { {SCE_AVS_FUNCTION}, IDS_LEX_STR_Function, L"Function", L"fore:#9224FF", L"" },
         { {SCE_AVS_CLIPPROP}, IDS_LEX_STR_63316, L"Clip Property", L"fore:#C4C400", L"" },
         { {SCE_AVS_USERDFN}, IDS_LEX_STR_63305, L"User Defined Function", L"fore:#8000FF", L"" },
         EDITLEXER_SENTINEL

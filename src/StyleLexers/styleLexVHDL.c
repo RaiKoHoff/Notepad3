@@ -22,7 +22,8 @@ static KEYWORDLIST KeyWords_VHDL = {
     "readline reflect resize resolved reverse_range right rightof rising_edge rotate_left rotate_right shift_left "
     "shift_right signal simple_name stable std_match subtype succ to_01 to_UX01 to_bit to_bitvector to_integer to_signed "
     "to_stdlogicvector to_stdulogic to_stdulogicvector to_unsigned to_x01 to_x01z transaction val value "
-    "write writeline",
+    "write writeline"
+    " instance_name",
 
     // 3 Functions
     "add add_carry arccos arccosh arcsin arcsinh arctan arctanh arg "
@@ -53,7 +54,8 @@ static KEYWORDLIST KeyWords_VHDL = {
     // 4 Packages
     "env fixed_float_types fixed_generic_pkg fixed_pkg float_generic_pkg float_pkg ieee math_complex math_real "
     "numeric_bit numeric_bit_unsigned numeric_std reflection standard std std_logic_1164 std_logic_arith std_logic_misc "
-    "std_logic_signed, std_logic_textio std_logic_unsigned textio vital_primitives vital_timing work",
+    "std_logic_signed, std_logic_textio std_logic_unsigned textio vital_primitives vital_timing work"
+    " std_logic_signed",
 
     // 5 Types
     "bit bit_vector boolean boolean_vector "

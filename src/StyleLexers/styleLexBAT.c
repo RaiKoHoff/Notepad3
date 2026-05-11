@@ -14,6 +14,8 @@ KEYWORDLIST KeyWords_BAT =
     "recover reg regedit regsvr32 rem ren rename replace rmdir robocopy route runas rundll32 sc schtasks "
     "sclist set setlocal sfc shift shutdown sort start subst systeminfo taskkill tasklist time timeout title "
     "tracert tree type typeperf ver verify vol wmic xcopy",
+    // User slot 1
+    "",
     NULL,
 };
 
@@ -31,6 +33,7 @@ EDITLEXER lexBAT =
         { {MULTI_STYLE(SCE_BAT_COMMAND,SCE_BAT_HIDE,0,0)}, IDS_LEX_STR_Cmd, L"Command", L"bold", L"" },
         { {SCE_BAT_LABEL}, IDS_LEX_STR_Label, L"Label", L"fore:#C80000; back:#F4F4F4; eolfilled", L"" },
         { {SCE_BAT_AFTER_LABEL}, IDS_LEX_STR_AfterLabel, L"After Label", L"fore:#00ACAC;", L"" },
+        { {MULTI_STYLE(SCE_B_DOCLINE,SCE_B_DOCBLOCK,0,0)}, IDS_LEX_STR_DocCmt, L"Doc Comment", L"italic; fore:#808080", L"" },
         EDITLEXER_SENTINEL
     }
 };

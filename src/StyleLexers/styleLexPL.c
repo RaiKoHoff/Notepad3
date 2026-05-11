@@ -20,7 +20,8 @@ KEYWORDLIST KeyWords_PL =
     "shift shmctl shmget shmread shmwrite shutdown sin sleep socket socketpair sort splice split sprintf sqrt "
     "srand stat state study sub substr symlink syscall sysopen sysread sysseek system syswrite tell telldir "
     "tie tied time times truncate uc ucfirst umask undef unless unlink unpack unshift untie until use utime "
-    "values vec wait waitpid wantarray warn when while write xor",
+    "values vec wait waitpid wantarray warn when while write xor"
+    " ADJUST ARGC ARGIND ARGV CONVFMT ENVIRON ERRNO FIELDWIDTHS FILENAME FNR FS IGNORECASE LINT NF NR NULL OFMT OFS ORS PROCINFO RLENGTH RS RSTART RT SUBSEP TEXTDOMAIN __CLASS__ __SUB__ all any asort asorti attributes autodie autouse base bigfloat bigint bignum bigrat bindtextdomain blib builtin bytes catch charnames class compl constant dcgettext dcngettext defer deprecate diagnostics elseif encoding evalbytes experimental fc feature fflush field fields filetest finally function gensub getline gsub import in integer isa less lib locale lshift match meta_notation method mktime mro nextfile ok ops overload overloading parent perlfaq re rshift sigtrap size stable strftime strict strtonum subs systime threads tolower toupper try utf8 vars version vmsish warnings",
     NULL,
 };
 
@@ -61,6 +62,9 @@ EDITLEXER lexPL =
         { {SCE_PL_POD_VERB}, IDS_LEX_STR_63214, L"POD (Verbatim)", L"fore:#A46000; back:#FFFFC0; eolfilled", L"" },
         { {SCE_PL_DATASECTION}, IDS_LEX_STR_63222, L"Data Section", L"fore:#A46000; back:#FFFFC0; eolfilled", L"" },
         { {SCE_PL_ERROR}, IDS_LEX_STR_63252, L"Parsing Error", L"fore:#C80000; back:#FFFF80", L"" },
+        { {SCE_PL_XLAT}, IDS_LEX_STR_PerlXlat, L"Transliteration tr///", L"fore:#006633; back:#FFF1A8", L"" },
+        { {MULTI_STYLE(SCE_PL_REGEX_VAR,SCE_PL_REGSUBST_VAR,SCE_PL_BACKTICKS_VAR,0)}, IDS_LEX_STR_PerlIVRx, L"Interpolated Var (regex/backticks)", L"italic; fore:#0A246A; back:#FFF1A8", L"" },
+        { {MULTI_STYLE(SCE_PL_HERE_QQ_VAR,SCE_PL_HERE_QX_VAR,SCE_PL_STRING_QQ_VAR,SCE_PL_STRING_QX_VAR)}, IDS_LEX_STR_PerlIVQQ, L"Interpolated Var (qq/qx/here)", L"italic; fore:#0A246A", L"" },
         //{ {SCE_PL_PUNCTUATION}, L"Symbols / Punctuation (not used)", L"", L"" },
         //{ {SCE_PL_PREPROCESSOR}, L"Preprocessor (not used)", L"", L"" },
         //{ {SCE_PL_LONGQUOTE}, L"Long Quote (qq, qr, qw, qx) (not used)", L"", L"" },

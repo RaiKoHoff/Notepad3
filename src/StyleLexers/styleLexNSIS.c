@@ -34,14 +34,16 @@ KEYWORDLIST KeyWords_NSIS =
     "un.onrebootfailed un.onuninstfailed un.onuninstsuccess un.onuserabort unicode uninstallbuttontext "
     "uninstallcaption uninstallicon uninstallsubcaption uninstalltext uninstpage unregdll var viaddversionkey "
     "vifileversion viproductversion windowicon writeinistr writeregbin writeregdword writeregexpandstr "
-    "writeregstr writeuninstaller xpstyle",
+    "writeregstr writeuninstaller xpstyle"
+    " Contributors: DirShow Function FunctionEnd LangStringUP MakeNSIS PageEx PageExEnd Portions Section SectionEnd SectionGroup SectionGroupEnd SubSection SubSectionEnd UninstallExeName",
     "$0 $1 $2 $3 $4 $5 $6 $7 $8 $9 $admintools $appdata $cdburn_area $cmdline $commonfiles $commonfiles32 "
     "$commonfiles64 $cookies $desktop $documents $exedir $exefile $exepath $favorites $fonts $history "
     "$hwndparent $instdir $internet_cache $language $localappdata $music $nethood $outdir $pictures "
     "$pluginsdir $printhood $profile $programfiles $programfiles32 $programfiles64 $quicklaunch $r0 $r1 $r2 "
     "$r3 $r4 $r5 $r6 $r7 $r8 $r9 $recent $resources $resources_localized $sendto $smprograms $smstartup "
     "$startmenu $sysdir $temp $templates $videos $windir ${__date__} ${__file__} ${__function__} ${__global__} "
-    "${__line__} ${__pageex__} ${__section__} ${__time__} ${__timestamp__} ${__uninstall__} ${nsisdir}",
+    "${__line__} ${__pageex__} ${__section__} ${__time__} ${__timestamp__} ${__uninstall__} ${nsisdir}"
+    " $$ $VARNAME",
     "32 64 admin all alt alwaysoff archive auto both bottom branding bzip2 charset colored components "
     "componentsonlyoncustom control cur current custom customstring date directory enablecancel end false "
     "file_attribute_archive file_attribute_hidden file_attribute_normal file_attribute_offline "
@@ -56,7 +58,10 @@ KEYWORDLIST KeyWords_NSIS =
     "normal nounload noworkingdir off offline on oname plugin rawnl readonly rebootok resizetofit right sd "
     "shctx shell_context shift short show silent silentlog smooth solid strike sw_hide sw_showmaximized "
     "sw_showminimized sw_shownormal system temporary textonly timeout top trimcenter trimleft trimright true "
-    "try underline uninstconfirm user utcdate win10 win7 win8 win8.1 windows winvista zlib",
+    "try underline uninstconfirm user utcdate win10 win7 win8 win8.1 windows winvista zlib"
+    " CENTER EXT dlg_id open print",
+    // User slot 3
+    "",
     NULL,
 };
 

@@ -27,7 +27,8 @@ KEYWORDLIST KeyWords_Fortran =
     "quote rank re readwrite read real rec recl recursive result return rewind round "
     "save select selectcase selecttype selectrank sequence sequential sign size stat status stop stream subroutine submodule "
     "sync target team then to type unformatted unit unlock use "
-    "value volatile wait where while write",
+    "value volatile wait where while write"
+    " is",
 
     // --- Intrinsic functions (Standard Function) - Fortran Standard 2018 ---
     "abs achar acos acosh adjustl adjustr aimag aint all allocated anint any asin asinh associated atan atan2 atanh "
@@ -49,7 +50,8 @@ KEYWORDLIST KeyWords_Fortran =
     "alog alog10 amod anint asin cabs ccos cexp clog csin csqrt dabs dacos dasin datan datan2 dcos dcosh ddim dexp "
     "dint dlog dlog10 dmod dnint dsign dsin dsinh dsqrt dtan dtanh iabs idim idnint isign "
     // Restricted specific names for standard intrinsic procedures
-    "amax0 amax1 amin0 amin1 dmax1 dmin1 float idint ifix max0 max1 min0 min1 sngl",
+    "amax0 amax1 amin0 amin1 dmax1 dmin1 float idint ifix max0 max1 min0 min1 sngl"
+    " acosd aimax0 aimin0 ajmax0 ajmin0 akmax0 akmin0 asind atan2d atand bitest bitl bitlr bitrl bjtest bktest break cdabs cdcos cdexp cdlog cdsin cdsqrt cosd dacosd dasind datan2d datand date dcmplx dconjg dcosd dcotan dfloat dfloti dflotj dflotk dimag dreal dsind dtand errsns floati floatj floatk free idate iiabs iiand iibclr iibits iibset iidim iidint iidnnt iieor iifix iint iior iiqint iiqnnt iishft iishftc iisign ilen imax0 imax1 imin0 imin1 imod inint inot int1 int2 int4 int8 iqint iqnint isnan izext jiand jibclr jibits jibset jidim jidint jidnnt jieor jifix jint jior jiqint jiqnnt jishft jishftc jisign jmax0 jmax1 jmin0 jmin1 jmod jnint jnot jzext kiabs kiand kibclr kibits kibset kidim kidint kidnnt kieor kifix kint kior kishft kishftc kisign kmax0 kmax1 kmin0 kmin1 kmod knint knot kzext lenlge lshift malloc number_of_processors nworkers random rshift secnds sind sizeof snglq tand",
  
     // --- Extended and user defined functions (Function) ---
     // Intrinsic procedures for the IEEE_ARITHMETIC module
@@ -67,7 +69,8 @@ KEYWORDLIST KeyWords_Fortran =
     // Intrinsic procedures for the ISO_FORTRAN_ENV module
     "compiler_options compiler_version "
     // Intrinsic procedures for the ISO_C_BINDING module
-    "c_associated c_f_pointer c_f_procpointer c_funloc c_loc c_sizeof",
+    "c_associated c_f_pointer c_f_procpointer c_funloc c_loc c_sizeof"
+    " cdabs cdcos cdexp cdlog cdsin cdsqrt cotan cotand dcmplx dconjg dcotan dcotand decode dimag dll_export dll_import doublecomplex dreal dvchk encode find flen getarg getcharqq getcl getdat getenv gettim hfix ibchng identifier imag int1 int2 int4 intc intrup invalop iostat_msg isha ishc ishl jfix lacfar locking locnear map nargs nbreak ndperr ndpexc offset ovefl peekcharqq precfill prompt qabs qacos qacosd qasin qasind qatan qatan2 qatand qcmplx qconjg qcos qcosd qcosh qdim qexp qext qextd qfloat qimag qlog qlog10 qmax1 qmin1 qmod qreal qsign qsin qsind qsinh qsqrt qtan qtand qtanh ran rand randu rewrite segment setdat settim system timer undfl union val virtual zabs zcos zexp zlog zsin zsqrt",
 
     NULL,
 };
