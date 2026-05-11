@@ -5,8 +5,8 @@
 KEYWORDLIST KeyWords_PY =
 {
     // Keywords
-    "False None True and as assert break class continue def del elif else except exec finally for from global if "
-    "import in is lambda nonlocal not or pass print raise return try while with yield",
+    "False None True and as assert break case cdef cimport class continue cpdef def del elif else except exec finally "
+    "for from global if import in is lambda match nonlocal not or pass print raise return try while with yield",
     
     // Highlighted identifiers
     "__main__ _dummy_thread _thread abc aifc argparse array ast asynchat asyncio asyncore atexit audioop "
@@ -31,7 +31,7 @@ KEYWORDLIST KeyWords_PY =
 
 EDITLEXER lexPY =
 {
-    SCLEX_PYTHON, "python", IDS_LEX_PYTHON, L"Python Script", L"py; pyw; pyx; pxd; pxi; boo; empy; cobra; gs", L"",
+    SCLEX_PYTHON, "python", IDS_LEX_PYTHON, L"Python Script", L"py; pyw; pyx; pxd; pxi; pyi; boo; empy; cobra; gs", L"",
     &KeyWords_PY, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_P_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },

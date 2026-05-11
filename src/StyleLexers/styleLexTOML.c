@@ -26,6 +26,7 @@ EDITLEXER lexTOML =
         { {SCE_TOML_TABLE}, IDS_LEX_STR_Table, L"Table", L"bold; fore:#FF8000", L"" },
         { {MULTI_STYLE(SCE_TOML_STRING_SQ, SCE_TOML_TRIPLE_STRING_SQ,0,0)}, IDS_LEX_STR_63212, L"String Single Quoted", L"italic; fore:#606060", L"" },
         { {MULTI_STYLE(SCE_TOML_STRING_DQ, SCE_TOML_TRIPLE_STRING_DQ,0,0)}, IDS_LEX_STR_63211, L"String Double Quoted", L"italic; fore:#606060", L"" },
+        { {SCE_TOML_STRINGEOL}, IDS_LEX_STR_63379, L"Unclosed String", L"fore:#FFFFFF; back:#FF8040; eolfilled", L"" },
         { {SCE_TOML_ESCAPECHAR}, IDS_LEX_STR_Esc, L"Escaped", L"fore:#202020", L"" },
         { {SCE_TOML_ERROR}, IDS_LEX_STR_63252, L"Parsing Error", L"fore:#FFFF00; back:#A00000; eolfilled", L"" },
         EDITLEXER_SENTINEL

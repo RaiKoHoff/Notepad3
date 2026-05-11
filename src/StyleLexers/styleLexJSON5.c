@@ -4,12 +4,13 @@
 
 KEYWORDLIST KeyWords_JSON5 =
 {
-    // JSON5 Keywords
-    "+Infinity -Infinity Infinity NaN false null true",
+    // JSON5 Keywords (per https://spec.json5.org/ § BooleanLiteral / NullLiteral / NumericLiteral)
+    "+Infinity -Infinity +NaN -NaN Infinity NaN false null true",
 
-    // JSON-LD Keywords
-    "@base @container @context @direction @graph @id @import @included @index @json @language @list @nest @none "
-    "@prefix @propagate @protected @reverse @set @type @value @version @vocab",
+    // JSON-LD Keywords (W3C JSON-LD 1.1 § 1.7 + JSON-LD 1.1 Framing § 1.5)
+    "@base @container @context @default @direction @embed @explicit @graph @id @import @included "
+    "@index @json @language @list @nest @none @null @omitDefault @prefix @propagate @protected "
+    "@requireAll @reverse @set @type @value @version @vocab",
 
     NULL
 };

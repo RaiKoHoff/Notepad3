@@ -58,8 +58,11 @@ Each language is one `styleLexXXX.c` defining an `EDITLEXER` struct (see existin
 Easy-to-miss touchpoints — derivable but only if you know to look:
 
 - **Property setter arm in `EditLexer.c`.** If the lexer exposes Scintilla properties (e.g. `lexer.foo.allow.X`), add a `case SCLEX_FOO:` in the top-of-file dispatch that calls `SciCall_SetProperty(...)`. Without it the `OptionsXXX` constructor defaults silently apply — symptom is "feature looks broken" (e.g. comments highlighted as ERROR).
+- **Shared `SCLEX_*` values**: `SCLEX_CPP` is the lexer for **C, C#, Java, JS, RC**; `SCLEX_D` for **D + Go**; `SCLEX_PYTHON` for **Python + Awk**. Property-arm or `EDITLEXER` table changes under those `SCLEX_*` cases ripple to every wiring using that lexer (e.g. adding `SCE_C_USERLITERAL` affects all SCLEX_CPP languages).
 - **Comment-toggle arms.** If the lexer has comments, add `case SCLEX_FOO:` in BOTH `Lexer_GetStreamCommentStrgs` and `Lexer_GetLineCommentStrg` in `EditLexer.c`, or Edit > Toggle Block/Line Comment is a no-op.
 - **Theme INI sections live under `pszName` (4th `EDITLEXER` field), not the lexer name string.** Each new lexer needs a `[<pszName>]` block in every theme INI: `Build\Notepad3.ini`, `Build\Themes\*.ini`, `res\StdDarkModeScheme.ini`, locale variants `Build\Notepad3_<locale>.ini`. Renaming `pszName` orphans existing user style customizations.
+- **New style rows need theme INI entries too** — same rule as new lexers, just per-row. Each `EDITLEXER` row's label string (e.g. `L"User Literal"`) needs a matching `User Literal=<spec>` line in every theme INI's `[<pszName>]` block. Without it, the EDITLEXER inline default applies and the row is invisible to theme switching. `lexilla/wscite/*.properties` (one per language) are useful colour references.
+- **Homebrew lexers in `lexilla/lexers_x/`** (6 files): `LexAHK`, `LexCSV`, `LexHTML` (NP3 fork — used by both `SCLEX_HTML` and `SCLEX_XML`), `LexJSON5`, `LexKotlin`, `LexVerilog` (`SCLEX_VERILOG` + `SCLEX_SYSVERILOG`). Their `SCE_*_*` enums live in `lexilla/lexers_x/SciXLexer.h`, not the stock `lexilla/include/SciLexer.h` — `#include "lexers_x/SciXLexer.h"` if you need the homebrew constants.
 
 ## Localization (`language\`)
 

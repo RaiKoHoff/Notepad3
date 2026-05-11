@@ -50,6 +50,10 @@ KEYWORDLIST KeyWords_PS =
     "rd rdr ren ri rjb rm rmdir rmo rni rnp rp rsn rsnp rv rvpa rwmi sajb sal saps sasv sbp sc select set si "
     "sl sleep sort sp spjb spps spsv start sv swmi tee type where wjb write",
     "importsystemmodules prompt psedit tabexpansion",
+// User1 (theme- or user-supplied identifiers)
+    "",
+// DocComment keywords
+    "",
     NULL,
 };
 
@@ -69,7 +73,7 @@ EDITLEXER lexPS =
         { {SCE_POWERSHELL_VARIABLE}, IDS_LEX_STR_Var, L"Variable", L"fore:#0A246A", L"" },
         { {MULTI_STYLE(SCE_POWERSHELL_CMDLET,SCE_POWERSHELL_FUNCTION,0,0)}, IDS_LEX_STR_Cmdlet, L"Cmdlet", L"fore:#804000; back:#FFF1A8", L"" },
         { {SCE_POWERSHELL_ALIAS}, IDS_LEX_STR_Alias, L"Alias", L"bold; fore:#0A246A", L"" },
-        //{ {MULTI_STYLE(SCE_POWERSHELL_HERE_STRING,SCE_POWERSHELL_HERE_CHARACTER,0,0)}, IDS_LEX_STR_String, L"Here String", L"fore:#008000", L"" },
+        { {MULTI_STYLE(SCE_POWERSHELL_HERE_STRING,SCE_POWERSHELL_HERE_CHARACTER,0,0)}, IDS_LEX_STR_HereStr, L"Here String", L"fore:#008000", L"" },
         EDITLEXER_SENTINEL
     }
 };

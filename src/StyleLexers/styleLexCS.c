@@ -20,7 +20,8 @@ KEYWORDLIST KeyWords_CS =
     "hideinitializer htmlinclude htmlonly if image include ingroup internal invariant interface latexonly li line link "
     "mainpage name namespace nosubgrouping note overload p page par param param[in] param[out] post pre "
     "ref relates remarks return retval sa section see showinitializer since skip skipline struct subsection "
-    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup",
+    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup"
+    " fn hideinitializer",
     // Global classes and typedefs
     "CriticalHandleMinusOneIsInvalid CriticalHandleZeroOrMinusOneIsInvalid SafeFileHandle SafeHandleMinusOneIsInvalid SafeHandleZeroOrMinusOneIsInvalid "
     "SafeMemoryMappedFileHandle SafeMemoryMappedViewHandle SafePipeHandle SafeProcessHandle SafeWaitHandle SafeX509ChainHandle "

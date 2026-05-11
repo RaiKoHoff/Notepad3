@@ -6,7 +6,8 @@ KEYWORDLIST KeyWords_R =
 {
 // Language Keywords
     "Inf NA NA_character_ NA_complex_ NA_integer_ NA_real_ NULL NaN break else false for function if in next "
-    "repeat true while",
+    "repeat true while"
+    " NULL",
 // Base / Default package function
     "abbreviate abline abs acf acos acosh addmargins aggregate agrep alarm alias alist all anova any aov aperm "
     "append apply approx approxfun apropos ar args arima array arrows asin asinh assign assocplot atan atanh "

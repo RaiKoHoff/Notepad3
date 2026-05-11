@@ -69,7 +69,8 @@ KEYWORDLIST KeyWords_AU3 =
     "@startupcommondir @startupdir @sw_disable @sw_enable @sw_hide @sw_lock @sw_maximize @sw_minimize "
     "@sw_restore @sw_show @sw_showdefault @sw_showmaximized @sw_showminimized @sw_showminnoactive @sw_showna "
     "@sw_shownoactivate @sw_shownormal @sw_unlock @systemdir @tab @tempdir @tray_id @trayiconflashing "
-    "@trayiconvisible @username @userprofiledir @wday @windowsdir @workingdir @yday @year",
+    "@trayiconvisible @username @userprofiledir @wday @windowsdir @workingdir @yday @year"
+    " @localappdatadir",
     "{!} {#} {+} {^} {altdown} {altup} {alt} {appskey} {asc} {backspace} {break} {browser_back} "
     "{browser_favorites} {browser_forward} {browser_home} {browser_refresh} {browser_search} {browser_stop} "
     "{bs} {capslock} {ctrldown} {ctrlup} {delete} {del} {down} {end} {enter} {escape} {esc} {f10} {f11} {f12} "
@@ -631,6 +632,8 @@ KEYWORDLIST KeyWords_AU3 =
     "_word_docclose _word_docexport _word_docfind _word_docfindreplace _word_docget _word_doclinkadd "
     "_word_doclinkget _word_docopen _word_docpictureadd _word_docprint _word_docrangeset _word_docsave "
     "_word_docsaveas _word_doctableread _word_doctablewrite _word_quit",
+    // User slot 7
+    "",
     NULL,
 };
 
@@ -643,16 +646,18 @@ EDITLEXER lexAU3 =
         //{ SCE_AU3_DEFAULT, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { {MULTI_STYLE(SCE_AU3_COMMENT,SCE_AU3_COMMENTBLOCK,0,0)}, IDS_LEX_STR_Comment, L"Comment", L"fore:#008000", L"" },
         { {SCE_AU3_NUMBER}, IDS_LEX_STR_Number, L"Number", L"fore:#008080", L"" },
-        { {SCE_AU3_FUNCTION}, IDS_LEX_STR_63277, L"Function", L"fore:#0000FF", L"" },
+        { {SCE_AU3_FUNCTION}, IDS_LEX_STR_Function, L"Function", L"fore:#0000FF", L"" },
         { {SCE_AU3_UDF}, IDS_LEX_STR_63305, L"User-Defined Function", L"fore:#0000FF", L"" },
         { {SCE_AU3_KEYWORD}, IDS_LEX_STR_Keyword, L"Keyword", L"fore:#0000FF", L"" },
-        { {SCE_AU3_MACRO}, IDS_LEX_STR_PageEx, L"Macro", L"fore:#0080FF", L"" },
+        { {SCE_AU3_MACRO}, IDS_LEX_STR_Macro, L"Macro", L"fore:#0080FF", L"" },
         { {SCE_AU3_STRING}, IDS_LEX_STR_String, L"String", L"fore:#008080", L"" },
         { {SCE_AU3_OPERATOR}, IDS_LEX_STR_Operator, L"Operator", L"fore:#C000C0", L"" },
         { {SCE_AU3_VARIABLE}, IDS_LEX_STR_Var, L"Variable", L"fore:#808000", L"" },
         { {SCE_AU3_SENT}, IDS_LEX_STR_SendKey, L"Send Key", L"fore:#FF0000", L"" },
         { {SCE_AU3_PREPROCESSOR}, IDS_LEX_STR_PreProc, L"Preprocessor", L"fore:#FF8000", L"" },
         { {SCE_AU3_SPECIAL}, IDS_LEX_STR_Special, L"Special", L"fore:#FF8000", L"" },
+        { {SCE_AU3_EXPAND}, IDS_LEX_STR_AU3Expand, L"Expand Variable", L"fore:#A46000", L"" },
+        { {SCE_AU3_COMOBJ}, IDS_LEX_STR_COMObj, L"COM Object", L"bold; fore:#0080FF", L"" },
         EDITLEXER_SENTINEL
     }
 };

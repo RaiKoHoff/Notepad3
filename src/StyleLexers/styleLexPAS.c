@@ -11,7 +11,8 @@ KEYWORDLIST KeyWords_PAS =
     "object of oldfpccall on operator or out overload override packed pascal private procedure program "
     "property protected public published raise read record register reintroduce repeat resourcestring safecall "
     "self set shl shr softfloat stdcall stored string then threadvar to true try type unit until uses var "
-    "virtual while with write xor",
+    "virtual while with write xor"
+    " add automated contains delayed deprecated dispid dispinterface dynamic experimental final helper implements nodefault package platform readonly reference remove requires sealed static strict unsafe varargs winapi writeonly",
     NULL,
 };
 
@@ -25,7 +26,7 @@ EDITLEXER lexPAS =
         { {MULTI_STYLE(SCE_PAS_COMMENT,SCE_PAS_COMMENT2,SCE_PAS_COMMENTLINE,0)}, IDS_LEX_STR_Comment, L"Comment", L"fore:#646464", L"" },
         { {SCE_PAS_WORD}, IDS_LEX_STR_Keyword, L"Keyword", L"bold; fore:#800080", L"" },
         { {SCE_PAS_IDENTIFIER}, IDS_LEX_STR_Identifier, L"Identifier", L"", L"" },
-        { {MULTI_STYLE(SCE_PAS_STRING,SCE_PAS_CHARACTER,SCE_PAS_STRINGEOL,0)}, IDS_LEX_STR_String, L"String", L"fore:#008000", L"" },
+        { {MULTI_STYLE(SCE_PAS_STRING,SCE_PAS_CHARACTER,SCE_PAS_STRINGEOL,SCE_PAS_MULTILINESTRING)}, IDS_LEX_STR_String, L"String", L"fore:#008000", L"" },
         { {MULTI_STYLE(SCE_PAS_NUMBER,SCE_PAS_HEXNUMBER,0,0)}, IDS_LEX_STR_Number, L"Number", L"fore:#FF0000", L"" },
         { {SCE_PAS_OPERATOR}, IDS_LEX_STR_Operator, L"Operator", L"bold", L"" },
         { {SCE_PAS_ASM}, IDS_LEX_STR_63205, L"Inline Asm", L"fore:#0000FF", L"" },

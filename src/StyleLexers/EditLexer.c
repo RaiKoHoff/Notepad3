@@ -281,6 +281,58 @@ void Lexer_SetLexerSpecificProperties(const int lexerId) {
     case SCLEX_PYTHON:
         SciCall_SetProperty("tab.timmy.whinge.level", "1");
         SciCall_SetProperty("lexer.python.strings.f", "1");
+        SciCall_SetProperty("lexer.python.literals.binary", "1");
+        SciCall_SetProperty("lexer.python.strings.u", "1");
+        SciCall_SetProperty("lexer.python.strings.b", "1");
+        SciCall_SetProperty("lexer.python.strings.over.newline", "0");
+        SciCall_SetProperty("lexer.python.unicode.identifiers", "1");
+        SciCall_SetProperty("lexer.python.identifier.attributes", "0");
+        break;
+
+    case SCLEX_ASM:
+        SciCall_SetProperty("lexer.asm.comment.delimiter", ";");
+        SciCall_SetProperty("fold.asm.syntax.based", "1");
+        SciCall_SetProperty("fold.asm.comment.multiline", "1");
+        SciCall_SetProperty("fold.asm.comment.explicit", "0");
+        SciCall_SetProperty("fold.asm.explicit.start", ";{");
+        SciCall_SetProperty("fold.asm.explicit.end", ";}");
+        SciCall_SetProperty("fold.asm.explicit.anywhere", "0");
+        break;
+
+    case SCLEX_BASH:
+        SciCall_SetProperty("lexer.bash.styling.inside.string", "1");
+        SciCall_SetProperty("lexer.bash.styling.inside.backticks", "1");
+        SciCall_SetProperty("lexer.bash.styling.inside.parameter", "1");
+        SciCall_SetProperty("lexer.bash.styling.inside.heredoc", "1");
+        SciCall_SetProperty("lexer.bash.command.substitution", "1");
+        SciCall_SetProperty("lexer.bash.nested.backticks", "1");
+        SciCall_SetProperty("lexer.bash.special.parameter", "1");
+        break;
+
+    case SCLEX_D:
+        SciCall_SetProperty("fold.d.syntax.based", "1");
+        SciCall_SetProperty("fold.d.comment.multiline", "1");
+        SciCall_SetProperty("fold.d.comment.explicit", "0");
+        SciCall_SetProperty("fold.d.explicit.start", "//{");
+        SciCall_SetProperty("fold.d.explicit.end", "//}");
+        SciCall_SetProperty("fold.d.explicit.anywhere", "0");
+        SciCall_SetProperty("lexer.d.fold.at.else", "1");
+        break;
+
+    case SCLEX_JULIA:
+        SciCall_SetProperty("fold.julia.docstring", "1");
+        SciCall_SetProperty("fold.julia.syntax.based", "1");
+        SciCall_SetProperty("lexer.julia.highlight.typeannotation", "1");
+        SciCall_SetProperty("lexer.julia.highlight.lexerror", "1");
+        break;
+
+    case SCLEX_KOTLIN:
+        SciCall_SetProperty("fold", "1");
+        SciCall_SetProperty("fold.comment", "1");
+        break;
+
+    case SCLEX_NIM:
+        SciCall_SetProperty("lexer.nim.raw.strings.highlight.ident", "1");
         break;
 
     case SCLEX_VERILOG:

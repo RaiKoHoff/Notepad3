@@ -16,7 +16,8 @@ KEYWORDLIST KeyWords_CMAKE =
     "remove remove_definitions separate_arguments set set_directory_properties set_source_files_properties "
     "set_target_properties set_tests_properties site_name source_group string subdir_depends subdirs "
     "target_link_libraries try_compile try_run use_mangled_mesa utility_source variable_requires "
-    "vtk_make_instantiator vtk_wrap_java vtk_wrap_python vtk_wrap_tcl while write_file",
+    "vtk_make_instantiator vtk_wrap_java vtk_wrap_python vtk_wrap_tcl while write_file"
+    " add_compile_definitions add_compile_options add_link_options endfunction export target_compile_definitions target_compile_features target_compile_options target_include_directories target_link_directories target_link_options target_sources",
     "ABSOLUTE ABSTRACT ADDITIONAL_MAKE_CLEAN_FILES ALL AND APPEND APPLE ARGS ASCII BEFORE BORLAND CACHE "
     "CACHE_VARIABLES CLEAR CMAKE_COMPILER_2005 COMMAND COMMANDS COMMAND_NAME COMMENT COMPARE COMPILE_FLAGS "
     "COPYONLY CYGWIN DEFINED DEFINE_SYMBOL DEPENDS DOC EQUAL ESCAPE_QUOTES EXCLUDE EXCLUDE_FROM_ALL EXISTS "
@@ -29,6 +30,8 @@ KEYWORDLIST KeyWords_CMAKE =
     "PROPERTIES QUIET RANGE READ REGEX REGULAR_EXPRESSION REPLACE REQUIRED RETURN_VALUE RUNTIME_DIRECTORY "
     "SEND_ERROR SHARED SOURCES STATIC STATUS STREQUAL STRGREATER STRLESS SUFFIX TARGET TOLOWER TOUPPER VAR "
     "VARIABLES VERSION WATCOM WIN32 WRAP_EXCLUDE WRITE",
+    // User slot 2
+    "",
     NULL,
 };
 
@@ -41,13 +44,13 @@ EDITLEXER lexCmake =
         //{ {SCE_CMAKE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { {SCE_CMAKE_COMMENT}, IDS_LEX_STR_Comment, L"Comment", L"fore:#008000", L"" },
         { {MULTI_STYLE(SCE_CMAKE_STRINGDQ,SCE_CMAKE_STRINGLQ,SCE_CMAKE_STRINGRQ,0)}, IDS_LEX_STR_String, L"String", L"fore:#7F007F; back:#EEEEEE", L"" },
-        { {SCE_CMAKE_COMMANDS}, IDS_LEX_STR_63277, L"Function", L"fore:#00007F", L"" },
+        { {SCE_CMAKE_COMMANDS}, IDS_LEX_STR_Function, L"Function", L"fore:#00007F", L"" },
         { {SCE_CMAKE_PARAMETERS}, IDS_LEX_STR_Param, L"Parameter", L"fore:#7F200F", L"" },
         { {SCE_CMAKE_VARIABLE}, IDS_LEX_STR_Var, L"Variable", L"fore:#CC3300", L"" },
-        { {SCE_CMAKE_WHILEDEF}, IDS_LEX_STR_63358, L"While Def", L"fore:#00007F", L"" },
-        { {SCE_CMAKE_FOREACHDEF}, IDS_LEX_STR_63357, L"For Each Def", L"fore:#00007F", L"" },
-        { {SCE_CMAKE_IFDEFINEDEF}, IDS_LEX_STR_63279, L"If Def", L"fore:#00007F", L"" },
-        { {SCE_CMAKE_MACRODEF}, IDS_LEX_STR_63280, L"Macro Def", L"fore:#00007F", L"" },
+        { {SCE_CMAKE_WHILEDEF}, IDS_LEX_STR_WhileDef, L"While Def", L"fore:#00007F", L"" },
+        { {SCE_CMAKE_FOREACHDEF}, IDS_LEX_STR_ForEachDef, L"For Each Def", L"fore:#00007F", L"" },
+        { {SCE_CMAKE_IFDEFINEDEF}, IDS_LEX_STR_IfDef, L"If Def", L"fore:#00007F", L"" },
+        { {SCE_CMAKE_MACRODEF}, IDS_LEX_STR_MacroDef, L"Macro Def", L"fore:#00007F", L"" },
         { {SCE_CMAKE_STRINGVAR}, IDS_LEX_STR_63267, L"Variable within String", L"fore:#CC3300; back:#EEEEEE", L"" },
         { {SCE_CMAKE_NUMBER}, IDS_LEX_STR_Number, L"Number", L"fore:#008080", L"" },
         //{ {SCE_CMAKE_USERDEFINED}, IDS_LEX_STR_63106, L"User Defined", L"fore:#800020", L"" },

@@ -5,7 +5,7 @@
 KEYWORDLIST KeyWords_CPP =
 {
 // Primary keywords
-    "alignas alignof asm audit auto axiom bitand bitor bool break case catch char class compl concept "
+    "alignas alignof and and_eq asm audit auto axiom bitand bitor bool break case catch char class compl concept "
     "const const_cast consteval constexpr continue co_await co_return co_yield "
     "decltype default defined delete do double dynamic_cast else enum explicit export extern false final float for "
     "friend goto if import inline int long module mutable naked namespace new noexcept not not_eq noreturn nullptr "
@@ -13,7 +13,8 @@ KEYWORDLIST KeyWords_CPP =
     "register reinterpret_cast requires restrict return "
     "short signed sizeof static static_assert static_cast struct switch "
     "template this thread_local throw true try typedef typeid typename "
-    "union unsigned using virtual void volatile while xor xor_eq",
+    "union unsigned using virtual void volatile while xor xor_eq"
+    " @autoreleasepool @catch @class @compatibility_alias @defs @dynamic @encode @end @finally @implementation @interface @optional @package @private @property @protected @protocol @public @required @selector @synchronized @synthesize @throw @try",
 // Secondary keywords
     "_Alignas _Alignof _Atomic _Bool _Complex _Generic _Imaginary _Noreturn _Static_assert _Thread_local "
     "_Pragma __DATE__ __FILE__ __LINE__ __STDCPP_DEFAULT_NEW_ALIGNMENT__ __STDCPP_STRICT_POINTER_SAFETY__ "
@@ -29,7 +30,8 @@ KEYWORDLIST KeyWords_CPP =
     "hideinitializer htmlinclude htmlonly if image include ingroup internal invariant interface latexonly li line link "
     "mainpage name namespace nosubgrouping note overload p page par param param[in] param[out] post pre "
     "ref relates remarks return retval sa section see showinitializer since skip skipline struct subsection "
-    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup",
+    "test throw throws todo typedef union until var verbatim verbinclude version warning weakgroup"
+    " file fn hideinitializer",
 // Global classes and typedefs
     "__int16 __int32 __int64 __int8 __m128 __m128d __m128i __m64 __wchar_t char8_t char16_t char32_t complex imaginary int16_t int32_t "
     "int64_t int8_t intmax_t intptr_t ptrdiff_t size_t uint16_t uint32_t uint64_t uint8_t uintmax_t uintptr_t wchar_t",
@@ -42,7 +44,7 @@ KEYWORDLIST KeyWords_CPP =
 
 EDITLEXER lexCPP =
 {
-    SCLEX_CPP, "cpp", IDS_LEX_CPP_SRC, L"C/C++ Source Code", L"c; cpp; cxx; cc; h; hpp; hxx; hh; mm; idl; midl; inl; odl; xpm; pch; cl", L"",
+    SCLEX_CPP, "cpp", IDS_LEX_CPP_SRC, L"C/C++ Source Code", L"c; cpp; cxx; cc; h; hpp; hxx; hh; mm; idl; midl; inl; odl; xpm; pch; cl; cppm; ixx", L"",
     &KeyWords_CPP, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ {SCE_C_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
@@ -56,13 +58,13 @@ EDITLEXER lexCPP =
         { {SCE_C_NUMBER}, IDS_LEX_STR_Number, L"Number", L"fore:#FF0000", L"" },
         { {SCE_C_OPERATOR}, IDS_LEX_STR_Operator, L"Operator", L"fore:#B000B0", L"" },
         { {MULTI_STYLE(SCE_C_PREPROCESSOR,SCE_C_PREPROCESSORCOMMENT,SCE_C_PREPROCESSORCOMMENTDOC,0)}, IDS_LEX_STR_PreProc, L"Preprocessor", L"fore:#FF8000", L"" },
-        { {MULTI_STYLE(SCE_C_VERBATIM,SCE_C_TRIPLEVERBATIM,0,0)}, IDS_LEX_STR_VerbStrg, L"Verbatim", L"fore:#B000B0", L"" },
+        { {MULTI_STYLE(SCE_C_VERBATIM,SCE_C_TRIPLEVERBATIM,0,0)}, IDS_LEX_STR_Verbatim, L"Verbatim", L"fore:#B000B0", L"" },
         { {MULTI_STYLE(SCE_C_COMMENTDOC,SCE_C_COMMENTLINEDOC,0,0)}, IDS_LEX_STR_63259, L"Comment Doc", L"fore:#808080", L"" },
         { {SCE_C_COMMENTDOCKEYWORD}, IDS_LEX_STR_63371, L"Comment Doc Word", L"bold; fore:#808080", L"" },
         { {SCE_C_COMMENTDOCKEYWORDERROR}, IDS_LEX_STR_63374, L"Comment Doc Error", L"italic; fore:#800000", L"" },
         { {SCE_C_TASKMARKER}, IDS_LEX_STR_63373, L"Task Marker", L"bold; fore:#208080", L"" },
         //{ {SCE_C_UUID}, L"UUID", L"", L"" },
-        //{ {SCE_C_USERLITERAL}, L"User Literal", L"", L"" },
+        { {SCE_C_USERLITERAL}, IDS_LEX_STR_UserLit, L"User Literal", L"fore:#A46000", L"" },
         //{ {SCE_C_ESCAPESEQUENCE}, L"Esc Seq", L"", L"" },
         EDITLEXER_SENTINEL
     }

@@ -51,6 +51,7 @@ EDITLEXER lexRC = {
         { {SCE_C_TASKMARKER}, IDS_LEX_STR_63373, L"Task Marker", L"bold; fore:#208080", L"" },
         //{ {SCE_C_UUID}, L"UUID", L"", L"" },
         //{ {SCE_C_GLOBALCLASS}, L"Global Class", L"", L"" },
+        //{ {SCE_C_WORD2}, IDS_LEX_STR_Word, L"Keyword 2", L"", L"" },
         EDITLEXER_SENTINEL
     }
 };

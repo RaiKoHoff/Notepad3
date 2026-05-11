@@ -32,6 +32,13 @@ EDITLEXER lexRUBY =
         { {SCE_RB_CLASS_VAR}, IDS_LEX_STR_63296, L"Class Var", L"fore:#8000B0", L"" },
         { {SCE_RB_DATASECTION}, IDS_LEX_STR_63222, L"Data Section", L"fore:#600000; back:#FFF0D8; eolfilled", L"" },
         { {SCE_RB_ERROR}, IDS_LEX_STR_Error, L"Error", L"fore:#FFFF00; back:#A00000; eolfilled", L"" },
+        { {SCE_RB_BACKTICKS}, IDS_LEX_STR_63221, L"Back Ticks", L"fore:#E24000; back:#FFF1A8", L"" },
+        { {MULTI_STYLE(SCE_RB_HERE_DELIM,SCE_RB_HERE_Q,SCE_RB_HERE_QQ,SCE_RB_HERE_QX)}, IDS_LEX_STR_RbHereDoc, L"Here-Doc", L"fore:#648000", L"" },
+        { {MULTI_STYLE(SCE_RB_STRING_Q,SCE_RB_STRING_QQ,SCE_RB_STRING_QX,SCE_RB_STRING_QR)}, IDS_LEX_STR_RbPctStr, L"%-String", L"fore:#FF8000", L"" },
+        { {MULTI_STYLE(SCE_RB_STRING_QW,SCE_RB_STRING_W,SCE_RB_STRING_I,SCE_RB_STRING_QI)}, IDS_LEX_STR_RbPctWord, L"%-Word/Symbol List", L"fore:#003CE6", L"" },
+        { {SCE_RB_STRING_QS}, IDS_LEX_STR_Symbol, L"%s Symbol", L"fore:#C0A030", L"" },
+        { {SCE_RB_WORD_DEMOTED}, IDS_LEX_STR_RbDemoted, L"Demoted Keyword", L"italic; fore:#00007F", L"" },
+        { {MULTI_STYLE(SCE_RB_STDIN,SCE_RB_STDOUT,SCE_RB_STDERR,0)}, IDS_LEX_STR_RbStdStream, L"Standard Stream", L"bold; fore:#0080FF", L"" },
         EDITLEXER_SENTINEL
     }
 };
