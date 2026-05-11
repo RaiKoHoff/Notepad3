@@ -36,7 +36,7 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.508.(build_#) (2026-05-08)
+Current BETA Version 7.26.511.(build_#) (2026-05-08)
 ========================================================
 
 --------------------------------------------------------
@@ -64,6 +64,8 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.511.1]- Modernize and align Lexilla lib related Style-Lexers definitions (LEX) (#5836).
+[.511.1]- Hardening of JSON5 lexer (#5843).
 [.508.1]- Small correction of factory default position (#5836).
 [.507.1]- Minor fixes for change-history navigation (#5834).
 [.507.1]- Skip paste board minimizing if nothing to paste (#5831).
