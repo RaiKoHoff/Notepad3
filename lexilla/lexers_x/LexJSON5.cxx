@@ -31,6 +31,7 @@
 #include "DefaultLexer.h"
 
 #include "CharSetX.h"
+#include "CharacterCategory.h"
 #include "SciXLexer.h"
 
 using namespace Scintilla;
@@ -110,6 +111,70 @@ struct EscapeSequence {
 	}
 };
 
+// Decode a single UTF-8 code point at byte position `pos`.
+// Returns the code point and sets `outWidth` to its byte width (1-4).
+// On invalid UTF-8 (lone trail byte, truncated sequence), returns the raw
+// lead byte with width 1 so callers degrade gracefully.
+static int DecodeUTF8At(LexAccessor &styler, Sci_PositionU pos, int &outWidth) noexcept {
+	const unsigned char b0 = static_cast<unsigned char>(styler.SafeGetCharAt(pos, '\0'));
+	outWidth = 1;
+	if (b0 < 0x80) {
+		return b0;
+	}
+	if (b0 < 0xC2 || b0 > 0xF4) {
+		return b0;
+	}
+	const unsigned char b1 = static_cast<unsigned char>(styler.SafeGetCharAt(pos + 1, '\0'));
+	if ((b1 & 0xC0) != 0x80) {
+		return b0;
+	}
+	if (b0 < 0xE0) {
+		outWidth = 2;
+		return ((b0 & 0x1F) << 6) | (b1 & 0x3F);
+	}
+	const unsigned char b2 = static_cast<unsigned char>(styler.SafeGetCharAt(pos + 2, '\0'));
+	if ((b2 & 0xC0) != 0x80) {
+		return b0;
+	}
+	if (b0 < 0xF0) {
+		outWidth = 3;
+		return ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F);
+	}
+	const unsigned char b3 = static_cast<unsigned char>(styler.SafeGetCharAt(pos + 3, '\0'));
+	if ((b3 & 0xC0) != 0x80) {
+		return b0;
+	}
+	outWidth = 4;
+	return ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F);
+}
+
+// JSON5 IdentifierStart per ECMA-262 / JSON5 §5.4:
+//   $ | _ | UnicodeLetter (UAX #31 ID_Start).
+static bool IsJSON5IdStart(int cp) noexcept {
+	if (cp < 0x80) {
+		return (cp == '$') || (cp == '_')
+			|| (cp >= 'A' && cp <= 'Z')
+			|| (cp >= 'a' && cp <= 'z');
+	}
+	return IsIdStart(cp);
+}
+
+// JSON5 IdentifierPart per ECMA-262 / JSON5 §5.4:
+//   IdentifierStart | UnicodeCombiningMark | UnicodeDigit
+//   | UnicodeConnectorPunctuation | ZWNJ (U+200C) | ZWJ (U+200D).
+static bool IsJSON5IdContinue(int cp) noexcept {
+	if (cp < 0x80) {
+		return (cp == '$') || (cp == '_')
+			|| (cp >= '0' && cp <= '9')
+			|| (cp >= 'A' && cp <= 'Z')
+			|| (cp >= 'a' && cp <= 'z');
+	}
+	if (cp == 0x200C || cp == 0x200D) {
+		return true;
+	}
+	return IsIdContinue(cp);
+}
+
 struct OptionsJSON5 {
 	bool foldCompact;
 	bool fold;
@@ -118,8 +183,9 @@ struct OptionsJSON5 {
 	OptionsJSON5() {
 		foldCompact = false;
 		fold = false;
-		allowComments = false;
-		escapeSequence = false;
+		// JSON5 spec mandates comments and ECMAScript-style escape sequences.
+		allowComments = true;
+		escapeSequence = true;
 	}
 };
 
@@ -167,34 +233,83 @@ class LexerJSON5 : public DefaultLexer {
 	/**
 	 * Looks for the colon following the end quote
 	 *
-	 * Assumes property names of lengths no longer than a 120 characters.
+	 * Assumes property names of lengths no longer than 120 code points.
 	 * The colon is also expected to be less than 50 spaces after the end
-	 * quote for the string to be considered a property name
+	 * quote for the string to be considered a property name.
 	 */
-	static constexpr bool IsPropChar(int ch) noexcept {
-		// JSON5 / ECMAScript IdentifierStart + IdentifierPart (ASCII subset)
-		return IsAlphaNumeric(ch) || ch == '$' || ch == '_';
+
+	// Match a JSON5 reserved literal at `start`. Returns the literal length
+	// (including any leading sign for Infinity/NaN) or 0 if no match.
+	// On match, sets `style` to SCE_JSON5_NUMBER (Infinity/NaN) or
+	// SCE_JSON5_KEYWORD (true/false/null).
+	static int MatchJSON5Literal(LexAccessor &styler, Sci_PositionU start, int &style) noexcept {
+		struct Lit { const char *name; int style; bool allowSign; };
+		static constexpr Lit literals[] = {
+			{ "Infinity", SCE_JSON5_NUMBER,  true  },
+			{ "NaN",      SCE_JSON5_NUMBER,  true  },
+			{ "true",     SCE_JSON5_KEYWORD, false },
+			{ "false",    SCE_JSON5_KEYWORD, false },
+			{ "null",     SCE_JSON5_KEYWORD, false },
+		};
+		const char first = styler.SafeGetCharAt(start, '\0');
+		const int signLen = (first == '+' || first == '-') ? 1 : 0;
+		for (const auto &lit : literals) {
+			if (signLen && !lit.allowSign) {
+				continue;
+			}
+			int n = 0;
+			while (lit.name[n] != '\0') {
+				if (styler.SafeGetCharAt(start + signLen + n, '\0') != lit.name[n]) {
+					n = -1;
+					break;
+				}
+				++n;
+			}
+			if (n <= 0) {
+				continue;
+			}
+			int afterWidth = 0;
+			const int after = DecodeUTF8At(styler, start + signLen + n, afterWidth);
+			if (IsJSON5IdContinue(after)) {
+				continue;
+			}
+			style = lit.style;
+			return signLen + n;
+		}
+		return 0;
 	}
 
 	static bool AtPropertyName(LexAccessor &styler, const Sci_PositionU start, bool bQuoted) {
-		Sci_PositionU i = 0;
+		// Walk forward one code point per iteration (rather than one byte) so
+		// strict IsJSON5IdContinue is applied to actual code points, not raw
+		// UTF-8 lead/trail bytes.
+		Sci_PositionU i = 1;       // start+0 is the identifier-start char (caller validated)
 		bool escaped = false;
-		while (++i < 120) {
-			char curr = styler.SafeGetCharAt(start+i, '\0');
-			if (escaped) {
-				escaped = false;
-				continue;
-			}
-			escaped = (curr == '\\');
-			if (curr == ':' && !bQuoted) {
-				return true;
-			} else if ((curr == '"' || curr == '\'') && bQuoted) {
-				return IsNextNonWhitespace(styler, start + i, ':');
-			} else if (isspacechar(curr) && !bQuoted) {
-				return IsNextNonWhitespace(styler, start + i, ':');
-			} if (!curr || (!bQuoted && !IsPropChar(curr))) {
+		for (int iter = 0; iter < 120; ++iter) {
+			int width = 0;
+			const int cp = DecodeUTF8At(styler, start + i, width);
+			if (cp == 0) {
 				return false;
 			}
+			if (escaped) {
+				escaped = false;
+				i += width;
+				continue;
+			}
+			escaped = (cp == '\\');
+			if (cp == ':' && !bQuoted) {
+				return true;
+			}
+			if ((cp == '"' || cp == '\'') && bQuoted) {
+				return IsNextNonWhitespace(styler, start + i, ':');
+			}
+			if (cp < 0x80 && isspacechar(cp) && !bQuoted) {
+				return IsNextNonWhitespace(styler, start + i, ':');
+			}
+			if (!bQuoted && !IsJSON5IdContinue(cp)) {
+				return false;
+			}
+			i += width;
 		}
 		return false;
 	}
@@ -266,7 +381,8 @@ class LexerJSON5 : public DefaultLexer {
 	LexerJSON5() :
 		DefaultLexer("json5", SCLEX_JSON5),
 		setOperators(CharacterSet::setNone, "[{}]:,"),
-		setURL(CharacterSet::setAlphaNum, "-._~:/?#[]@!$&'()*+,),="),
+		// RFC 3986 unreserved + gen-delims + sub-delims (URI characters)
+		setURL(CharacterSet::setAlphaNum, "-._~:/?#[]@!$&'()*+,;="),
 		setKeywordJSON5_LD(CharacterSet::setAlpha, ":@"),
 		setKeywordJSON5(CharacterSet::setAlpha, "$_+-") {
 	}
@@ -466,7 +582,7 @@ void SCI_METHOD LexerJSON5::Lex(Sci_PositionU startPos,
 						context.SetState(SCE_JSON5_LDKEYWORD);
 					}
 				}
-				else if (IsPropChar(context.ch)) {
+				else if (IsJSON5IdContinue(context.ch)) {
 					if (!AtPropertyName(styler, context.currentPos, (doubleQuotCntx || singleQuotCntx))) {
 						if (context.state == SCE_JSON5_PROPERTYNAME) {
 							context.SetState(SCE_JSON5_ERROR);
@@ -531,7 +647,15 @@ void SCI_METHOD LexerJSON5::Lex(Sci_PositionU startPos,
 					context.SetState(SCE_JSON5_PROPERTYNAME);
 				}
 			} else if (setKeywordJSON5.Contains(context.ch)) {
-				if (IsNextWordInList(keywordsJSON5, setKeywordJSON5, context, styler)) {
+				// Hardcoded JSON5 reserved literals (true, false, null, Infinity, NaN, +/-Infinity, +/-NaN)
+				int litStyle = 0;
+				const int litLen = MatchJSON5Literal(styler, context.currentPos, litStyle);
+				if (litLen > 0) {
+					context.SetState(litStyle);
+					for (int k = 1; k < litLen; ++k) {
+						context.Forward();
+					}
+				} else if (IsNextWordInList(keywordsJSON5, setKeywordJSON5, context, styler)) {
 					context.SetState(SCE_JSON5_KEYWORD);
 				}
 			} else if (setOperators.Contains(context.ch)) {
@@ -547,7 +671,7 @@ void SCI_METHOD LexerJSON5::Lex(Sci_PositionU startPos,
 				context.SetState(SCE_JSON5_NUMBER);
 			}
 			else if (context.state == SCE_JSON5_DEFAULT) {
-				if (IsPropChar(context.ch)) {
+				if (IsJSON5IdStart(context.ch)) {
 					if (AtPropertyName(styler, context.currentPos, (doubleQuotCntx || singleQuotCntx))) {
 						context.SetState(SCE_JSON5_PROPERTYNAME);
 					}
@@ -577,16 +701,25 @@ void SCI_METHOD LexerJSON5::Fold(Sci_PositionU startPos,
 		currLevel = styler.LevelAt(currLine - 1) >> 16;
 	int nextLevel = currLevel;
 	int visibleChars = 0;
+	int prevStyle = (startPos > 0) ? styler.StyleAt(startPos - 1) : SCE_JSON5_DEFAULT;
 	for (Sci_PositionU i = startPos; i < endPos; i++) {
 		char curr = styler.SafeGetCharAt(i);
 		char next = styler.SafeGetCharAt(i+1);
 		bool atEOL = (curr == '\r' && next != '\n') || (curr == '\n');
-		if (styler.StyleAt(i) == SCE_JSON5_OPERATOR) {
+		const int style = styler.StyleAt(i);
+		if (style == SCE_JSON5_OPERATOR) {
 			if (curr == '{' || curr == '[') {
 				nextLevel++;
 			} else if (curr == '}' || curr == ']') {
 				nextLevel--;
 			}
+		}
+		// Fold /* ... */ block comments. Single-line block comments self-cancel
+		// (enter + exit on the same line), so they never produce a fold.
+		if (style == SCE_JSON5_BLOCKCOMMENT && prevStyle != SCE_JSON5_BLOCKCOMMENT) {
+			nextLevel++;
+		} else if (prevStyle == SCE_JSON5_BLOCKCOMMENT && style != SCE_JSON5_BLOCKCOMMENT) {
+			nextLevel--;
 		}
 		if (atEOL || i == (endPos-1)) {
 			int level = currLevel | nextLevel << 16;
@@ -605,6 +738,7 @@ void SCI_METHOD LexerJSON5::Fold(Sci_PositionU startPos,
 		if (!isspacechar(curr)) {
 			visibleChars++;
 		}
+		prevStyle = style;
 	}
 }
 

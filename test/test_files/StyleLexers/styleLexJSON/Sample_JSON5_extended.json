@@ -167,6 +167,83 @@ single quotes too',
   l4LS:         "before\ continued",
   l4PS:         "before\ continued",
 
+  // =====================================================================
+  // BELOW: extensions covering the strict-ID / hardcoded-literal /
+  // signed-NaN / setURL-typo / block-comment-folding lexer changes.
+  // =====================================================================
+
+  // ---------- Hardcoded JSON5 reserved literals: signed NaN ----------
+  // Pre-fix the word-list path handled +Infinity / -Infinity but missed
+  // +NaN / -NaN (those tokens were never in the keyword list).  After the
+  // hardcoded-literal change both style as NUMBER.
+  posNaN:         +NaN,
+  negNaN:         -NaN,
+
+  // ---------- Literal-boundary check ----------
+  // true / false / null / Infinity / NaN are reserved ONLY when the next
+  // character is NOT an identifier-continue char.  These keys start with
+  // literal text but continue with more identifier characters, so they
+  // MUST style as PROPERTYNAME (not KEYWORD / NUMBER).
+  nullable:       'starts with literal "null"',
+  truer:          'starts with literal "true"',
+  falsehood:      'starts with literal "false"',
+  Infinityx:      'starts with literal "Infinity"',
+  NaNny:          'starts with literal "NaN"',
+
+  // ---------- Strict Unicode IdentifierName: accepted (UAX #31 ID_Start) ----------
+  // Pre-strict accepted any byte >= 0x80 indiscriminately; post-strict
+  // requires the actual code point to be a Unicode Letter / $ / _.
+  café:           'Latin Extended (precomposed)',
+  naïve:          'Latin Extended with diaeresis',
+  Σmega:          'Greek capital sigma + ASCII',
+  λambda:         'Greek small lambda + ASCII',
+  имя:            'Cyrillic letters (Russian "name")',
+  名前:           'CJK Han ideographs (Japanese "name")',
+  中文:           'CJK Han ideographs (Chinese)',
+
+  // ---------- IdentifierPart: ZWNJ / ZWJ inside identifier (invisible chars) ----------
+  // ZWNJ (U+200C) and ZWJ (U+200D) are valid IdentifierPart per ECMA-262.
+  // The bytes are present in the source even though they don't render --
+  // inspect with a hex viewer; the unquoted keys below must lex as
+  // PROPERTYNAME, not break at the joiner.
+  x‌y_zwnj:        'unquoted key with ZWNJ between x and y',
+  x‍y_zwj:         'unquoted key with ZWJ between x and y',
+
+  // ---------- Strict Unicode rejection: should style as PARSING ERROR ----------
+  // Each leading character is NOT a Unicode Letter, so not ID_Start.
+  // Pre-strict accepted these (over-accepting all bytes >= 0x80);
+  // post-strict flags them as ERROR.
+
+  // Emoji 😀 (U+1F600, category So) -- ERROR:
+  😀: 'leading emoji must be ERROR',
+
+  // Math symbol ∞ (U+221E, category Sm) -- ERROR:
+  ∞: 'leading math symbol must be ERROR',
+
+  // Currency € (U+20AC, category Sc) -- JSON5 allows ONLY ASCII '$':
+  €: 'leading currency symbol must be ERROR',
+
+  // ---------- URI charset typo fix: ';' inside URL ----------
+  // Pre-fix setURL was "...,)," (duplicated ')' with ';' missing), so the
+  // URI style terminated at the first ';'.  Post-fix ';' is part of the
+  // RFC-3986 sub-delim set and the whole URL highlights as URI through
+  // the matrix parameters.
+  urlSemicolon:   "http://example.com/path;jsessionid=abc;v=2",
+
+  // ---------- Folding: multi-line block comment ----------
+  // Fold() now treats a multi-line /* ... */ as a fold region (HEADERFLAG
+  // on the opening line).  The block below should be foldable; the
+  // single-line /* ... */ further down should NOT produce a fold (its
+  // enter+exit cancel within the same line).
+
+  /* This block comment
+     spans three lines
+     and should produce a fold marker on the opening line. */
+  foldDemo:       'after the foldable block comment',
+
+  /* single-line comment -- should NOT produce a fold marker */
+  noFold:         'after the non-foldable comment',
+
   // ---------- Trailing item to verify the closing brace styling ----------
   last: 'end-of-test',
 }
