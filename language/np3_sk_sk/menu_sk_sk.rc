@@ -352,6 +352,7 @@ BEGIN
         MENUITEM "Zobraziť &symboly zalomenia\tCtrl+Shift+7",   IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Zobraziť &prázdne miesta\tCtrl+Shift+8",     IDM_VIEW_SHOWBLANKS
         MENUITEM "Zobraziť &konce riadkov\tCtrl+Shift+9",    IDM_VIEW_SHOWEOLS
+        MENUITEM "Show &Non-Printable Characters",           IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Značka histórie zmien"
         BEGIN

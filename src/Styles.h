@@ -60,6 +60,7 @@ float  Style_GetCurrentLexerFontSize();
 void   Style_SetLexer(HWND hwnd,PEDITLEXER pLexNew);
 void   Style_FillRelatedStyles(HWND hwnd, const PEDITLEXER pLexer);
 void   Style_SetUrlHotSpot(HWND hwnd);
+void   Style_SetNonPrintCharRepresentations(HWND hwnd);
 void   Style_SetInvisible(HWND hwnd, bool);
 //void   Style_SetReadonly(HWND hwnd, bool);
 void   Style_HighlightCurrentLine(HWND hwnd, int);

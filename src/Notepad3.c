@@ -4668,6 +4668,7 @@ LRESULT MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     CheckCmd(hmenu, IDM_VIEW_SHOWBLANKS, Settings.ViewWhiteSpace);
     CheckCmd(hmenu, IDM_VIEW_SHOWEOLS, Settings.ViewEOLs);
+    CheckCmd(hmenu, IDM_VIEW_NONPRINTINGCHARS, Settings.ViewNonPrintingChars);
     CheckCmd(hmenu, IDM_VIEW_WORDWRAPSYMBOLS, Settings.ShowWordWrapSymbols);
     CheckCmd(hmenu, IDM_VIEW_TITLEBAR, Settings.ShowTitlebar);
     CheckCmd(hmenu, IDM_VIEW_MENUBAR, Settings.ShowMenubar);
@@ -6563,6 +6564,11 @@ static bool _HandleViewAndSettingsCommands(HWND hwnd, UINT umsg, WPARAM wParam, 
     case IDM_VIEW_SHOWEOLS:
         Settings.ViewEOLs = !Settings.ViewEOLs;
         SciCall_SetViewEOL(Settings.ViewEOLs);
+        break;
+
+    case IDM_VIEW_NONPRINTINGCHARS:
+        Settings.ViewNonPrintingChars = !Settings.ViewNonPrintingChars;
+        Style_SetNonPrintCharRepresentations(Globals.hwndEdit);
         break;
 
     case IDM_VIEW_MATCHBRACES:

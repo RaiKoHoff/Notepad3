@@ -674,6 +674,7 @@ typedef struct SETTINGS_T {
     bool MarkOccurrencesCurrentWord;
     bool ViewWhiteSpace;
     bool ViewEOLs;
+    bool ViewNonPrintingChars;
     cpi_enc_t DefaultEncoding; // default new file encoding
     bool UseDefaultForFileEncoding;
     bool LoadASCIIasUTF8;

@@ -73,7 +73,7 @@ class PCRE2RegExEngine : public RegexSearchBase
 public:
 
   explicit PCRE2RegExEngine(CharClassify* /*charClassTable*/)
-    : m_CompileOptions(PCRE2_UTF | PCRE2_UCP | PCRE2_MULTILINE)
+    : m_CompileOptions(PCRE2_UTF | PCRE2_UCP | PCRE2_MULTILINE | PCRE2_USE_OFFSET_LIMIT)
     , m_CompiledPattern(nullptr)
     , m_MatchData(nullptr)
     , m_CompileContext(nullptr)
@@ -261,8 +261,11 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
 
   // --- Build compile options ---
   // PCRE2_MULTILINE: ^/$ match at line boundaries
+  // PCRE2_USE_OFFSET_LIMIT: enables pcre2_set_offset_limit() on the match context;
+  //   set unconditionally so the bit is part of the recompile cache key and
+  //   forward/backward share one compiled pattern.
   // Newline convention (ANYCRLF) is set on m_CompileContext, not here
-  uint32_t compileOptions = PCRE2_UTF | PCRE2_UCP | PCRE2_MULTILINE;
+  uint32_t compileOptions = PCRE2_UTF | PCRE2_UCP | PCRE2_MULTILINE | PCRE2_USE_OFFSET_LIMIT;
 
   if (!caseSensitive) {
     compileOptions |= PCRE2_CASELESS;
@@ -346,6 +349,9 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
 
     if (findForward) {
       // --- Forward search ---
+      // Clear any offset_limit a prior backward call left on the shared match context.
+      pcre2_set_offset_limit(m_MatchContext, PCRE2_UNSET);
+
       int rc = pcre2_match(
         m_CompiledPattern,
         docBegPtr,
@@ -378,11 +384,21 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
       // range forward (O(n)), we search in reverse chunks starting near rangeEnd.
       // Each chunk searches forward within a window and keeps the last match.
       // Average case is O(chunk_size) instead of O(range_size).
+      //
+      // PCRE2_USE_OFFSET_LIMIT (compile flag) + pcre2_set_offset_limit() let the
+      // engine itself prune match attempts whose start position would exceed
+      // rangeEnd, so the inner loop needs no post-match bounds check.
+      pcre2_set_offset_limit(m_MatchContext, static_cast<PCRE2_SIZE>(rangeEnd));
 
       Sci::Position lastMatchPos = SciPos(-1);
       Sci::Position lastMatchLen = SciPos(0);
 
-      pcre2_match_data* iterMatchData = pcre2_match_data_create_from_pattern(m_CompiledPattern, nullptr);
+      // Snapshot the ovector of the rightmost successful match so the loop can
+      // keep advancing without losing it. Sized for the same cap that
+      // SubstituteByPosition supports ($0..$99 → 100 pairs).
+      constexpr size_t kMaxOvecPairs = 100;
+      PCRE2_SIZE savedOvec[kMaxOvecPairs * 2];
+      uint32_t   savedOvecCount = 0;
 
       Sci::Position const chunkSize = 4096;  // search window size
       Sci::Position chunkStart = (rangeEnd > chunkSize) ? (rangeEnd - chunkSize) : rangeBeg;
@@ -403,25 +419,28 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
             docLen,
             searchStart,
             matchOptions,
-            iterMatchData,
+            m_MatchData,
             m_MatchContext
           );
 
-          if (rc <= 0) break;  // no more matches
+          if (rc <= 0) break;  // no more matches (offset_limit enforces upper bound)
 
-          PCRE2_SIZE* ovector = pcre2_get_ovector_pointer(iterMatchData);
-          Sci::Position pos = SciPos(ovector[0]);
-          Sci::Position len = SciPos(ovector[1]) - pos;
+          PCRE2_SIZE* ovector = pcre2_get_ovector_pointer(m_MatchData);
+          uint32_t    ovecCount = pcre2_get_ovector_count(m_MatchData);
+          if (ovecCount > kMaxOvecPairs) ovecCount = kMaxOvecPairs;
+          memcpy(savedOvec, ovector, ovecCount * 2 * sizeof(PCRE2_SIZE));
+          savedOvecCount = ovecCount;
 
-          if (pos > rangeEnd) break;   // past search range
+          Sci::Position pos = SciPos(savedOvec[0]);
+          Sci::Position len = SciPos(savedOvec[1]) - pos;
 
           lastMatchPos = pos;
           lastMatchLen = len;
           found = true;
 
           // Advance past this match (at least 1 byte, handle UTF-8)
-          if (ovector[1] > ovector[0]) {
-            searchStart = ovector[1];
+          if (savedOvec[1] > savedOvec[0]) {
+            searchStart = savedOvec[1];
           } else {
             searchStart = static_cast<PCRE2_SIZE>(
               doc->MovePositionOutsideChar(SciPos(searchStart + 1), 1, true)
@@ -442,20 +461,15 @@ Sci::Position PCRE2RegExEngine::FindText(Document* doc, Sci::Position minPos, Sc
         }
       }
 
-      // Re-run the match at the final position to populate m_MatchData for SubstituteByPosition
-      if (lastMatchPos >= 0) {
-        pcre2_match(
-          m_CompiledPattern,
-          docBegPtr,
-          docLen,
-          static_cast<PCRE2_SIZE>(lastMatchPos),
-          matchOptions | PCRE2_ANCHORED,
-          m_MatchData,
-          m_MatchContext
-        );
+      // Restore the rightmost-match ovector into m_MatchData so SubstituteByPosition
+      // sees the correct groups. The loop's final pcre2_match call returned
+      // PCRE2_ERROR_NOMATCH and left m_MatchData's ovector in an undefined state;
+      // memcpy'ing the snapshot back is cheaper than a re-anchored pcre2_match call.
+      if (lastMatchPos >= 0 && savedOvecCount > 0) {
+        memcpy(pcre2_get_ovector_pointer(m_MatchData),
+               savedOvec,
+               savedOvecCount * 2 * sizeof(PCRE2_SIZE));
       }
-
-      pcre2_match_data_free(iterMatchData);
 
       m_MatchPos = lastMatchPos;
       m_MatchLen = lastMatchLen;

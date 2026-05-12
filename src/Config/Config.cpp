@@ -1788,6 +1788,7 @@ void LoadSettings()
 
     GET_BOOL_VALUE_FROM_INISECTION(ViewWhiteSpace, false);
     GET_BOOL_VALUE_FROM_INISECTION(ViewEOLs, false);
+    GET_BOOL_VALUE_FROM_INISECTION(ViewNonPrintingChars, false);
 
 #ifdef D_NP3_WIN10_DARK_MODE
     GET_CAST_INT_VALUE_FROM_INISECTION(WIN_DISPL_MODE, WinThemeDarkMode, 0, 0, 2);
@@ -2256,6 +2257,7 @@ static bool _SaveSettings(bool bForceSaveSettings)
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, MarkOccurrencesCurrentWord);
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, ViewWhiteSpace);
     SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, ViewEOLs);
+    SAVE_VALUE_IF_NOT_EQ_DEFAULT(Bool, ViewNonPrintingChars);
 
     // recalculate encoding-dependent defaults before save comparison
     bool const bCurrentEncUTF8 = (Settings.DefaultEncoding == CPI_UTF8 || Settings.DefaultEncoding == CPI_UTF8SIGN);

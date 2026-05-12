@@ -1430,6 +1430,87 @@ static __forceinline bool Style_StrHasAttribute(LPCWSTR lpszStyle, LPCWSTR name)
 
 //=============================================================================
 //
+//  Style_SetNonPrintCharRepresentations()
+//
+// Install / clear visible-abbreviation representations for non-printable and
+// confusable Unicode formatting characters via Scintilla's representation API.
+// Keyed by UTF-8 bytes (Notepad3 always uses SC_CP_UTF8 internally).
+//
+static const struct {
+    const char* utf8;
+    const char* abbr;
+} s_NonPrintCharRepresentations[] = {
+    { "\xC2\x85",     "NEL"   }, // U+0085 next line
+    { "\xC2\xA0",     "NBSP"  }, // U+00A0 no-break space
+    { "\xD8\x9C",     "ALM"   }, // U+061C arabic letter mark
+    { "\xE1\x9A\x80", "OSPM"  }, // U+1680 ogham space mark
+    { "\xE1\xA0\x8E", "MVS"   }, // U+180E mongolian vowel separator
+    { "\xE2\x80\x80", "NQSP"  }, // U+2000 en quad
+    { "\xE2\x80\x81", "MQSP"  }, // U+2001 em quad
+    { "\xE2\x80\x82", "ENSP"  }, // U+2002 en space
+    { "\xE2\x80\x83", "EMSP"  }, // U+2003 em space
+    { "\xE2\x80\x84", "3/MSP" }, // U+2004 three-per-em space
+    { "\xE2\x80\x85", "4/MSP" }, // U+2005 four-per-em space
+    { "\xE2\x80\x86", "6/MSP" }, // U+2006 six-per-em space
+    { "\xE2\x80\x87", "FSP"   }, // U+2007 figure space
+    { "\xE2\x80\x88", "PSP"   }, // U+2008 punctuation space
+    { "\xE2\x80\x89", "THSP"  }, // U+2009 thin space
+    { "\xE2\x80\x8A", "HSP"   }, // U+200A hair space
+    { "\xE2\x80\x8B", "ZWSP"  }, // U+200B zero-width space
+    { "\xE2\x80\x8C", "ZWNJ"  }, // U+200C zero-width non-joiner
+    { "\xE2\x80\x8D", "ZWJ"   }, // U+200D zero-width joiner
+    { "\xE2\x80\x8E", "LRM"   }, // U+200E left-to-right mark
+    { "\xE2\x80\x8F", "RLM"   }, // U+200F right-to-left mark
+    { "\xE2\x80\xA8", "LS"    }, // U+2028 line separator
+    { "\xE2\x80\xA9", "PS"    }, // U+2029 paragraph separator
+    { "\xE2\x80\xAA", "LRE"   }, // U+202A left-to-right embedding
+    { "\xE2\x80\xAB", "RLE"   }, // U+202B right-to-left embedding
+    { "\xE2\x80\xAC", "PDF"   }, // U+202C pop directional formatting
+    { "\xE2\x80\xAD", "LRO"   }, // U+202D left-to-right override
+    { "\xE2\x80\xAE", "RLO"   }, // U+202E right-to-left override
+    { "\xE2\x80\xAF", "NNBSP" }, // U+202F narrow no-break space
+    { "\xE2\x81\x9F", "MMSP"  }, // U+205F medium mathematical space
+    { "\xE2\x81\xA0", "WJ"    }, // U+2060 word joiner
+    { "\xE2\x81\xA6", "LRI"   }, // U+2066 left-to-right isolate
+    { "\xE2\x81\xA7", "RLI"   }, // U+2067 right-to-left isolate
+    { "\xE2\x81\xA8", "FSI"   }, // U+2068 first strong isolate
+    { "\xE2\x81\xA9", "PDI"   }, // U+2069 pop directional isolate
+    { "\xE2\x81\xAA", "ISS"   }, // U+206A inhibit symmetric swapping
+    { "\xE2\x81\xAB", "ASS"   }, // U+206B activate symmetric swapping
+    { "\xE2\x81\xAC", "IAFS"  }, // U+206C inhibit arabic form shaping
+    { "\xE2\x81\xAD", "AAFS"  }, // U+206D activate arabic form shaping
+    { "\xE2\x81\xAE", "NADS"  }, // U+206E national digit shapes
+    { "\xE2\x81\xAF", "NODS"  }, // U+206F nominal digit shapes
+    { "\xE3\x80\x80", "IDSP"  }, // U+3000 ideographic space
+    { "\xEF\xBB\xBF", "ZWNBSP" }, // U+FEFF zero-width no-break space / BOM
+};
+
+void Style_SetNonPrintCharRepresentations(HWND hwnd)
+{
+    UNREFERENCED_PARAMETER(hwnd);
+
+    // GDI rendering cannot draw representations -> always clear
+    bool const bEnable = Settings.ViewNonPrintingChars &&
+                         (SciCall_GetTechnology() != SC_TECHNOLOGY_DEFAULT);
+
+    int const         appearance = SC_REPRESENTATION_BLOB | SC_REPRESENTATION_COLOUR;
+    COLORALPHAREF const argb = SciCall_GetElementColour(SC_ELEMENT_WHITE_SPACE);
+
+    for (size_t i = 0; i < COUNTOF(s_NonPrintCharRepresentations); ++i) {
+        const char* const utf8 = s_NonPrintCharRepresentations[i].utf8;
+        if (bEnable) {
+            SciCall_SetRepresentation(utf8, s_NonPrintCharRepresentations[i].abbr);
+            SciCall_SetRepresentationAppearance(utf8, appearance);
+            SciCall_SetRepresentationColour(utf8, argb);
+        } else {
+            SciCall_ClearRepresentation(utf8);
+        }
+    }
+}
+
+
+//=============================================================================
+//
 //  Style_SetLexer()
 //
 void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
@@ -1792,6 +1873,9 @@ void Style_SetLexer(HWND hwnd, PEDITLEXER pLexNew)
         SciCall_SetRepresentationColour("\n", SciCall_GetElementColour(SC_ELEMENT_WHITE_SPACE));
         SciCall_SetRepresentationColour("\r\n", SciCall_GetElementColour(SC_ELEMENT_WHITE_SPACE));
     }
+
+    // non-printable / formatting Unicode characters (NBSP, ZWSP, LRM, ...)
+    Style_SetNonPrintCharRepresentations(hwnd);
 
     rgb = RGB(0, 0, 0);
     rgbWrt = rgb;

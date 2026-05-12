@@ -352,6 +352,7 @@ BEGIN
         MENUITEM "Zeige Umbruchsymbole\tCtrl+Shift+7",      IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Zeige Leerzeichen\tCtrl+Shift+8",         IDM_VIEW_SHOWBLANKS
         MENUITEM "Zeige Zeilenumbrüche\tCtrl+Shift+9",      IDM_VIEW_SHOWEOLS
+        MENUITEM "Zeige nicht-druckbare &Zeichen",          IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Änderungshistorie Markierung"
             BEGIN
