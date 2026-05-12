@@ -155,10 +155,10 @@
 - [x] **(Q2) Smarter URL Recognition** - Improve URL boundary detection - ✅ FIXED
   - Issue: [#5464](https://github.com/rizonesoft/Notepad3/issues/5464)
   - Don't include trailing `'` when URL is quoted
-- [ ] **(Q3) Display Hidden Characters** - Show invisible/control characters
-  - Issue: [#5496](https://github.com/rizonesoft/Notepad3/issues/5496)
+- [x] **(Q3) Display Hidden Characters** - Show invisible/control characters - ✅ IMPLEMENTED
+  - Issue: [#5035](https://github.com/rizonesoft/Notepad3/issues/5035) - Non-printing chars like Notepad++ - ⚠ Validation ❗
+  - Issue: [#5496](https://github.com/rizonesoft/Notepad3/issues/5496) - ⚠ Validation ❗
   - Scintilla `SCI_SETREPRESENTATION` for custom char display
-  - Issue: [#5035](https://github.com/rizonesoft/Notepad3/issues/5035) - Non-printing chars like Notepad++
 - [ ] **(Q2) Trailing Whitespace Highlighting** - Distinct style for trailing blanks
   - Issue: [#1913](https://github.com/rizonesoft/Notepad3/issues/1913)
 - [ ] **(Q3) Scrollbar Marks** - Highlights in scrollbar (search matches, bookmarks)
