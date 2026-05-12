@@ -156,6 +156,12 @@ Coverage at a glance:
 
 ⌨️ **Full reference:** [readme/cmdln/CmdLnOptions.md](readme/cmdln/CmdLnOptions.md) — every switch with arguments, examples, persistence notes, and Notepad2/Notepad2-mod compatibility.
 
+## Menus & Commands
+
+User-facing description of every entry in Notepad3's menus and context menus, structured to mirror the in-app menu tree. Covers File, Edit, Search, View, Appearance, Settings, Help, plus the four context (right-click) menus — with the keyboard shortcut, behaviour notes, and links into the relevant deep-dive docs for each command.
+
+📋 **Menu reference:** [readme/MenuEntriesAndCmds.md](readme/MenuEntriesAndCmds.md)
+
 ## Keyboard Shortcuts
 
 Every key combination Notepad3 understands — file, editing, view, search, customization — grouped by menu, with Notepad2 → Notepad3 reassignments flagged.
