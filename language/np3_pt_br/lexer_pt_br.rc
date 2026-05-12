@@ -547,7 +547,7 @@ BEGIN
     IDS_LEX_STR_CStr        "String C"
     IDS_LEX_STR_QOper       "Operador citado"
     IDS_LEX_STR_TclExpand   "Expansão {*}"
-    IDS_LEX_STR_Keyword47   "Keyword 4-7"
+    IDS_LEX_STR_Keyword47   "Palavra-chave 4-7"
     IDS_LEX_STR_Keyword8    "Palavra-chave 8"
     IDS_LEX_STR_MacroDef    "Definição de macro"
     IDS_LEX_STR_Macro       "Macro"
