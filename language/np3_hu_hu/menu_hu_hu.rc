@@ -352,7 +352,7 @@ BEGIN
         MENUITEM "Sortö&rés jelzése\tCtrl+Shift+7",       IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Sz&óközök megjelenítése\tCtrl+Shift+8", IDM_VIEW_SHOWBLANKS
         MENUITEM "Sorvégek &megjelenítése\tCtrl+Shift+9", IDM_VIEW_SHOWEOLS
-        MENUITEM "Show &Non-Printable Characters",           IDM_VIEW_NONPRINTINGCHARS
+        MENUITEM "Nem n&yomtatható karakterek megjelenítése", IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Előzményjelölők megváltoztatása"
         BEGIN
