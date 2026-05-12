@@ -26,8 +26,9 @@
 - [x] **(Q1) BUG: /m command line uses last search mode** - ✅ FIXED
   - Issue: [#5060](https://github.com/rizonesoft/Notepad3/issues/5060)
   - Fix: When `/m` is used without 'R' flag, explicitly clear SCFIND_REGEXP to force text mode
-- [x] **(Q3) Replace GetOpenFileNameW with IFileOpenDialog** - Modern file dialog API
-  - Issues: [#5066](https://github.com/rizonesoft/Notepad3/issues/5066), [#5080](https://github.com/rizonesoft/Notepad3/issues/5080)
+- [x] **(Q3) Replace GetOpenFileNameW with IFileOpenDialog** - Modern file dialog API - ✅ IMPLEMENTED
+  - Issue: [#5066](https://github.com/rizonesoft/Notepad3/issues/5066)
+  - Issue: [#5080](https://github.com/rizonesoft/Notepad3/issues/5080)
   - Fixes crash on Windows Server 2022 (STATUS_STACK_BUFFER_OVERRUN in ntdll.dll)
   - See [research/server2022-file-dialog-crash.md](research/server2022-file-dialog-crash.md)
   - [ ] **Test on Windows Server 2022 and higer** - ⚠ Validation❗
@@ -37,7 +38,7 @@
 - [ ] **(Q2) BUG: Replace dialog full-width caching** - Second replace uses wrong character
   - Issue: [#4268](https://github.com/rizonesoft/Notepad3/issues/4268)
   - CJK full-width replacement cached incorrectly
-- [x] **(Q2) BUG: Initial window position not working** - Position settings ignored - ✅ FIXED
+- [x] **(Q2) BUG: Initial window position not working** - Position settings ignored - ✅ IMPLEMENTED
   - Issue: [#4725](https://github.com/rizonesoft/Notepad3/issues/4725)
   - [ ] **To be analyzed - works as designed ???** - ⚠ Validation ❗
 - [ ] **(Q2) BUG: Minipath options don't save** - FullRowSelect/TrackSelect broken
@@ -60,9 +61,9 @@
 - [x] **(Q1) BUG: Mouse scroll settings not updated** - ✅ FIXED
   - Issue: [#5223](https://github.com/rizonesoft/Notepad3/issues/5223)
   - Fix: Forward `WM_SETTINGCHANGE` to Scintilla to refresh cached scroll parameters
-- [x] **(Q2) BUG: File lock held too long on save** - Blocks FileSystemWatcher - ✅ FIXED
+- [x] **(Q2) BUG: File lock held too long on save** - Blocks FileSystemWatcher - ✅ IMPLEMENTED
   - Issue: [#5301](https://github.com/rizonesoft/Notepad3/issues/5301) - ⚠ Validation❗
-- [x] **(Q2) BUG: Folder handle leak** - Can't rename/delete folders with opened files
+- [x] **(Q2) BUG: Folder handle leak** - Can't rename/delete folders with opened files - ✅ IMPLEMENTED
   - Issue: [#5342](https://github.com/rizonesoft/Notepad3/issues/5342) - ⚠ Validation❗
 - [x] **(Q1) BUG: Black line in Language menu** - ✅ FIXED
   - Issue: [#5361](https://github.com/rizonesoft/Notepad3/issues/5361)
@@ -133,16 +134,16 @@
   - Issue: [#3580](https://github.com/rizonesoft/Notepad3/issues/3580)  - ⚠ Validation ❗
 
 - [ ] **(Q3) Additional Syntax Highlighting** - New language lexers
-  - Haskell: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Lexilla `LexHaskell.cxx`
-  - Racket: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Could use Lisp/Scheme lexer
-  - OpenCL: [#5374](https://github.com/rizonesoft/Notepad3/issues/5374) - C-like with extra keywords
-  - Verilog HDL: [#4108](https://github.com/rizonesoft/Notepad3/issues/4108) - Lexilla `LexVerilog.cxx`
-  - [x] JSON5: [#5411](https://github.com/rizonesoft/Notepad3/issues/5411) - Extend JSON lexer - ⚠ Validation ❗
-  - SourcePawn: [#5430](https://github.com/rizonesoft/Notepad3/issues/5430) - SourceMod scripting
-  - Groovy: [#5093](https://github.com/rizonesoft/Notepad3/issues/5093)
-  - Swift, Zig, Scala, F#, WASM, Vim, OCaml, Smali, GraphViz, Rebol
+  - [ ] Haskell: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Lexilla `LexHaskell.cxx`
+  - [ ] Racket: [#3035](https://github.com/rizonesoft/Notepad3/issues/3035) - Could use Lisp/Scheme lexer
+  - [ ] OpenCL: [#5374](https://github.com/rizonesoft/Notepad3/issues/5374) - C-like with extra keywords
+  - [ ] Verilog HDL: [#4108](https://github.com/rizonesoft/Notepad3/issues/4108) - Lexilla `LexVerilog.cxx`
+  - [x] JSON5: [#5411](https://github.com/rizonesoft/Notepad3/issues/5411) - ⚠ Validation ❗
+  - [ ] SourcePawn: [#5430](https://github.com/rizonesoft/Notepad3/issues/5430) - SourceMod scripting
+  - [ ] Groovy: [#5093](https://github.com/rizonesoft/Notepad3/issues/5093)
+  - [ ] Swift, Zig, Scala, F#, WASM, Vim, OCaml, Smali, GraphViz, Rebol
   - (Maybe) CSS in `<style>` tags: [#2061](https://github.com/rizonesoft/Notepad3/issues/2061) - Embedded language complexity
-  - BUG: CSS keywords: [#4214](https://github.com/rizonesoft/Notepad3/issues/4214) - Update CSS property list
+  - [ ] BUG: CSS keywords: [#4214](https://github.com/rizonesoft/Notepad3/issues/4214) - Update CSS property list
 - [ ] **(Q3) BATCH Code Folding** - Fold `if`/`for` blocks with parentheses
   - Issue: [#4484](https://github.com/rizonesoft/Notepad3/issues/4484)
   - BUG: [#4959](https://github.com/rizonesoft/Notepad3/issues/4959) - Complex for loops highlighting

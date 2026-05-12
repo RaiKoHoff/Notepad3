@@ -29,7 +29,7 @@ Notepad3 is a free, open-source text editor with syntax highlighting for Windows
 - **Mark all occurrences** of a selected word with occurrence count display
 - **Find and Replace** with [PCRE2](https://github.com/PCRE2Project/pcre2) regular expression engine
 - **[Focused View](readme/focusedview/FocusedView.md)** — filter display to show only lines matching the current word/selection (Ctrl+Alt+V), with fold, bookmark, and highlight modes
-- **[TinyExpr++](https://blake-madden.github.io/tinyexpr-plusplus/)** — inline math expression evaluation with 80+ functions (type `expression=?` to evaluate in-place, use `${expr}` in line numbering). See the [Expression Engine Guide](readme/tinyexprcpp/TinyExprPP.md) for details.
+- **[TinyExpr++](readme/tinyexprcpp/TinyExprPP.md)** — inline math expression evaluation with 80+ functions (type `expression=?` to evaluate in-place, use `${expr}` in line numbering).
 - **Undo/Redo** that preserves selection state
 - **Visual Studio–style** copy/paste of the current line (when nothing is selected)
 - **Virtual space** rectangular selection (Alt+Drag)

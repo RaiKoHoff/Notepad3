@@ -352,6 +352,7 @@ BEGIN
         MENUITEM "Εμφάνιση &συμβόλων αναδίπλωσης\tCtrl+Shift+7",  IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Εμφάνιση &κενών διαστημάτων\tCtrl+Shift+8",     IDM_VIEW_SHOWBLANKS
         MENUITEM "Εμφάνιση καταλή&ξεων γραμμών\tCtrl+Shift+9",    IDM_VIEW_SHOWEOLS
+        MENUITEM "Show &Non-Printable Characters",           IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Ενδείξεις αλλαγών"
         BEGIN

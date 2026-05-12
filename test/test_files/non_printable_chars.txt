@@ -1,0 +1,69 @@
+Notepad3 - Test file for "Show Non-Printable Characters" (View menu)
+====================================================================
+
+How to read this file
+---------------------
+Each row below frames one non-printable Unicode character between '>' and '<'.
+
+  - With "View > Show Non-Printable Characters" OFF, the area between the
+    markers looks empty or like ordinary whitespace.
+  - With it ON (and a non-GDI rendering technology), the abbreviation listed
+    in the third column appears inside a coloured rounded box between '>' and
+    '<'.
+
+Note: U+2028 (LS) and U+2029 (PS) are paragraph-breaking characters in some
+renderers; in Notepad3 they are represented inline with their abbreviation.
+
+Table
+-----
+Codepoint  Name                                 Abbreviation  Sample
+---------  -----------------------------------  ------------  --------
+U+0085     next line                            NEL           ><
+U+00A0     no-break space                       NBSP          > <
+U+061C     arabic letter mark                   ALM           >؜<
+U+1680     ogham space mark                     OSPM          > <
+U+180E     mongolian vowel separator            MVS           >᠎<
+U+2000     en quad                              NQSP          > <
+U+2001     em quad                              MQSP          > <
+U+2002     en space                             ENSP          > <
+U+2003     em space                             EMSP          > <
+U+2004     three-per-em space                   3/MSP         > <
+U+2005     four-per-em space                    4/MSP         > <
+U+2006     six-per-em space                     6/MSP         > <
+U+2007     figure space                         FSP           > <
+U+2008     punctuation space                    PSP           > <
+U+2009     thin space                           THSP          > <
+U+200A     hair space                           HSP           > <
+U+200B     zero-width space                     ZWSP          >​<
+U+200C     zero-width non-joiner                ZWNJ          >‌<
+U+200D     zero-width joiner                    ZWJ           >‍<
+U+200E     left-to-right mark                   LRM           >‎<
+U+200F     right-to-left mark                   RLM           >‏<
+U+2028     line separator                       LS            > <
+U+2029     paragraph separator                  PS            > <
+U+202A     left-to-right embedding              LRE           >‪<
+U+202B     right-to-left embedding              RLE           >‫<
+U+202C     pop directional formatting           PDF           >‬<
+U+202D     left-to-right override               LRO           >‭<
+U+202E     right-to-left override               RLO           >‮<
+U+202F     narrow no-break space                NNBSP         > <
+U+205F     medium mathematical space            MMSP          > <
+U+2060     word joiner                          WJ            >⁠<
+U+2066     left-to-right isolate                LRI           >⁦<
+U+2067     right-to-left isolate                RLI           >⁧<
+U+2068     first strong isolate                 FSI           >⁨<
+U+2069     pop directional isolate              PDI           >⁩<
+U+206A     inhibit symmetric swapping           ISS           >⁪<
+U+206B     activate symmetric swapping          ASS           >⁫<
+U+206C     inhibit arabic form shaping          IAFS          >⁬<
+U+206D     activate arabic form shaping         AAFS          >⁭<
+U+206E     national digit shapes                NADS          >⁮<
+U+206F     nominal digit shapes                 NODS          >⁯<
+U+3000     ideographic space                    IDSP          >　<
+U+FEFF     zero-width no-break space / BOM      ZWNBSP        >﻿<
+
+Free-form mix (paste into a longer paragraph to spot stray markers):
+
+word1 word2​joined‎LTR‏RTL narrow math﻿eof
+
+--- end of test file ---

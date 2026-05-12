@@ -352,6 +352,7 @@ BEGIN
         MENUITEM "Visa radbrytningssymboler\tCtrl+Shift+7",            IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Visa blanksteg\tCtrl+Shift+8",                    IDM_VIEW_SHOWBLANKS
         MENUITEM "Visa radslut\tCtrl+Shift+9",                      IDM_VIEW_SHOWEOLS
+        MENUITEM "Show &Non-Printable Characters",           IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Markör för ändringshistorik"
         BEGIN
