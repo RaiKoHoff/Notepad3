@@ -4,6 +4,39 @@
 - [ ] Merge/Cleanup all old documentation (Build/Docs/*.txt, etc.) files
 - [ ] PCRE2 backward search seems to be slow - ask Claude for analysis
 
+## Epics (high effort)
+
+- [ ] **(Q3) SVG Toolbar Icons** - Resolution-independent toolbar with dark/light mode
+  - Auto-adapts to any DPI (100%-300%)
+  - Dark/light mode color switching
+  - Keep classic bitmap as fallback (ToolBarTheme 0/1)
+  - Issues: [#5471](https://github.com/rizonesoft/Notepad3/issues/5471), [#5090](https://github.com/rizonesoft/Notepad3/issues/5090), [#4631](https://github.com/rizonesoft/Notepad3/issues/4631) (DPI scaling), [#5316](https://github.com/rizonesoft/Notepad3/issues/5316) (dark mode readability), [#5390](https://github.com/rizonesoft/Notepad3/issues/5390) (encrypted dialog)
+  - See [research/svg-toolbar.md](research/svg-toolbar.md)
+
+- [/] **(Q3) Autosave / Backup** - ✅ **PARTIALLY IMPLEMENTED**
+  - **Implemented**:
+    - Settings dialog (`AutoSaveBackupSettingsDlg`) with full UI
+    - Timer-based periodic autosave (`AutoSaveStart/Stop/DoWork`)
+    - Options: Periodic save, Save on Suspend, Save on Shutdown
+    - Backup options: Enable backup, On AutoSave, Side-by-side
+    - Configurable interval (minimum 2 seconds)
+  - **Remaining**:
+    - Recovery folder (`%APPDATA%\Notepad3\recovery\`) not yet implemented
+    - Versioned backups (`.bak_1`, `.bak_2`) not yet implemented
+  - Issues: [#1665](https://github.com/rizonesoft/Notepad3/issues/1665), [#370](https://github.com/rizonesoft/Notepad3/issues/370), [#512](https://github.com/rizonesoft/Notepad3/issues/512), [#4331](https://github.com/rizonesoft/Notepad3/issues/4331), [#3652](https://github.com/rizonesoft/Notepad3/issues/3652), [#5399](https://github.com/rizonesoft/Notepad3/issues/5399)
+  - See [research/autosave-backup.md](research/autosave-backup.md)
+
+- [ ] **(Q3) EditorConfig Integration** - Apply `.editorconfig` settings on file open
+  - Use [editorconfig-core-c](https://github.com/editorconfig/editorconfig-core-c) library
+  - Support: indent_style, indent_size, tab_width, end_of_line, charset
+  - See [research/editorconfig-integration.md](research/editorconfig-integration.md)
+
+- [ ] **(Q3) Windows Spell Checker** - Spellcheck via Windows API
+  - Issue: [#5157](https://github.com/rizonesoft/Notepad3/issues/5157)
+
+- [ ] **(Q3) Scrollbar Marks** - Highlights in scrollbar (search matches, bookmarks)
+
+
 ## High Priority
 
 - [x] **Scintilla/Lexilla Update** - ✅ Upgraded to 5.5.8/5.4.6 parity
@@ -51,8 +84,8 @@
 - [x] **(Q1) BUG: Find/Replace patterns not updating** - Dropdown not refreshed immediately - ✅ FIXED
   - Issue: [#5134](https://github.com/rizonesoft/Notepad3/issues/5134)
 - [x] **(Q3) BUG: Multiple file positions not saved** - Only last file's bookmarks/caret preserved - ✅ FIXED
-  - Issue: [#5151](https://github.com/rizonesoft/Notepad3/issues/5151)
-- [ ] **(Q3) BUG: grepWinNP3 crash** - Right-click search results crashes
+  - Issue: [#5151](https://github.com/rizonesoft/Notepad3/issues/5151) - ✅ DELEGATED (using grepWin orig)
+- [x] **(Q3) BUG: grepWinNP3 crash** - Right-click search results crashes - ⚠ Validation❗
   - Issue: [#5158](https://github.com/rizonesoft/Notepad3/issues/5158)
 - [x] **(Q2) BUG: PHP comment toggle** - Ctrl+Q not working in Web Source Code - ✅ FIXED
   - Issue: [#5163](https://github.com/rizonesoft/Notepad3/issues/5163)
@@ -74,28 +107,6 @@
 - [x] **DirectWrite Font Variant Bug** - ✅ Fixed with ResolveFontFace() patch
   - Uses IDWriteGdiInterop to resolve font face → family + weight/style/stretch
   - See [scintilla/np3_patches/001_directwrite_font_resolution.md](../scintilla/np3_patches/001_directwrite_font_resolution.md)
-- [ ] **(Q3) SVG Toolbar Icons** - Resolution-independent toolbar with dark/light mode
-  - Auto-adapts to any DPI (100%-300%)
-  - Dark/light mode color switching
-  - Keep classic bitmap as fallback (ToolBarTheme 0/1)
-  - Issues: [#5471](https://github.com/rizonesoft/Notepad3/issues/5471), [#5090](https://github.com/rizonesoft/Notepad3/issues/5090), [#4631](https://github.com/rizonesoft/Notepad3/issues/4631) (DPI scaling), [#5316](https://github.com/rizonesoft/Notepad3/issues/5316) (dark mode readability), [#5390](https://github.com/rizonesoft/Notepad3/issues/5390) (encrypted dialog)
-  - See [research/svg-toolbar.md](research/svg-toolbar.md)
-- [ ] **(Q3) EditorConfig Integration** - Apply `.editorconfig` settings on file open
-  - Use [editorconfig-core-c](https://github.com/editorconfig/editorconfig-core-c) library
-  - Support: indent_style, indent_size, tab_width, end_of_line, charset
-  - See [research/editorconfig-integration.md](research/editorconfig-integration.md)
-- [/] **(Q3) Autosave / Backup** - ✅ **PARTIALLY IMPLEMENTED**
-  - **Implemented**:
-    - Settings dialog (`AutoSaveBackupSettingsDlg`) with full UI
-    - Timer-based periodic autosave (`AutoSaveStart/Stop/DoWork`)
-    - Options: Periodic save, Save on Suspend, Save on Shutdown
-    - Backup options: Enable backup, On AutoSave, Side-by-side
-    - Configurable interval (minimum 2 seconds)
-  - **Remaining**:
-    - Recovery folder (`%APPDATA%\Notepad3\recovery\`) not yet implemented
-    - Versioned backups (`.bak_1`, `.bak_2`) not yet implemented
-  - Issues: [#1665](https://github.com/rizonesoft/Notepad3/issues/1665), [#370](https://github.com/rizonesoft/Notepad3/issues/370), [#512](https://github.com/rizonesoft/Notepad3/issues/512), [#4331](https://github.com/rizonesoft/Notepad3/issues/4331), [#3652](https://github.com/rizonesoft/Notepad3/issues/3652), [#5399](https://github.com/rizonesoft/Notepad3/issues/5399)
-  - See [research/autosave-backup.md](research/autosave-backup.md)
 - [ ] (Q2) Installer testing on various Windows versions
 - [x] **AVX2 Build** - ✅ Added x64_AVX2 to CI matrix
   - Issue: [#4240](https://github.com/rizonesoft/Notepad3/issues/4240)
@@ -161,9 +172,6 @@
   - Scintilla `SCI_SETREPRESENTATION` for custom char display
 - [ ] **(Q2) Trailing Whitespace Highlighting** - Distinct style for trailing blanks
   - Issue: [#1913](https://github.com/rizonesoft/Notepad3/issues/1913)
-- [ ] **(Q3) Scrollbar Marks** - Highlights in scrollbar (search matches, bookmarks)
-- [ ] **(Q3) Windows Spell Checker** - Spellcheck via Windows API
-  - Issue: [#5157](https://github.com/rizonesoft/Notepad3/issues/5157)
 - [ ] **(Q3) Enhanced Auto-Complete** - Language-aware auto-complete triggers
 - [x] **(Q3) Auto-Pair Brackets** - Auto-close `()`, `[]`, `{}`, `""`, `''`
   - [x] Issue: [#4149](https://github.com/rizonesoft/Notepad3/issues/4149)
@@ -175,7 +183,7 @@
 
 ## Open Discussions
 
-- [ ] **(Q2) BUG: Highlight current line broken** - Settings not respected (regression)
+- [x] **(Q2) BUG: Highlight current line broken** - Settings not respected (regression) - ✅ WON'T CHANGE
   - Issue: [#5270](https://github.com/rizonesoft/Notepad3/issues/5270)
   - **This is a discussion, about limited line highlite rule language in schema definition **
 - [x] **(Q3) QUE: Regex replace issue** - Verify if still present - ✅ FIXED
