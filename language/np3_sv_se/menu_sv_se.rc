@@ -352,7 +352,7 @@ BEGIN
         MENUITEM "Visa radbrytningssymboler\tCtrl+Shift+7",            IDM_VIEW_WORDWRAPSYMBOLS
         MENUITEM "Visa blanksteg\tCtrl+Shift+8",                    IDM_VIEW_SHOWBLANKS
         MENUITEM "Visa radslut\tCtrl+Shift+9",                      IDM_VIEW_SHOWEOLS
-        MENUITEM "Show &Non-Printable Characters",           IDM_VIEW_NONPRINTINGCHARS
+        MENUITEM "Visa &icke-utskrivbara tecken",           IDM_VIEW_NONPRINTINGCHARS
         MENUITEM SEPARATOR
         POPUP "Markör för ändringshistorik"
         BEGIN
@@ -363,7 +363,7 @@ BEGIN
         END
         MENUITEM "Rensa ändringshistorik"             IDM_VIEW_CHGHIST_CLEAR_UNDOREDO
         MENUITEM SEPARATOR
-        MENUITEM "Hyperlänkpunkt\tCtrl+Alt+W",                      IDM_VIEW_HYPERLINKHOTSPOTS
+        MENUITEM "Hotspots för hyperlänkar\tCtrl+Alt+W",                      IDM_VIEW_HYPERLINKHOTSPOTS
         POPUP "Färgpunkter"
         BEGIN
             MENUITEM "&Av",                              IDM_VIEW_COLORDEFHOTSPOTS
