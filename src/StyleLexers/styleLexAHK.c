@@ -160,6 +160,7 @@ EDITLEXER lexAHK = {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ SCE_AHK_DEFAULT, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { {MULTI_STYLE(SCE_AHK_COMMENTLINE,SCE_AHK_COMMENTBLOCK,0,0)}, IDS_LEX_STR_Comment, L"Comment", L"fore:#008000", L"" },
+        { {SCE_AHK_COMMENTDOC}, IDS_LEX_STR_DocCmt, L"Doc Comment", L"italic; fore:#3F7F5F", L"" },
         { {SCE_AHK_ESCAPE}, IDS_LEX_STR_Escape, L"Escape", L"fore:#FF8000", L"" },
         { {SCE_AHK_SYNOPERATOR}, IDS_LEX_STR_SyntaxOp, L"Syntax Operator", L"fore:#7F200F", L"" },
         { {SCE_AHK_EXPOPERATOR}, IDS_LEX_STR_63308, L"Expression Operator", L"fore:#FF4F00", L"" },

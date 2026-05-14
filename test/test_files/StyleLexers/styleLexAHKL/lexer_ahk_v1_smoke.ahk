@@ -13,7 +13,8 @@
 #NoEnv
 #SingleInstance Force
 #Include %A_ScriptDir%\lib.ahk          ; var deref inside a directive arg
-#IfWinActive ahk_class Notepad          ; conditional-directive context
+#IfWinActive ahk_class Notepad          ; conditional-directive context (WinTitle, NOT expression)
+#If WinActive("Notepad") && A_Hour > 9  ; #If expression context (plan §6 D2)
 
 ; --- escape character + special chars in strings -------------------------
 str := "hello`tworld`n""quoted`"""      ; backtick escapes, doubled quote
@@ -24,8 +25,9 @@ ints   := 42
 hex    := 0xFF
 flt    := 3.14
 neg    := -7
-; lexer currently lumps `1e5` as identifier; see plan §3 (scientific notation)
-;sci   := 1e5
+sci1   := 1e5                            ; scientific notation (plan §6 L4)
+sci2   := 1.5e-3
+sci3   := 0.5E+10
 
 ; --- expression assignment + multi-char operators ------------------------
 result := 3 + 4 * (2 ** 8)
@@ -46,9 +48,19 @@ MsgBox, Hello, %name%!                  ; legacy command + %var% deref
 
 ; --- hotkeys ------------------------------------------------------------
 ^!a::                                    ; Ctrl+Alt+a
-  Send {Tab}{Enter 3}                    ; send-key braces (plan §2.7 / §4)
+  Send {Tab}{Enter 3}                    ; send-key braces -> WORD_KB, no fold (plan §6 B3)
+  Send {{}MyVar{}}                       ; literal `{` / `}` send (unbalanced count without B3)
+  SendInput {F5}{F10}                    ; SendInput recognised
+  ControlSend, , {Enter}, ahk_class Notepad
   Run notepad.exe
   return
+
+; B3 false-positive guard: Send used as a variable/identifier, NOT a command call.
+; The `{` after `if (Send)` must stay SYNOPERATOR so the code block folds correctly.
+if (Send) {
+  MsgBox, var-mode Send
+}
+result := MyFunc(Send, otherVar)         ; Send as function arg, not command
 
 ~LButton & RButton::                     ; custom combo with modifiers
   Tooltip, Combo!
@@ -67,6 +79,39 @@ try {
 } catch e {
   MsgBox, % "caught: " e
 }
+
+; --- continuation sections (plan §6 D1) ---------------------------------
+; literal-string continuation (default — body styles as STRING)
+msg :=
+(
+Line one of the message.
+Line two with `tcontrol chars.
+Last line.
+)
+
+; expression-mode continuation via Join option — body styles as expression
+total := 0 +
+(Join
+    1 + 2
+  + 3 * 4
+  + StrLen("hello")
+)
+
+; --- doc-comment style ;@ (AHK_L convention, plan §6 L3) ----------------
+;@function MakePoint
+;@param x - the x coordinate
+;@param y - the y coordinate
+;@returns Point object
+MakePoint(x, y) {
+  return {x: x, y: y}
+}
+
+; --- reference operator &var (plan §6 L5) -------------------------------
+GetSize(&outW, &outH) {                  ; ByRef parameters
+  outW := 800
+  outH := 600
+}
+GetSize(&w, &h)
 
 ; --- class / extends / method / static (v1.1+) -------------------------
 class Animal {
