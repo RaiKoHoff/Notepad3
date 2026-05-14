@@ -110,7 +110,7 @@ BEGIN
     IDS_LEX_AUTOIT3         "Script AutoIt3"
     IDS_LEX_LATEX           "File LaTeX"
     IDS_LEX_AHK             "Script AutoHotkey"
-    IDS_LEX_AHK2            "AutoHotkey v2 Script"
+    IDS_LEX_AHK2            "Script AutoHotkey v2"
     IDS_LEX_CMAKE           "Script Cmake"
     IDS_LEX_AVI_SYNTH       "Script AviSynth"
 END
@@ -561,8 +561,8 @@ BEGIN
     IDS_LEX_STR_IfDef       "If Def"
     IDS_LEX_STR_WhileDef    "While Def"
     IDS_LEX_STR_ForEachDef  "For Each Def"
-    IDS_LEX_STR_DocCmtKw    "parola chiave coomento"
-    IDS_LEX_STR_UserDef     "User Defined"
+    IDS_LEX_STR_DocCmtKw    "Parola chiave coomento"
+    IDS_LEX_STR_UserDef     "Definito da utente"
 END
 
 STRINGTABLE
