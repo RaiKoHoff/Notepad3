@@ -27,7 +27,6 @@
 #include "WordList.h"
 //
 #include "CharSetX.h"
-#include "StringUtils.h"
 #include "SciXLexer.h"
 
 
@@ -205,8 +204,8 @@ Sci_Position SCI_METHOD LexerAHK::WordListSet(int n, const char *wl)
     int firstModification = -1;
     if (wordListN) {
         // AHK is fully case-insensitive for keywords/commands/directives/etc.
-        // Load each wordlist lowercased; callers must lowercase currentWord
-        // before InList() (see Lexilla::ToLowerAscii in StringUtils.h).
+        // Load each wordlist lowercased; callers use sc.GetCurrentLowered()
+        // (Lexilla idiom — see LexVB, LexSQL, LexAU3 for the same pattern).
         if (wordListN->Set(wl, true)) {
             firstModification = 0;
         }
@@ -217,9 +216,8 @@ Sci_Position SCI_METHOD LexerAHK::WordListSet(int n, const char *wl)
 
 void LexerAHK::HighlightKeyword(char currentWord[], StyleContext& sc) {
 
-    // Wordlists are stored lowercase (see WordListSet) — canonicalize lookup.
-    ToLowerAscii(currentWord);
-
+    // Wordlists are stored lowercase (see WordListSet); callers MUST pass an
+    // already-lowercased buffer (use sc.GetCurrentLowered() at the call site).
     if (controlFlow.InList(currentWord)) {
         sc.ChangeState(SCE_AHK_WORD_CF);
     }
@@ -399,8 +397,7 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                     // Hotkey F2:: or remapping a::b
                     bIsHotkey = true;
                     // Check if it is a known key
-                    sc.GetCurrent(currentWord, sizeof(currentWord));
-                    ToLowerAscii(currentWord);
+                    sc.GetCurrentLowered(currentWord, sizeof(currentWord));
                     if (keysButtons.InList(currentWord)) {
                         sc.ChangeState(SCE_AHK_WORD_KB);
                     }
@@ -496,7 +493,7 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
         }
         else if (sc.state == SCE_AHK_IDENTIFIER) {
             if (!WordChar.Contains(sc.ch)) {
-                sc.GetCurrent(currentWord, sizeof(currentWord));
+                sc.GetCurrentLowered(currentWord, sizeof(currentWord));
                 HighlightKeyword(currentWord, sc);
                 // AHK_L user-function call: unknown identifier immediately followed by `(`
                 if (sc.state == SCE_AHK_DEFAULT && sc.ch == '(') {
@@ -527,8 +524,7 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
         else if (sc.state == SCE_AHK_VARREF) {
             if (sc.ch == '%') {
                 // End of variable reference
-                sc.GetCurrent(currentWord, sizeof(currentWord));
-                ToLowerAscii(currentWord);
+                sc.GetCurrentLowered(currentWord, sizeof(currentWord));
                 if (variables.InList(currentWord)) {
                     sc.ChangeState(SCE_AHK_VARREFKW);
                 }
@@ -694,7 +690,7 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
     }
     // End of file: complete any pending changeState
     if (sc.state == SCE_AHK_IDENTIFIER) {
-        sc.GetCurrent(currentWord, sizeof(currentWord));
+        sc.GetCurrentLowered(currentWord, sizeof(currentWord));
         HighlightKeyword(currentWord, sc);
     }
     else if (sc.state == SCE_AHK_STRING && bInExprString) {

@@ -34,17 +34,6 @@ inline bool StrHasSuffix(const char *s, size_t length, const char (&suffix)[N]) 
 	return length >= N - 1 && strcmp(s + (length + 1 - N), suffix) == 0;
 }
 
-// In-place ASCII lowercase. Intended for canonicalizing identifiers before
-// case-insensitive WordList::InList lookups in case-insensitive languages
-// (AHK, etc.). Non-ASCII bytes are left untouched.
-inline void ToLowerAscii(char *s) noexcept {
-	for (; *s; ++s) {
-		if (*s >= 'A' && *s <= 'Z') {
-			*s = static_cast<char>(*s + 32);
-		}
-	}
-}
-
 
 #if defined(__clang__) || defined(__GNUC__) || !defined(_MSC_BUILD)// || (_MSC_VER >= 1920)
 template <size_t N>
