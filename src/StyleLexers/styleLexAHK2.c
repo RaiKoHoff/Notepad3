@@ -2,44 +2,25 @@
 
 // ----------------------------------------------------------------------------
 
-KEYWORDLIST KeyWords_AHK = {
+KEYWORDLIST KeyWords_AHK2 = {
 
     // Flow of Control
     "Break Catch Class Continue Critical Else Exit ExitApp Extends Finally For Get GoSub Goto "
     "If Loop New Reg OnError OnExit Pause Reload Return Set SetBatchLines Sleep Static Switch "
     "Thread Throw Try Until While",
 
-    // Commands
-    "AutoTrim BlockInput Click ClipWait ControlAddItem ControlChoose ControlChooseString "
-    "ControlClick ControlDeleteItem ControlEditPaste ControlFocus ControlGet ControlGetFocus "
-    "ControlGetPos ControlGetText ControlHide ControlHideDropDown ControlMove ControlSend "
-    "ControlSendRaw ControlSendText ControlSetChecked ControlSetEnabled ControlSetExStyle "
-    "ControlSetStyle ControlSetTab ControlSetText ControlShow ControlShowDropDown CoordMode "
-    "DetectHiddenText DetectHiddenWindows DirCopy DirCreate DirDelete DirMove Download Drive "
-    "DriveEject DriveGet DriveLock DriveSetLabel DriveSpaceFree DriveUnlock Edit EnvGet EnvSet "
-    "EnvUpdate FileAppend FileCopy FileCopyDir FileCreateDir FileCreateShortcut FileDelete "
-    "FileEncoding FileGroupActivate FileInstall FileMove FileMoveDir FileReadLine FileRecycle "
-    "FileRecycleEmpty FileRemoveDir FileSelectFile FileSelectFolder FileSetAttrib FileSetTime "
-    "FormatTime Global GroupAdd GroupClose GroupDeactivate Gui GuiControl GuiControlGet Hotkey "
-    "IfInString IfNotExist IfNotInString ImageSearch IniDelete IniIfExist IniWrite Input "
-    "KeyHistory KeyWait ListHotkeys ListLines ListVars Local Menu MenuSelect MouseClick "
-    "MouseClickDrag MouseGetPos MouseMove MsgBox OutputDebug PixelGetColor PixelSearch "
-    "PostMessage ProcessClose ProcessSetPriority Run RunAs RunWait Send SendEvent SendInput "
-    "SendLevel SendMode SendPlay SendRaw SendText SetCapsLockState SetControlDelay "
-    "SetDefaultMouseSpeed SetFormat SetKeyDelay SetMouseDelay SetNumLockState SetRegView "
-    "SetScrollLockState SetStoreCapsLockMode SetTimer SetTitleMatchMode SetWinDelay SetWorkingDir "
-    "Shutdown Sort SoundBeep SoundPlay SoundSetMute SoundSetVolume SplitPath StatusBarGetText "
-    "StatusBarWait StringCaseSense StringGetPos StringLeft StringLen StringLower StringMid "
-    "StringReplace StringRight StringSplit StringTrimLeft StringTrimRight StringUpper Suspend "
-    "SysGet ToolTip Transform TraySetIcon UrlDownloadToFile WinActivate WinActivateBottom "
-    "WinClose WinGet WinGetActiveStats WinGetActiveTitle WinGetClass WinGetClientPos WinGetPos "
-    "WinHide WinKill WinMaximize WinMenuSelectItem WinMinimize WinMinimizeAll WinMinimizeAllUndo "
-    "WinMove WinMoveBottom WinMoveTop WinRedraw WinRestore WinSet WinSetAlwaysOnTop WinSetEnabled "
-    "WinSetExStyle WinSetRegion WinSetStyle WinSetTitle WinSetTransColor WinSetTransparent "
-    "WinShow WinWait WinWaitActive WinWaitClose WinWaitNotActive",
+    // Commands -- empty in v2 (legacy command-syntax was removed; everything is a
+    // function call now). Wordlist arm preserved at index 1 for parity with v1.
+    "",
 
     // Functions
-    "BufferAlloc CallbackCreate CaretGetPos Ceil Chr ComCall ComObjActive" 
+    // v2-only constructors / built-in types (often called directly: Map(), Array(), …)
+    "Array Buffer Class ClipboardAll Error Func Gui Map Menu Object RegExMatchInfo "
+    "BoundFunc Closure Enumerator File InputHook MemoryError MemberError "
+    "MethodError OSError PropertyError TargetError TimeoutError TypeError "
+    "UnsetError UnsetItemError ValueError ZeroDivisionError "
+    // v1-inherited function names (most apply to v2 too):
+    "BufferAlloc CallbackCreate CaretGetPos Ceil Chr ComCall ComObjActive "
     "ComObjArray ComObjConnect ComObjCreate ComObjEnwrap ComObjError ComObjFlags "
     "ComObjGet ComObjMissing ComObjQuery ComObjType ComObjUnwrap ComObjValue ComObject "
     "ControlFindItem ControlGetChecked ControlGetChoice ControlGetClassNN ControlGetCurrentCol "
@@ -66,13 +47,13 @@ KEYWORDLIST KeyWords_AHK = {
     "WinGetList WinGetMinMax WinGetPID WinGetProcessName WinGetProcessPath WinGetStyle "
     "WinGetText WinGetTitle WinGetTransColor WinGetTransparent",
     
-    // Directives
-    "AllowSameLineComments ClipboardTimeout CommentFlag DllLoad ErrorStdOut EscapeChar "
-    "HotkeyInterval HotkeyModifierTimeout Hotstring If IfTimeout IfWinActive IfWinExist "
-    "IfWinNotActive IfWinNotExist Include IncludeAgain InputLevel InstallKeybdHook "
-    "InstallMouseHook KeyHistory MaxHotkeysPerInterval MaxMem MaxThreads MaxThreadsBuffer "
-    "MaxThreadsPerHotkey MenuMaskKey NoEnv NoTrayIcon Persistent SingleInstance "
-    "SuspendExempt UseHook Warn WinActivateForce",
+    // Directives (v2). Removed v1-only: AllowSameLineComments, CommentFlag, EscapeChar,
+    // If, IfTimeout, IfWin*, MaxMem, MenuMaskKey, NoEnv, Persistent. Added v2-new:
+    // HotIf, HotIfTimeout, Requires.
+    "ClipboardTimeout DllLoad ErrorStdOut HotIf HotIfTimeout Hotstring HotkeyInterval "
+    "HotkeyModifierTimeout Include IncludeAgain InputLevel InstallKeybdHook InstallMouseHook "
+    "KeyHistory MaxHotkeysPerInterval MaxThreads MaxThreadsBuffer MaxThreadsPerHotkey "
+    "NoTrayIcon Requires SingleInstance SuspendExempt UseHook Warn WinActivateForce",
 
     // Keys & Buttons
     "Alt AltDown AltUp AppsKey BS BackSpace Backspace Break Browser_Back "
@@ -154,9 +135,9 @@ KEYWORDLIST KeyWords_AHK = {
 };
 
 
-EDITLEXER lexAHK = {
-    SCLEX_AHK, "ahk", IDS_LEX_AHK, L"AutoHotkey Script", L"ahk; ahkl; ia", L"",
-    &KeyWords_AHK, {
+EDITLEXER lexAHK2 = {
+    SCLEX_AHK2, "ahk2", IDS_LEX_AHK2, L"AutoHotkey v2 Script", L"ahk2", L"",
+    &KeyWords_AHK2, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ SCE_AHK_DEFAULT, IDS_LEX_STR_Default, L"Default", L"", L"" },
         { {MULTI_STYLE(SCE_AHK_COMMENTLINE,SCE_AHK_COMMENTBLOCK,0,0)}, IDS_LEX_STR_Comment, L"Comment", L"fore:#008000", L"" },

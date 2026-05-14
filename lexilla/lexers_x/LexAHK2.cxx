@@ -1,7 +1,7 @@
 // encoding: UTF-8
 // Scintilla source code edit control
-/** @file LexAHK.cxx
- ** Lexer for AutoHotkey, simplified version
+/** @file LexAHK2.cxx
+ ** Lexer for AutoHotkey v2, simplified version
  ** Written by Philippe Lhoste (PhiLho)
  **/
  // Copyright 1998-2006 by Neil Hodgson <neilh@scintilla.org>
@@ -47,7 +47,7 @@ struct OptionsAHK
     { }
 };
 
-static const char* const ahkWordLists[] =
+static const char* const ahk2WordLists[] =
 {
     "Flow of Control",
     "Commands",
@@ -70,11 +70,11 @@ struct OptionSetAHK : public OptionSet<OptionsAHK>
         DefineProperty("fold.comment", &OptionsAHK::foldComment);
         DefineProperty("fold.compact", &OptionsAHK::foldCompact);
 
-        DefineWordListSets(ahkWordLists);
+        DefineWordListSets(ahk2WordLists);
     }
 };
 
-class LexerAHK : public DefaultLexer
+class LexerAHK2 : public DefaultLexer
 {
 
     OptionsAHK options;
@@ -93,14 +93,14 @@ class LexerAHK : public DefaultLexer
     CharacterSet ExpOperator;
 
 public:
-    LexerAHK() : DefaultLexer("AHK", SCLEX_AHK, nullptr, 0),
+    LexerAHK2() : DefaultLexer("AHK2", SCLEX_AHK2, nullptr, 0),
         //valLabel(CharacterSet::setAlphaNum, "@#$_~!^&*()+[]\';./\\<>?|{}-=\""),
         WordChar(CharacterSet::setAlphaNum, "@#$_[]?"),
         ExpOperator(CharacterSet::setNone, "+-*/!~&|^=<>.()")
     {
     }
 
-    virtual ~LexerAHK() = default;
+    virtual ~LexerAHK2() = default;
 
     void SCI_METHOD Release() override
     {
@@ -141,9 +141,9 @@ public:
     void SCI_METHOD Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess) override;
     void SCI_METHOD Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess) override;
 
-    static ILexer5 *LexerFactoryAHK()
+    static ILexer5 *LexerFactoryAHK2()
     {
-        return new LexerAHK();
+        return new LexerAHK2();
     }
 
 private:
@@ -151,7 +151,7 @@ private:
 
 };
 
-Sci_Position SCI_METHOD LexerAHK::PropertySet(const char* key, const char* val)
+Sci_Position SCI_METHOD LexerAHK2::PropertySet(const char* key, const char* val)
 {
     if (osAHK.PropertySet(&options, key, val))
     {
@@ -161,7 +161,7 @@ Sci_Position SCI_METHOD LexerAHK::PropertySet(const char* key, const char* val)
 }
 
 
-Sci_Position SCI_METHOD LexerAHK::WordListSet(int n, const char *wl)
+Sci_Position SCI_METHOD LexerAHK2::WordListSet(int n, const char *wl)
 {
     WordList *wordListN = nullptr;
     switch (n)
@@ -214,16 +214,17 @@ Sci_Position SCI_METHOD LexerAHK::WordListSet(int n, const char *wl)
 }
 
 
-void LexerAHK::HighlightKeyword(char currentWord[], StyleContext& sc) {
+void LexerAHK2::HighlightKeyword(char currentWord[], StyleContext& sc) {
 
     // Wordlists are stored lowercase (see WordListSet); callers MUST pass an
     // already-lowercased buffer (use sc.GetCurrentLowered() at the call site).
     if (controlFlow.InList(currentWord)) {
         sc.ChangeState(SCE_AHK_WORD_CF);
     }
-    else if (commands.InList(currentWord)) {
-        sc.ChangeState(SCE_AHK_WORD_CMD);
-    }
+    // v2 has NO command-mode syntax — every former v1 command (MsgBox, Send, …)
+    // is now a function call. The commands wordlist arm still exists for index
+    // parity with the v1 lexer (C-δ will empty the v2 wordlist itself), but we
+    // intentionally skip the InList check so nothing is ever styled WORD_CMD.
     else if (functions.InList(currentWord)) {
         sc.ChangeState(SCE_AHK_WORD_FN);
     }
@@ -249,7 +250,7 @@ void LexerAHK::HighlightKeyword(char currentWord[], StyleContext& sc) {
 
 
 
-void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess)
+void SCI_METHOD LexerAHK2::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess)
 {
     PropSetSimple props;
     Accessor styler(pAccess, &props);
@@ -288,13 +289,8 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
     bool bInHexNumber = false;
     // To accept digits after e/E in scientific notation
     bool bInExponent = false;
-    // Inside a Send / SendInput / SendRaw / ControlSend* argument run
-    // (line-scoped; resets at line start)
-    bool bInSendArgs = false;
-    // True if the current identifier started at line start (no preceding non-space).
-    // Captured at IDENTIFIER entry; used at IDENTIFIER termination to disambiguate
-    // command-call Send from expression-operand Send.
-    bool bIdentAtLineStart = false;
+    // (v2: no Send-args / line-start-ident tracking — v2 has no command-mode,
+    //  so Send is a normal function call and key sequences live inside quoted strings.)
 
 
     for (; sc.More(); sc.Forward()) {
@@ -324,8 +320,6 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
             bInExpression = false;	// I don't manage multiline expressions yet!
             bInHexNumber = false;
             bInExponent = false;
-            bInSendArgs = false;
-            bIdentAtLineStart = false;
         }
 
         // Manage cases occuring in (almost) all states (not in comments)
@@ -341,28 +335,11 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 nextState = currentState;
                 continue;
             }
-            if (sc.ch == '%' && !bIsHotstring && !bInExprString &&
-                sc.state != SCE_AHK_VARREF &&
-                sc.state != SCE_AHK_VARREFKW &&
-                sc.state != SCE_AHK_ERROR) {
-                if (IsASpace(sc.chNext)) {
-                    if (sc.state == SCE_AHK_STRING) {
-                        // Illegal unquoted character!
-                        sc.SetState(SCE_AHK_ERROR);
-                    }
-                    else {
-                        // % followed by a space is expression start
-                        bInExpression = true;
-                    }
-                }
-                else {
-                    // Variable reference
-                    currentState = sc.state;
-                    sc.SetState(SCE_AHK_SYNOPERATOR);
-                    nextState = SCE_AHK_VARREF;
-                    continue;
-                }
-            }
+            // v2: the v1 `%var%` deref outside strings and `% ` expression-start
+            // marker are gone. Variables are bare identifiers in expressions; `%`
+            // alive only as the dynamic-deref operator inside strings (handled by
+            // C-γ-4 expression-string interpolation). Anything `%` does outside a
+            // quoted string in v2 is either a modulo operator or an error.
             if (sc.state != SCE_AHK_STRING && !bInExpression) {
                 // Management of labels, hotkeys, hotstrings and remapping
 
@@ -455,6 +432,16 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                         sc.ForwardSetState(SCE_AHK_DEFAULT);
                     }
                 }
+                else if (sc.ch == '%' && WordChar.Contains(sc.chNext)) {
+                    // v2 string interpolation: "Hello %name%" -- %expr% inside a
+                    // quoted string is a dynamic deref. Save STRING state, hand off
+                    // to VARREF; the existing VARREF handler returns to currentState
+                    // (STRING) on the closing `%`.
+                    currentState = sc.state;
+                    sc.SetState(SCE_AHK_SYNOPERATOR);
+                    nextState = SCE_AHK_VARREF;
+                    continue;
+                }
                 else if (sc.atLineEnd) {
                     sc.ChangeState(SCE_AHK_ERROR);
                 }
@@ -499,17 +486,9 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 if (sc.state == SCE_AHK_DEFAULT && sc.ch == '(') {
                     sc.ChangeState(SCE_AHK_WORD_UD);
                 }
-                // Send/SendInput/SendRaw/SendPlay/SendEvent/SendUnicode/ControlSend[Raw]
-                // — flag the rest of the line so `{`/`}` style as WORD_KB instead of
-                // SYNOPERATOR (which keeps Fold() from oscillating on key braces).
-                // Gated on bIdentAtLineStart to avoid false positives like `if (Send)`
-                // or `MyFunc(Send, ...)` where Send is a variable, not a command call.
-                if (sc.state == SCE_AHK_WORD_CMD && bIdentAtLineStart) {
-                    if (_strnicmp(currentWord, "Send", 4) == 0 ||
-                        _strnicmp(currentWord, "ControlSend", 11) == 0) {
-                        bInSendArgs = true;
-                    }
-                }
+                // (v2: no Send-args detection — Send is a regular function call
+                //  with quoted args; key sequences live INSIDE the quoted strings.)
+
                 // AHK keywords are case-insensitive; flow-of-control `if` and the
                 // `#If <expr>` directive both put the rest of the line in expression
                 // mode. `#IfWin*` variants take a WinTitle, NOT an expression — they
@@ -575,16 +554,10 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 sc.Forward();
             }
             else if (sc.ch == '{' || sc.ch == '}') {
-                // Inside Send-args: style as WORD_KB so Fold() (gated on SYNOPERATOR)
-                // doesn't oscillate on key-sequence braces — `Send {Tab}{Enter 3}`,
-                // `Send {{}` (literal `{`), etc. Outside Send-args these are code-block
-                // braces and need to stay SYNOPERATOR for folding to work.
-                if (bInSendArgs) {
-                    sc.SetState(SCE_AHK_WORD_KB);
-                    nextState = SCE_AHK_DEFAULT;
-                } else {
-                    sc.SetState(SCE_AHK_SYNOPERATOR);
-                }
+                // v2: braces are always code-block / object-literal braces (Send-key
+                // braces in v2 live INSIDE quoted strings, so `{`/`}` mid-line are
+                // structural).
+                sc.SetState(SCE_AHK_SYNOPERATOR);
             }
             else if (bExprContinuation && bContinuationSection && bOnlySpaces && sc.ch == ')') {
                 // End of expression-mode continuation section (parallel to STRING-mode
@@ -622,12 +595,24 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 sc.SetState(SCE_AHK_SYNOPERATOR);
                 nextState = bExprContinuation ? SCE_AHK_DEFAULT : SCE_AHK_STRING;
             }
+            else if (sc.Match('=', '>')) {
+                // v2 fat-arrow lambda:  MyFunc(x) => x * 2
+                // Body after `=>` is an expression.
+                bInExpression = true;
+                sc.SetState(SCE_AHK_SYNOPERATOR);
+                sc.Forward();
+                nextState = SCE_AHK_DEFAULT;
+            }
             else if (sc.Match(':', '=') ||
                 sc.Match('+', '=') ||
                 sc.Match('-', '=') ||
                 sc.Match('/', '=') ||
-                sc.Match('*', '=')) {
-                // Expression assignment
+                sc.Match('*', '=') ||
+                sc.Match('.', '=') ||
+                sc.Match('|', '=') ||
+                sc.Match('&', '=') ||
+                sc.Match('^', '=')) {
+                // Expression assignment (v2 adds `.=`, `|=`, `&=`, `^=` beyond v1)
                 bInExpression = true;
                 sc.SetState(SCE_AHK_SYNOPERATOR);
                 sc.Forward();
@@ -655,7 +640,6 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 sc.SetState(SCE_AHK_NUMBER);
             }
             else if (WordChar.Contains(sc.ch)) {
-                bIdentAtLineStart = bOnlySpaces;
                 sc.SetState(SCE_AHK_IDENTIFIER);
             }
             else if (sc.ch == ',') {
@@ -704,7 +688,7 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
 }
 
 
-void SCI_METHOD LexerAHK::Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess)
+void SCI_METHOD LexerAHK2::Fold(Sci_PositionU startPos, Sci_Position lengthDoc, int initStyle, IDocument *pAccess)
 {
     if (!options.fold) { return; }
 
@@ -773,5 +757,5 @@ void SCI_METHOD LexerAHK::Fold(Sci_PositionU startPos, Sci_Position lengthDoc, i
 
 }
 
-extern const LexerModule lmAHK(SCLEX_AHK, LexerAHK::LexerFactoryAHK, "ahk", ahkWordLists);
+extern const LexerModule lmAHK2(SCLEX_AHK2, LexerAHK2::LexerFactoryAHK2, "ahk2", ahk2WordLists);
 

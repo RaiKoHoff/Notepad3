@@ -1007,6 +1007,7 @@
 #define IDS_LEX_AUTOIT3                 63035
 #define IDS_LEX_LATEX                   63036
 #define IDS_LEX_AHK                     63037
+#define IDS_LEX_AHK2                    63060
 #define IDS_LEX_CMAKE                   63038
 #define IDS_LEX_AVI_SYNTH               63039
 #define IDS_LEX_MARKDOWN                63040
@@ -1383,6 +1384,7 @@
 #define IDS_LEX_STR_WhileDef            63448
 #define IDS_LEX_STR_ForEachDef          63449
 #define IDS_LEX_STR_DocCmtKw            63450
+#define IDS_LEX_STR_UserDef             63451
 
 #define IDS_LEX_CSV_COL_0               63490
 #define IDS_LEX_CSV_COL_1               63491

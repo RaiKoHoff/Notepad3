@@ -30,6 +30,7 @@ using namespace Lexilla;
 //**\(extern const LexerModule \*;\n\)
 extern const LexerModule lmAbaqus;
 extern const LexerModule lmAHK;
+extern const LexerModule lmAHK2;
 extern const LexerModule lmAs;
 extern const LexerModule lmAsm;
 extern const LexerModule lmAU3;
@@ -102,6 +103,7 @@ void AddEachLexer() {
 //**\(\t\t&\*,\n\)
 		&lmAbaqus,
 		&lmAHK,
+		&lmAHK2,
 		&lmAs,
 		&lmAsm,
 		&lmAU3,

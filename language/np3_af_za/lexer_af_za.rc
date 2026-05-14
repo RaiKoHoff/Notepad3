@@ -110,6 +110,7 @@ BEGIN
     IDS_LEX_AUTOIT3         "AutoIt3 Skrip"
     IDS_LEX_LATEX           "LaTeX Lêers"
     IDS_LEX_AHK             "AutoHotkey Skrip"
+    IDS_LEX_AHK2            "AutoHotkey v2 Script"
     IDS_LEX_CMAKE           "Cmake Skrip"
     IDS_LEX_AVI_SYNTH       "AviSynth Skrip"
 END
@@ -561,6 +562,7 @@ BEGIN
     IDS_LEX_STR_WhileDef    "While Def"
     IDS_LEX_STR_ForEachDef  "For Each Def"
     IDS_LEX_STR_DocCmtKw    "Doc Comment Keyword"
+    IDS_LEX_STR_UserDef     "User Defined"
 END
 
 STRINGTABLE

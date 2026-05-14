@@ -1,12 +1,13 @@
 ## This file defines the interface to ScintillaX Lexers
+## NOTE: numbers in this file may drift from SciXLexer.h; the header is the source of truth
 ## -----------------------------------------------------------------------------
 
 val SCLEX_AHK=200
 val SCLEX_CSV=201
-val SCLEX_DART=202
-val SCLEX_KOTLIN=203
-val SCLEX_TOML=204
-val SCLEX_SYSVERILOG=205
+val SCLEX_KOTLIN=202
+val SCLEX_SYSVERILOG=203
+val SCLEX_JSON5=204
+val SCLEX_AHK2=205   
 
 ## -----------------------------------------------------------------------------
 
@@ -33,6 +34,8 @@ val SCE_AHK_WORD_SP=17
 val SCE_AHK_WORD_UD=18
 val SCE_AHK_VARREFKW=19
 val SCE_AHK_ERROR=20
+val SCE_AHK_HOTSTRINGOPT=21
+val SCE_AHK_COMMENTDOC=22
 
 
 # Lexical states for SCLEX_KOTLIN
@@ -64,46 +67,3 @@ val SCE_KOTLIN_INTERFACE=23
 val SCE_KOTLIN_ENUM=24
 val SCE_KOTLIN_FUNCTION=25
 val SCE_KOTLIN_FUNCTION_DEFINITION=26
-
-
-# # Lexical states for SCLEX_YAML
-# lex YAML=SCLEX_YAML SCE_YAML_
-# val SCE_YAML_DEFAULT=0
-# val SCE_YAML_COMMENT=1
-# val SCE_YAML_IDENTIFIER=2
-# val SCE_YAML_KEYWORD=3
-# val SCE_YAML_NUMBER=4
-# val SCE_YAML_REFERENCE=5
-# val SCE_YAML_DOCUMENT=6
-# val SCE_YAML_TEXT=7
-# val SCE_YAML_ERROR=8
-# val SCE_YAML_OPERATOR=9
-# val SCE_YAML_DIRECTIVE=10
-# val SCE_YAML_STRING1=11
-# val SCE_YAML_STRING2=12
-# val SCE_YAML_ESCAPECHAR=13
-# val SCE_YAML_KEY=14
-# val SCE_YAML_BLOCK_SCALAR=15
-# val SCE_YAML_TAG=16
-# val SCE_YAML_VERBATIM_TAG=17
-# val SCE_YAML_DATETIME=18
-# val SCE_YAML_INDENTED_TEXT=19
-
-
-
-# Embedded CSS sub-states (extended HTML lexer in lexers_x/LexHTML.cxx).
-# Placed at 128-140 to avoid Scintilla reserved styles 32-39 and to sit
-# above every other embedded sub-language inside SCLEX_HTML (PHP ends at 127).
-val SCE_HCSS_DEFAULT=128
-val SCE_HCSS_COMMENT=129
-val SCE_HCSS_SELECTOR=130
-val SCE_HCSS_CLASS=131
-val SCE_HCSS_ID=132
-val SCE_HCSS_PROPERTY=133
-val SCE_HCSS_VALUE=134
-val SCE_HCSS_OPERATOR=135
-val SCE_HCSS_STRING=136
-val SCE_HCSS_PSEUDOCLASS=137
-val SCE_HCSS_IMPORTANT=138
-val SCE_HCSS_DIRECTIVE=139
-val SCE_HCSS_NUMBER=140

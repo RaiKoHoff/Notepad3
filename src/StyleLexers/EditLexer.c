@@ -17,6 +17,8 @@ void Lexer_GetStreamCommentStrgs(LPWSTR beg_out, LPWSTR end_out, size_t maxlen)
         case SCLEX_AU3:
             SET_STREAMCOMMENT_STRG(L"#cs", L"#ce");
             break;
+        case SCLEX_AHK:
+        case SCLEX_AHK2:
         case SCLEX_AVS:
         case SCLEX_CPP:
         case SCLEX_CSS:
@@ -65,7 +67,6 @@ void Lexer_GetStreamCommentStrgs(LPWSTR beg_out, LPWSTR end_out, size_t maxlen)
             assert("SciCall_GetLexer() UNDEFINED!" && 0);
         // ------------------
         case SCLEX_NULL:
-        case SCLEX_AHK:
         case SCLEX_ASM:
         case SCLEX_BASH:
         case SCLEX_BATCH:
@@ -137,6 +138,7 @@ bool Lexer_GetLineCommentStrg(LPWSTR pre_out, size_t maxlen)
         case SCLEX_PROPERTIES:
             SET_COMMENT_STRG(L";", true);
         case SCLEX_AHK:
+        case SCLEX_AHK2:
         case SCLEX_AU3:
         case SCLEX_REGISTRY:
             SET_COMMENT_STRG(L";", false);

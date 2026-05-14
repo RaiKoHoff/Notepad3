@@ -11,6 +11,7 @@ index 5b3811466..b0dde49a8 100644
 -extern const LexerModule lmAda;
 -extern const LexerModule lmAPDL;
 +extern const LexerModule lmAHK;
++extern const LexerModule lmAHK2;
  extern const LexerModule lmAs;
 -extern const LexerModule lmAsciidoc;
  extern const LexerModule lmAsm;
@@ -160,6 +161,7 @@ index 5b3811466..b0dde49a8 100644
 -		&lmAda,
 -		&lmAPDL,
 +		&lmAHK,
++		&lmAHK2,
  		&lmAs,
 -		&lmAsciidoc,
  		&lmAsm,

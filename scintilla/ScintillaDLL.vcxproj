@@ -262,7 +262,6 @@
       <WarningLevel>Level3</WarningLevel>
       <DisableSpecificWarnings>4244;4389;4206;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <ClCompile Include="..\sciXlexers\LexAHKL.cxx" />
     <ClCompile Include="..\sciXlexers\LexCSV.cxx" />
     <ClCompile Include="..\sciXlexers\LexTOML.cxx" />
     <ClCompile Include="lexers\LexAsm.cxx" />

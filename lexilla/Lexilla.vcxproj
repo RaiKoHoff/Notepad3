@@ -107,14 +107,9 @@
     <ClCompile Include="lexers\LexVHDL.cxx" />
     <ClCompile Include="lexers\LexYAML.cxx" />
     <ClCompile Include="lexers_x\LexAHK.cxx" />
+    <ClCompile Include="lexers_x\LexAHK2.cxx" />
     <ClCompile Include="lexers_x\LexCSV.cxx" />
     <ClCompile Include="lexers_x\LexerUtils.cxx" />
-    <!-- lexers_x\LexHTML.cxx is the extended (CSS-in-HTML) lexer, paused.
-         See lexers_x\LexHTML_NOTES.md. The file is intentionally NOT compiled:
-         the upstream lexers\LexHTML.cxx is the active HTML lexer. To resume
-         the extension work, switch the ClCompile path back. -->
-    <None Include="lexers_x\LexHTML.cxx" />
-    <None Include="lexers_x\LexHTML_NOTES.md" />
     <ClCompile Include="lexers\LexJSON.cxx" />
     <ClCompile Include="lexers_x\LexJSON5.cxx" />
     <ClCompile Include="lexers_x\LexKotlin.cxx" />
