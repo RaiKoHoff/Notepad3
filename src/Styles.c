@@ -437,28 +437,60 @@ unsigned ThemesItems_MaxIndex()
 }
 
 
+// Single source of truth for the 'themes' directory used by the View → Themes
+// menu scanner AND by the Customize Schemes Export/Import file dialogs.
+// Path = <parent of Paths.IniFile, or IniFileDefault as fallback>\themes.
+// No side effects; caller must Path_Release(hThemesDir_out).
+// Returns true if a non-empty path was produced.
+static bool _BuildThemesDirectoryPath(HPATHL hThemesDir_out)
+{
+    if (!hThemesDir_out) {
+        return false;
+    }
+    Path_Reset(hThemesDir_out, Path_Get(Paths.IniFile));
+    if (Path_IsEmpty(hThemesDir_out)) {
+        Path_Reset(hThemesDir_out, Path_Get(Paths.IniFileDefault));
+    }
+    if (Path_IsEmpty(hThemesDir_out)) {
+        return false;
+    }
+    Path_RemoveFileSpec(hThemesDir_out);
+    Path_Append(hThemesDir_out, L"themes");
+    return Path_IsNotEmpty(hThemesDir_out);
+}
+
+
+// Builds the themes directory path and best-effort creates it on disk so the
+// Export / Import file dialogs can open inside it on a fresh install. No
+// fallback to any other location is attempted — if creation fails (read-only
+// parent etc.) the caller still passes the path to the dialog; the user can
+// manually navigate elsewhere from there.
+static bool _EnsureThemesDirectory(HPATHL hThemesDir_out)
+{
+    if (!_BuildThemesDirectoryPath(hThemesDir_out)) {
+        return false;
+    }
+    HRESULT const hr = Path_CreateDirectoryEx(hThemesDir_out);
+    UNREFERENCED_PARAMETER(hr); // success or ERROR_ALREADY_EXISTS or read-only — all proceed
+    return true;
+}
+
+
 static void _FillThemesMenuTable()
 {
-    HPATHL hThemesDir = Path_Copy(Paths.IniFile);
-
-    // NP3.ini settings
+    // NP3.ini settings (slot 0 = Standard Config = the active INI file itself)
 
     Theme_Files[0].rid = IDM_THEMES_STD_CFG;
     GetLngString(IDM_THEMES_STD_CFG, Theme_Files[0].szName, COUNTOF(Theme_Files[0].szName));
-    if (Path_IsNotEmpty(hThemesDir)) {
-        Path_Reset(Theme_Files[0].hStyleFilePath, Path_Get(hThemesDir));
+    if (Path_IsNotEmpty(Paths.IniFile)) {
+        Path_Reset(Theme_Files[0].hStyleFilePath, Path_Get(Paths.IniFile));
     }
     Globals.uCurrentThemeIndex = 0;
 
     unsigned iTheme = 1; // other themes
 
-    if (Path_IsEmpty(hThemesDir)) {
-        Path_Reset(hThemesDir, Path_Get(Paths.IniFileDefault));
-    }
-    if (Path_IsNotEmpty(hThemesDir)) {
-        Path_RemoveFileSpec(hThemesDir);
-        Path_Append(hThemesDir, L"themes");
-    }
+    HPATHL hThemesDir = Path_Allocate(NULL);
+    _BuildThemesDirectoryPath(hThemesDir);
 
     /// names are filled by Style_InsertThemesMenu()
 
@@ -725,15 +757,19 @@ bool Style_Import(HWND hwnd)
 
     PrepareFilterStr(flt_buf);
 
+    HPATHL  hThemesDir = Path_Allocate(NULL);
+    LPCWSTR lpInitDir  = _EnsureThemesDirectory(hThemesDir) ? Path_Get(hThemesDir) : NULL;
+
     bool result = false;
 
-    if (FileOpenDlg(hwnd, hfile_pth, NULL, StrgGet(hflt_str), L"ini",
+    if (FileOpenDlg(hwnd, hfile_pth, lpInitDir, StrgGet(hflt_str), L"ini",
             FOS_FILEMUSTEXIST | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR |
             FOS_DONTADDTORECENT | FOS_SHAREAWARE)) {
         Path_Sanitize(hfile_pth);
         result = Style_ImportFromFile(hfile_pth);
     }
 
+    Path_Release(hThemesDir);
     StrgDestroy(hflt_str);
     Path_Release(hfile_pth);
     return result;
@@ -1186,9 +1222,12 @@ bool Style_Export(HWND hwnd)
 
     PrepareFilterStr(flt_buf);
 
+    HPATHL  hThemesDir = Path_Allocate(NULL);
+    LPCWSTR lpInitDir  = _EnsureThemesDirectory(hThemesDir) ? Path_Get(hThemesDir) : NULL;
+
     bool result = false;
 
-    if (FileSaveDlg(hwnd, hfile_pth, NULL, StrgGet(hflt_str), L"ini",
+    if (FileSaveDlg(hwnd, hfile_pth, lpInitDir, StrgGet(hflt_str), L"ini",
             FOS_OVERWRITEPROMPT | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR |
             FOS_DONTADDTORECENT | FOS_SHAREAWARE)) {
         Path_Sanitize(hfile_pth);
@@ -1198,6 +1237,7 @@ bool Style_Export(HWND hwnd)
         }
     }
 
+    Path_Release(hThemesDir);
     StrgDestroy(hflt_str);
     Path_Release(hfile_pth);
     return result;

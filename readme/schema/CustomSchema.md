@@ -15,10 +15,11 @@ Audience: advanced users who want to tweak colours and fonts beyond the built-in
 5. [File → schema matching](#5-file--schema-matching)
 6. [The Customize Schemes dialog](#6-the-customize-schemes-dialog)
 7. [Themes collection (`View → Themes`)](#7-themes-collection-view--themes)
-8. [Export / Import](#8-export--import)
-9. [Anatomy of a style INI file](#9-anatomy-of-a-style-ini-file)
-10. [Toolbar themes (separate from colour schemes)](#10-toolbar-themes-separate-from-colour-schemes)
-11. [References in the code](#references-in-the-code)
+8. [**Quick workflow: save your customizations as a reusable theme**](#8-quick-workflow-save-your-customizations-as-a-reusable-theme)
+9. [Export / Import](#9-export--import)
+10. [Anatomy of a style INI file](#10-anatomy-of-a-style-ini-file)
+11. [Toolbar themes (separate from colour schemes)](#11-toolbar-themes-separate-from-colour-schemes)
+12. [References in the code](#references-in-the-code)
 
 ---
 
@@ -55,7 +56,7 @@ Every style string you see in the editor is the result of a four-level resolutio
 ```
 
 - **Lower levels fill gaps only.** If a user INI defines `fore:#ff0000` for a style but omits `font:`, the font comes from the Common Base, and ultimately from the hard-coded default.
-- **Only deltas are saved.** When Notepad3 writes your styles back, it stores *only* values that differ from the merged defaults. An exported theme, by contrast, can force-save everything — see [§8 Export/Import](#8-export--import).
+- **Only deltas are saved.** When Notepad3 writes your styles back, it stores *only* values that differ from the merged defaults. An exported theme, by contrast, can force-save everything — see [§9 Export/Import](#9-export--import).
 - **Empty lexer sections are removed.** After saving, any `[Python Script]`-style section that ended up empty (because the user reset everything to default) is stripped so the file stays readable.
 - **Dark mode is its own level 2.** When Windows is in dark mode, the *Common Base* defaults come from a dark-mode palette instead of the light one. Your custom deltas stack on top of whichever palette is active.
 
@@ -304,8 +305,8 @@ Every schema appears in the left-hand tree. Expand a schema to see its style slo
 | *Default* | Resets the current style to its compiled-in default (discards the INI override for that style only). |
 | *Preview* | Toggles live preview of your edits in the main editor. |
 | *< Prev / Next >* | Step through the styles of the current schema. |
-| *Import…* | See [§8](#8-export--import). |
-| *Export…* | See [§8](#8-export--import). |
+| *Import…* | See [§9](#9-export--import). |
+| *Export…* | See [§9](#9-export--import). |
 | *Dark Mode Highlight Contrast* (slider/field) | Adjusts how strongly foreground colours are re-mapped for legibility against the dark background. Stored as `Settings.DarkModeHiglightContrast`. |
 
 ### Cancel vs OK
@@ -375,18 +376,98 @@ Selecting a theme from the menu triggers this sequence:
 Easiest flow:
 
 1. Get your styles looking the way you want (Customize Schemes, regular save).
-2. **View → Customize Schemes… → Export…**, save as `<IniFileDir>\themes\MyTheme.ini` (see [§8](#8-export--import)).
+2. **View → Customize Schemes… → Export…**, save as `<IniFileDir>\themes\MyTheme.ini` (see [§9](#9-export--import)).
 3. Restart Notepad3. **View → Themes → MyTheme** now appears.
+
+For a fuller, step-by-step walkthrough aimed at first-time users, see the next section.
 
 ---
 
-## 8. Export / Import
+## 8. Quick workflow: save your customizations as a reusable theme
+
+> **Read this first if you just want to tweak Notepad3's colours, keep the result, and maybe share it.**
+> The other sections are reference material — this one is the recipe.
+
+**The idea in one sentence:** any colour/font tweak you make is stored in `Notepad3.ini`. If you also want it as a named, switchable theme that shows up under **View → Themes** (and that you can copy to another PC), export it once into a folder called `themes\` next to your `Notepad3.ini`.
+
+### Best practice: work on a copy, not on the original
+
+Before you start customizing, make a **named theme you can edit freely**. That keeps your starting point (your current `Notepad3.ini`, or a shipped theme like *Dark*) safe — if you ever want to revert, you just switch back to it in **View → Themes**. Two equally good ways to set up that copy:
+
+1. **Copy an existing theme file.** Pick a starting point — e.g. `Dark.ini` from the release package (`Build\themes\`), or any theme already in your own `themes\` folder. Make a copy of that file inside `<folder containing Notepad3.ini>\themes\` and **rename the copy** (e.g. `MyDark.ini`). Restart Notepad3, then switch to **View → Themes → MyDark**. All your edits now land in `MyDark.ini`; the original is untouched.
+2. **Export "Standard Config" under a new name.** This is the step-by-step below: it produces a fresh theme file that mirrors your current look exactly, but is now a separate file you can change freely without touching `Notepad3.ini`.
+
+> **The golden rule afterwards:** switch to your new theme **first**, *then* customize. *Save Settings* (**F7**) always writes to whichever theme is currently active — so as long as your theme has the radio dot in **View → Themes**, every edit lands in *your* file and not in the original.
+
+### Step-by-step
+
+1. **Customize.** Open **View → Customize Schemes…** (or press **F12**). On the left, expand a language (e.g. *C/C++ Source Code*). Click a style row (e.g. *Comment*). Use the **Font…**, **Foreground**, and **Background** buttons — or edit the text field directly — until the preview looks right. Repeat for whichever languages and styles you want to change. Click **OK** when done.
+2. **Save to disk.** Press **F7** (same as **Settings → Save Settings Now**). Alternatively, tick **Settings → Save Settings On Exit** so Notepad3 saves automatically when you close it. Your tweaks now live in `Notepad3.ini`.
+3. **Export as a theme file.** Reopen **View → Customize Schemes…** (**F12**) and click the **Export…** button at the bottom left. The file dialog **opens directly inside the `themes\` folder beside your `Notepad3.ini`** (Notepad3 creates that folder on the spot if it doesn't exist yet — no manual setup needed). Type a filename, e.g. `MyTheme.ini`, and save.
+4. **Restart Notepad3.** Open the **View → Themes** menu — your theme now appears as **MyTheme**. Click it to switch.
+
+That's the whole workflow. The rest of this section just shows you where things go and how to share them.
+
+### Where exactly is "the themes folder"?
+
+It is a folder named `themes` placed **right next to your active `Notepad3.ini`**:
+
+```text
+<folder containing your Notepad3.ini>\
+├── Notepad3.ini
+└── themes\
+    ├── Dark.ini
+    ├── Obsidian.ini
+    ├── Sombra.ini
+    └── MyTheme.ini      ← your exported file goes here
+```
+
+- If you don't know where your `Notepad3.ini` lives, open Notepad3 and use **File → Launch → Notepad3.ini** (or check **Help → About** for paths).
+- The `themes\` folder is created automatically the first time you click **Export…** in *Customize Schemes*. You can also create it by hand and drop theme files into it — Notepad3 picks them up on the next launch.
+- The three reference themes (`Dark.ini`, `Obsidian.ini`, `Sombra.ini`) ship inside the release package under `Build\themes\`. Copy them into your own `themes\` folder if you want them in the **View → Themes** menu too.
+
+### Sharing your theme with someone else
+
+An exported `.ini` is **self-contained** — it carries every style it needs. To share:
+
+1. Send the recipient your `MyTheme.ini` file (email, USB stick, cloud share, whatever).
+2. Tell them to drop it into their own `<folder containing Notepad3.ini>\themes\` folder.
+3. They restart Notepad3 and pick **View → Themes → MyTheme**.
+
+No other setup is required on their side.
+
+### Switching back and forth
+
+Once your theme is installed, **View → Themes** gives you three useful options:
+
+| Menu item | What it does |
+|---|---|
+| **Standard Config** | Your styles as stored in `Notepad3.ini` (your "everyday" look). |
+| **MyTheme** (or any named theme) | Apply the chosen theme file from `themes\`. |
+| **Factory Reset** | Go back to Notepad3's built-in defaults. Does *not* delete your INI or theme files. |
+
+### Tweaking your theme later
+
+You don't need to re-export every time you change something:
+
+1. **View → Themes → MyTheme** (make sure it's the active theme — the radio mark is next to it).
+2. Open **Customize Schemes…** (**F12**), make your changes, click **OK**.
+3. Press **F7**. Notepad3 writes the changes straight back into `themes\MyTheme.ini`.
+
+> **Tip — make a backup before big experiments.** Before doing a large round of edits, copy `MyTheme.ini` somewhere safe (e.g. `MyTheme.bak.ini`). If you don't like the result you can simply replace the file and restart.
+
+For the formal mechanics of Export / Import (what exactly is written, how Import differs from a theme switch, etc.), continue with [§9 Export / Import](#9-export--import).
+
+---
+
+## 9. Export / Import
 
 Both actions are in the *Customize Schemes* dialog (**F12**), lower left.
 
 ### Export
 
 - File dialog filter: `*.ini` only.
+- **Default location** is the `themes\` folder beside your active `Notepad3.ini` — i.e. the same folder **View → Themes** scans for theme files. Notepad3 creates that folder on demand if it does not yet exist, so the first export "just works". If the folder is read-only or otherwise un-writable, the dialog still opens there — no silent fallback to a different directory — and you can navigate elsewhere manually before saving.
 - Written with `bForceAll = true` — **every** style is written out in full, regardless of whether it equals the default. Exported files are therefore self-contained and can be shared with anyone.
 - Sections written:
   - `[Custom Colors]` — 16 palette slots.
@@ -398,6 +479,7 @@ Both actions are in the *Customize Schemes* dialog (**F12**), lower left.
 ### Import
 
 - File dialog filter: `*.ini`.
+- **Default location** is the same `themes\` folder as Export (created on demand). Same no-fallback rule applies — you can navigate elsewhere from the dialog if you want to import an `.ini` that lives outside `themes\`.
 - Loads the target file into the cache and re-reads style strings out of it. Existing in-memory styles are replaced slot-by-slot for keys present in the imported file; keys missing from the imported file keep their current value.
 - Extensions are imported too — **your previous per-schema extension customisations will be overwritten** by whatever is in the imported file.
 - Import does *not* persist by itself. Until you save settings (or a later auto-save fires), re-starting Notepad3 reverts to the previously persisted state. Hence the usual recipe: *Import → verify → Save Settings Now* (**F7**).
@@ -414,7 +496,7 @@ Both actions are in the *Customize Schemes* dialog (**F12**), lower left.
 
 ---
 
-## 9. Anatomy of a style INI file
+## 10. Anatomy of a style INI file
 
 Whether it is your `Notepad3.ini` or a shipped theme like `Dark.ini`, the schema-related sections follow the same layout:
 
@@ -475,7 +557,7 @@ Observations:
 
 ---
 
-## 10. Toolbar themes (separate from colour schemes)
+## 11. Toolbar themes (separate from colour schemes)
 
 The directories under the project's `themes/` folder (`Flat`, `b&w`, `professional`, `std_scaled`, `c6248`) are **toolbar bitmap themes**, not style themes. They contain `.bmp` files (`Toolbar.bmp`, `ToolbarDisabled.bmp`, `ToolbarHot.bmp`, plus 24- and 48-pixel variants).
 
