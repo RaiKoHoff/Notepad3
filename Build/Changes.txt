@@ -36,13 +36,17 @@ UCH - (UCH)ARDET is an Encoding Detector Library
 
 
 ========================================================
-Current BETA Version 7.26.511.(build_#) (2026-05-08)
+Current BETA Version 7.26.514.(build_#) (2026-05-14)
 ========================================================
 
 --------------------------------------------------------
 NEW:
 --------------------------------------------------------
 [.xxx.x]- .
+[.514.1]- Documentation for customizing themes (#5867).
+[.514.1]- AHK v2 Lexer, fixing existing AHK_L lexer (LEX) (#5860).
+[.514.1]- Add HotStringOption to AHK lexer (LEX) (#5860).
+[.514.1]- Option to show non-print characters (#5850).
 [.507.1]- Hex/binary status-bar output modes with click-to-copy and binary literal input (TIN) (#5834).
 [.507.1]- Matching braces (Ctrl+B and with selection Ctrl+Shift+B) inside blocks (#5819).
 [.504.1]- Add homebrew JSON5 lexer (#5796).
@@ -51,6 +55,8 @@ NEW:
 CHANGES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.514.1]- Code-cleanup and hardening (#5863).
+[.514.1]- grepWin, pass target directory on command line instead of via INI (GRE) (#5857).
 [.507.1]- Polish "Page Setup..." dialog (#5834).
 [.507.1]- Extend navigation documentation (#5834).
 [.504.1]- Moving all *.txt files to Docs folder (for Setup, PAF and Portable) (#5811).
@@ -64,6 +70,11 @@ CHANGES:
 FIXES:
 --------------------------------------------------------
 [.xxx.x]- .
+[.514.1]- Drag&drop files - temp handling (immediate deleted on drop) (#5863).
+[.514.1]- AHK case insensitive (LEX) (#5860).
+[.514.1]- Lexer AHK_L minor issues (LEX) (#5860).
+[.514.1]- Enhance existing homebrew AHK lexer (LEX) (#5860).
+[.514.1]- Small optimization of PCRE2 regEx backward search (PCR) (#5836).
 [.511.1]- Modernize and align Lexilla lib related Style-Lexers definitions (LEX) (#5836).
 [.511.1]- Hardening of JSON5 lexer (#5843).
 [.508.1]- Small correction of factory default position (#5836).
@@ -87,7 +98,8 @@ FIXES:
 REMOVED:
 --------------------------------------------------------
 [.xxx.x]- .
-[.504.1]- Remove Readme* from ANSI-Art extension (-> README.md) (#5800).
+[.514.1]- HTML CSS styling trial artefacts (LEX) (#5860).
+[.504.1]- Readme* from ANSI-Art extension (-> README.md) (#5800).
 [.501.1]- Revert experimental CSS styling for HTML Lexer (#5787).
 
 --------------------------------------------------------
@@ -266,35 +278,9 @@ TRANSLATIONS (MUI):
 Version 6.25.822.1 (22 August 2025)
 ========================================================
 
---------------------------------------------------------
-NEW:
---------------------------------------------------------
-
---------------------------------------------------------
-CHANGES:
---------------------------------------------------------
-
---------------------------------------------------------
 FIXES:
 --------------------------------------------------------
 [.821.1]- MS Notepad Replacement no longer works after Win11 Cumulative Update for 24H2 (KB5063878) (SUP).
-
---------------------------------------------------------
-REMOVED:
---------------------------------------------------------
-
---------------------------------------------------------
-CHANGES Versions in Tools or Libraries:
---------------------------------------------------------
-[.711.1]- Update Lexilla Library (LEX) version 5.4.5 (2025-06-08).
-[.711.1]- Update Scintilla Library (SCI) version 5.5.7 (2025-06-08).
-[.711.1]- Update Oniguruma Regex (ONI) engine version 6.9.10 (2025/04/24).
-[.101.1]- Update grepWinNP3 (GRE) version 2.1.15.48 (2024-01-10).
-[1213.1]- Update MiniPath (MIN) version 1.0.2.191 (2022-12-13).
-
---------------------------------------------------------
-TRANSLATIONS (MUI):
---------------------------------------------------------
 
 
 ========================================================
