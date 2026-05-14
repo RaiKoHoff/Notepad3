@@ -561,6 +561,7 @@ BEGIN
     IDS_LEX_STR_WhileDef    "While 定义"
     IDS_LEX_STR_ForEachDef  "For Each 定义"
     IDS_LEX_STR_DocCmtKw    "文档注释关键字"
+    IDS_LEX_STR_UserDef     "User Defined"
 END
 
 STRINGTABLE

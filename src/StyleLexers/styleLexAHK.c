@@ -5,9 +5,9 @@
 KEYWORDLIST KeyWords_AHK = {
 
     // Flow of Control
-    "Break Catch Continue Critical Else Exit ExitApp Finally For GoSub Goto If Loop "
-    "Reg OnError OnExit Pause Reload Return SetBatchLines Sleep Switch Thread "
-    "Throw Try Until While",
+    "Break Catch Class Continue Critical Else Exit ExitApp Extends Finally For Get GoSub Goto "
+    "If Loop New Reg OnError OnExit Pause Reload Return Set SetBatchLines Sleep Static Switch "
+    "Thread Throw Try Until While",
 
     // Commands
     "AutoTrim BlockInput Click ClipWait ControlAddItem ControlChoose ControlChooseString "
@@ -155,7 +155,7 @@ KEYWORDLIST KeyWords_AHK = {
 
 
 EDITLEXER lexAHK = {
-    SCLEX_AHK, "ahk", IDS_LEX_AHK, L"AutoHotkey Script", L"ahk; ahkl; ia; scriptlet", L"",
+    SCLEX_AHK, "ahk", IDS_LEX_AHK, L"AutoHotkey Script", L"ahk; ahkl; ia", L"",
     &KeyWords_AHK, {
         { {STYLE_DEFAULT}, IDS_LEX_STR_Default, L"Default", L"", L"" },
         //{ SCE_AHK_DEFAULT, IDS_LEX_STR_Default, L"Default", L"", L"" },
@@ -175,7 +175,7 @@ EDITLEXER lexAHK = {
         { {SCE_AHK_WORD_KB}, IDS_LEX_STR_63311, L"Keys & Buttons", L"bold; fore:#FF00FF", L"" },
         { {SCE_AHK_WORD_VAR}, IDS_LEX_STR_63312, L"Built-In Variables", L"italic; fore:#CF00CF", L"" },
         { {SCE_AHK_WORD_SP}, IDS_LEX_STR_Special, L"Special", L"italic; fore:#BD8E00", L"" },
-        //{ {SCE_AHK_WORD_UD}, IDS_LEX_STR_63106, L"User Defined", L"fore:#800020", L"" },
+        { {SCE_AHK_WORD_UD}, IDS_LEX_STR_UserDef, L"User Defined", L"fore:#800020", L"" },
         { {SCE_AHK_VARREFKW}, IDS_LEX_STR_63313, L"Variable Keyword", L"italic; fore:#CF00CF; back:#F9F9FF", L"" },
         EDITLEXER_SENTINEL
     }

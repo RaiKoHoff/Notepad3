@@ -561,6 +561,7 @@ BEGIN
     IDS_LEX_STR_WhileDef    "Definição While"
     IDS_LEX_STR_ForEachDef  "Definição For Each"
     IDS_LEX_STR_DocCmtKw    "Palavra-chave do comentário Doc"
+    IDS_LEX_STR_UserDef     "User Defined"
 END
 
 STRINGTABLE

@@ -561,6 +561,7 @@ BEGIN
     IDS_LEX_STR_WhileDef    "While Def"
     IDS_LEX_STR_ForEachDef  "For Each Def"
     IDS_LEX_STR_DocCmtKw    "parola chiave coomento"
+    IDS_LEX_STR_UserDef     "User Defined"
 END
 
 STRINGTABLE

@@ -560,9 +560,11 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                     }
                     nextState = SCE_AHK_LABEL;
                 }
-            }
-            else if (WordChar.Contains(sc.ch)) {
-                sc.SetState(SCE_AHK_IDENTIFIER);
+                else {
+                    // Mid-line single colon: ternary `?:`, object/map literal key:value
+                    sc.SetState(SCE_AHK_SYNOPERATOR);
+                    nextState = SCE_AHK_DEFAULT;
+                }
             }
         }
         if (!IsASpace(sc.ch)) {
