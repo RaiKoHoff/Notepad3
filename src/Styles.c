@@ -63,6 +63,7 @@ static PEDITLEXER g_pLexArray[] = {
     &lexCONF,          // Apache Config Files
     &lexASM,           // Assembly Script
     &lexAHK,           // AutoHotkey Script
+    &lexAHK2,          // AutoHotkey v2 Script
     &lexAU3,           // AutoIt3 Script
     &lexAVS,           // AviSynth Script
     &lexAwk,           // Awk Script

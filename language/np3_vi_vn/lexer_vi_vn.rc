@@ -110,6 +110,7 @@ BEGIN
     IDS_LEX_AUTOIT3         "Kịch bản AutoIt3"
     IDS_LEX_LATEX           "Tệp LaTeX"
     IDS_LEX_AHK             "Kịch bản AutoHotkey"
+    IDS_LEX_AHK2            "AutoHotkey v2 Script"
     IDS_LEX_CMAKE           "Kịch bản CMake"
     IDS_LEX_AVI_SYNTH       "Kịch bản AviSynth"
 END

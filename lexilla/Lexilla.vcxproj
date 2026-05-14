@@ -107,6 +107,7 @@
     <ClCompile Include="lexers\LexVHDL.cxx" />
     <ClCompile Include="lexers\LexYAML.cxx" />
     <ClCompile Include="lexers_x\LexAHK.cxx" />
+    <ClCompile Include="lexers_x\LexAHK2.cxx" />
     <ClCompile Include="lexers_x\LexCSV.cxx" />
     <ClCompile Include="lexers_x\LexerUtils.cxx" />
     <ClCompile Include="lexers\LexJSON.cxx" />

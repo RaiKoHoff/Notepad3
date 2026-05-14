@@ -986,6 +986,7 @@
     <ClCompile Include="StyleLexers\EditLexer.c" />
     <ClCompile Include="StyleLexers\styleLexAbaqus.c" />
     <ClCompile Include="StyleLexers\styleLexAHK.c" />
+    <ClCompile Include="StyleLexers\styleLexAHK2.c" />
     <ClCompile Include="StyleLexers\styleLexDart.c" />
     <ClCompile Include="StyleLexers\styleLexFortran.c" />
     <ClCompile Include="StyleLexers\styleLexJulia.c" />

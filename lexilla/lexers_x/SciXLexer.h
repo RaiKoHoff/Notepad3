@@ -8,6 +8,7 @@
 #define SCLEX_KOTLIN      202
 #define SCLEX_SYSVERILOG  203
 #define SCLEX_JSON5       204
+#define SCLEX_AHK2        205   /* AutoHotkey v2 — shares SCE_AHK_* style ids */
 
 // -----------------------------------------------------------------------------
 // !!!!! ADD  Lexer Linkage in:  scintilla\src\Catalogue.cxx  !!!!!
@@ -97,25 +98,3 @@
 #define SCE_JSON5_LDKEYWORD 12
 #define SCE_JSON5_ERROR 13
 
-
-//#define SCE_YAML_DEFAULT 0
-//#define SCE_YAML_COMMENT 1
-//#define SCE_YAML_IDENTIFIER 2
-//#define SCE_YAML_KEYWORD 3
-//#define SCE_YAML_NUMBER 4
-//#define SCE_YAML_REFERENCE 5
-//#define SCE_YAML_DOCUMENT 6
-//#define SCE_YAML_TEXT 7
-//#define SCE_YAML_ERROR 8
-//#define SCE_YAML_OPERATOR 9
-//#define SCE_YAML_DIRECTIVE 10
-//#define SCE_YAML_STRING1 11
-//#define SCE_YAML_STRING2 12
-//#define SCE_YAML_ESCAPECHAR 13
-//#define SCE_YAML_KEY 14
-//#define SCE_YAML_BLOCK_SCALAR 15
-//#define SCE_YAML_TAG 16
-//#define SCE_YAML_VERBATIM_TAG 17
-//#define SCE_YAML_DATETIME 18
-//#define SCE_YAML_INDENTED_TEXT 19
-//

@@ -1,0 +1,112 @@
+; ============================================================================
+;  Notepad3 AutoHotkey v2 lexer smoke test
+;  Open in Notepad3 to visually verify SCLEX_AHK2 styling.
+;  Covers every category the v2 lexer (C-α through C-δ) is expected to handle.
+; ============================================================================
+
+#Requires AutoHotkey v2.0
+#SingleInstance Force
+#Warn All, MsgBox
+
+; --- line + block comments (toggle should work in both directions) -------
+/*
+   block comment, /* and */ must start a line
+*/
+
+;@function Greet -- doc-comment style (`;@` prefix -> SCE_AHK_COMMENTDOC)
+;@param name - the person to greet
+;@returns nothing
+
+; --- numbers (incl. scientific notation from L4) -------------------------
+ints   := 42
+hex    := 0xFFAA
+flt    := 3.14
+sci1   := 1e5
+sci2   := 1.5e-3
+sci3   := 0.5E+10
+
+; --- strings + v2 interpolation `%expr%` ---------------------------------
+name   := "World"
+greeting := "Hello, %name%!"             ; %name% is dynamic deref inside string
+escaped  := "tab`there, quote`"end"      ; backtick escape + doubled quote
+
+; --- expression assignment (no v1 `=` legacy) -----------------------------
+result := 3 + 4 * (2 ** 8)
+result += 10                             ; compound +=
+result .= " suffix"                      ; v2 compound .=  (string concat assign)
+result := (cond := A_Hour > 9) ? "yes" : "no"   ; ternary, mid-line `:`
+
+; --- multi-char operators ------------------------------------------------
+ok := (x >= 10) && (y != "z") || !done
+identical := (a == b)                    ; v2 `==` is identity
+arr := [1, 2, 3, "four"]
+obj := {key: "value", n: 42}             ; object literal
+m   := Map("one", 1, "two", 2)           ; Map() constructor -> WORD_FN
+buf := Buffer(1024)                      ; Buffer() constructor -> WORD_FN
+
+; --- fat-arrow lambda (v2-only) -----------------------------------------
+double := (x) => x * 2
+adder  := (a, b := 10) => a + b
+chain  := obj.method().result            ; member access via `.` (L1)
+
+; --- hotstrings with options --------------------------------------------
+:*?B0:btw::by the way                    ; `*?B0` styles as HotStringOption
+::omg::Oh my gosh
+
+; --- hotkeys (v2 brace-block form, no command-mode body) ----------------
+^!a:: {
+    Send("{Tab}{Enter}")                 ; key braces live INSIDE string in v2
+    Run("notepad.exe")
+}
+
+~LButton & RButton:: {
+    ToolTip("custom combo")
+}
+
+#HotIf WinActive("ahk_class Notepad")    ; v2 #HotIf expression context (D2)
+^!q:: ExitApp()
+#HotIf
+
+; --- class with static / methods / properties / fat-arrow methods -------
+class Animal {
+    static count := 0
+
+    __New(name) {
+        this.name := name
+        Animal.count++
+    }
+
+    Speak() => MsgBox("${name} speaks".Replace("${name}", this.name))
+
+    Age {
+        get => this._age
+        set => this._age := value
+    }
+}
+
+class Dog extends Animal {
+    Bark() {
+        SoundBeep()
+        MsgBox(this.name " barks")
+    }
+}
+
+pet := Animal("Rex")
+pet.Speak()
+
+; --- continuation section (Join opt -> expression body, D1) --------------
+total := 0 +
+(Join
+    1 + 2
+  + 3 * 4
+  + StrLen("hello")
+)
+
+; --- literal-string continuation (no Join -> body styles as STRING) -----
+msg :=
+(
+Line one of the message.
+Line two.
+)
+
+ExitApp(0)

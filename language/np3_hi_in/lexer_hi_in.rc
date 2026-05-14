@@ -110,6 +110,7 @@ BEGIN
     IDS_LEX_AUTOIT3         "AutoIt3 स्क्रिप्ट"
     IDS_LEX_LATEX           "LaTeX फ़ाइल"
     IDS_LEX_AHK             "AutoHotkey स्क्रिप्ट"
+    IDS_LEX_AHK2            "AutoHotkey v2 Script"
     IDS_LEX_CMAKE           "Cmake स्क्रिप्ट"
     IDS_LEX_AVI_SYNTH       "AviSynth स्क्रिप्ट"
 END

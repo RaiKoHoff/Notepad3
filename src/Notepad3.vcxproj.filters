@@ -432,6 +432,9 @@
     <ClCompile Include="StyleLexers\styleLexAHK.c">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
+    <ClCompile Include="StyleLexers\styleLexAHK2.c">
+      <Filter>Source Files\StyleLexers</Filter>
+    </ClCompile>
     <ClCompile Include="DynStrg.c">
       <Filter>Source Files</Filter>
     </ClCompile>

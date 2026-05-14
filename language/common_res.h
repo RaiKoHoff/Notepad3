@@ -1007,6 +1007,7 @@
 #define IDS_LEX_AUTOIT3                 63035
 #define IDS_LEX_LATEX                   63036
 #define IDS_LEX_AHK                     63037
+#define IDS_LEX_AHK2                    63060
 #define IDS_LEX_CMAKE                   63038
 #define IDS_LEX_AVI_SYNTH               63039
 #define IDS_LEX_MARKDOWN                63040
