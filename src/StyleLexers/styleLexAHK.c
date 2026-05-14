@@ -168,6 +168,7 @@ EDITLEXER lexAHK = {
         { {SCE_AHK_IDENTIFIER}, IDS_LEX_STR_Identifier, L"Identifier", L"fore:#CF2F0F", L"" },
         { {SCE_AHK_VARREF}, IDS_LEX_STR_63309, L"Variable Dereferencing", L"fore:#CF2F0F; back:#E4FFE4", L"" },
         { {SCE_AHK_LABEL}, IDS_LEX_STR_Label, L"Label", L"fore:#000000; back:#FFFFA1", L"" },
+        { {SCE_AHK_HOTSTRINGOPT}, IDS_LEX_STR_HotStrgOp, L"HotStringOption", L"bold; fore:#7F007F", L"" },
         { {SCE_AHK_WORD_CF}, IDS_LEX_STR_63310, L"Flow of Control", L"bold; fore:#880088", L"" },
         { {SCE_AHK_WORD_CMD}, IDS_LEX_STR_Cmd, L"Command", L"fore:#0036D9", L"" },
         { {SCE_AHK_WORD_FN}, IDS_LEX_STR_Function, L"Function", L"italic; fore:#0F707F", L"" },

@@ -493,6 +493,14 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
                 continue;
             }
         }
+        else if (sc.state == SCE_AHK_HOTSTRINGOPT) {
+            // End of hotstring option run :*?B0: -> abbr
+            if (sc.ch == ':') {
+                sc.SetState(SCE_AHK_SYNOPERATOR);
+                nextState = SCE_AHK_LABEL;
+                continue;
+            }
+        }
 
         // Determine if a new state should be entered
         if (sc.state == SCE_AHK_DEFAULT) {
@@ -552,13 +560,18 @@ void SCI_METHOD LexerAHK::Lex(Sci_PositionU startPos, Sci_Position lengthDoc, in
             }
             else if (sc.ch == ':') {
                 if (bOnlySpaces) {
-                    // Start of hotstring :*:foo::Stuff or ::btw::Stuff
+                    // Start of hotstring :opts:abbr::Stuff or ::abbr::Stuff
                     bIsHotstring = true;
                     sc.SetState(SCE_AHK_SYNOPERATOR);
                     if (sc.chNext == ':') {
+                        // bare ::abbr::Stuff (no option run)
                         sc.Forward();
+                        nextState = SCE_AHK_LABEL;
                     }
-                    nextState = SCE_AHK_LABEL;
+                    else {
+                        // :opts:abbr::Stuff -- color the option chars distinctly
+                        nextState = SCE_AHK_HOTSTRINGOPT;
+                    }
                 }
                 else {
                     // Mid-line single colon: ternary `?:`, object/map literal key:value
