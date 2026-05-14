@@ -36,6 +36,16 @@
 
 - [ ] **(Q3) Scrollbar Marks** - Highlights in scrollbar (search matches, bookmarks)
 
+- [ ] **(Q3) Plugin System** - Customizable / loadable plugin support
+  - Issue: [#5071](https://github.com/rizonesoft/Notepad3/issues/5071)
+  - Architectural: extension API surface, lifetime, sandboxing
+
+- [ ] **(Q3) Code Compress/Pretty** - Minify/beautify code
+  - Issue: [#5515](https://github.com/rizonesoft/Notepad3/issues/5515) - JSON format, compress, escape/unescape
+  - Issue: [#1790](https://github.com/rizonesoft/Notepad3/issues/1790) - Call external formatter per scheme
+  - Issue: [#2839](https://github.com/rizonesoft/Notepad3/issues/2839) - Tidy HTML/XML
+  - (Maybe) Run Scripts: [#4045](https://github.com/rizonesoft/Notepad3/issues/4045) - Execute Python/Perl
+  - Issue: [#4126](https://github.com/rizonesoft/Notepad3/issues/4126) - Custom Execute Document command
 
 ## High Priority
 
@@ -101,6 +111,29 @@
 - [x] **(Q1) BUG: Black line in Language menu** - ✅ FIXED
   - Issue: [#5361](https://github.com/rizonesoft/Notepad3/issues/5361)
   - Fix: Removed `WM_UAHNCPAINTMENUPOPUP` from message interception - was using wrong window handle
+- [x] **(Q1) BUG: Typing causes cursor to flash, disappear and reappear** - Regression
+  - Issue: [#4942](https://github.com/rizonesoft/Notepad3/issues/4942)
+- [x] **(Q1) BUG: Holding Ctrl+S inserts DC3 characters** - Save shortcut leaks into buffer when repeated
+  - Issue: [#5178](https://github.com/rizonesoft/Notepad3/issues/5178)
+- [x] **(Q1) BUG: Redo button stays active after redo stack exhausted**
+  - Issue: [#5149](https://github.com/rizonesoft/Notepad3/issues/5149)
+- [x] **(Q1) BUG: Ctrl+Shift+D redo deletes penultimate line and merges with next**
+  - Issue: [#5150](https://github.com/rizonesoft/Notepad3/issues/5150)
+- [x] **(Q1) BUG: "Only One Instance per File" doesn't always work**
+  - Issue: [#5122](https://github.com/rizonesoft/Notepad3/issues/5122),
+  - Issue: [#4636](https://github.com/rizonesoft/Notepad3/issues/4636)
+- [x] **(Q1) BUG: New Empty Window prompts to save when nothing to save**
+  - Issue: [#5164](https://github.com/rizonesoft/Notepad3/issues/5164)
+- [x] **(Q1) BUG: New Empty Window button broken when AutoLoadMRUFile=true**
+  - Issue: [#5174](https://github.com/rizonesoft/Notepad3/issues/5174)
+- [x] **(Q1) BUG: Close-with-unsaved system dialog disappears on second instance close**
+  - Issue: [#4945](https://github.com/rizonesoft/Notepad3/issues/4945)
+- [x] **(Q1) BUG: Screen needs manual refresh after opening file with /g switch**
+  - Issue: [#5103](https://github.com/rizonesoft/Notepad3/issues/5103)
+- [x] **(Q2) BUG: Filename starting with "- " opens blank file from CLI**
+  - Issue: [#5160](https://github.com/rizonesoft/Notepad3/issues/5160)
+- [x] **(Q2) BUG: Selection (Sel) and Occurrences (Occ) status counts incorrect**
+  - Issue: [#5176](https://github.com/rizonesoft/Notepad3/issues/5176)
 
 ## Medium Priority
 
@@ -110,14 +143,38 @@
 - [ ] (Q2) Installer testing on various Windows versions
 - [x] **AVX2 Build** - ✅ Added x64_AVX2 to CI matrix
   - Issue: [#4240](https://github.com/rizonesoft/Notepad3/issues/4240)
-- [ ] (Q2) Language file updates
+- [x] (Q2) Language file updates
 - [ ] **(Q1) Move Beta Page to rizonesoft.com** - Host beta downloads on main site
   - Issue: [#1129](https://github.com/rizonesoft/Notepad3/issues/1129)
-- [ ] **(Q2) Improve Temp File Handling** - Better UX for files from archives
+- [x] **(Q2) Improve Temp File Handling** - Better UX for files from archives - ✅ FIXED
   - Issue: [#5343](https://github.com/rizonesoft/Notepad3/issues/5343)
 - [x] **(Q1) Force Save Option** - ✅ FIXED
   - Issue: [#5444](https://github.com/rizonesoft/Notepad3/issues/5444)
   - Fix: Added `Settings.FixTrailingBlanks` check to early return in `FileSave()`
+- [ ] **(Q2) BUG: Korean IME composition box obscures the line of text being edited**
+  - Issue: [#2982](https://github.com/rizonesoft/Notepad3/issues/2982)
+- [x] **(Q2) BUG: Mixed tiny menu / huge dialog icons across screens with different DPI**
+  - Issue: [#3150](https://github.com/rizonesoft/Notepad3/issues/3150)
+- [ ] **(Q2) BUG: AutoCompleteWordCharSet setting has no effect**
+  - Issue: [#4029](https://github.com/rizonesoft/Notepad3/issues/4029)
+- [ ] **(Q2) BUG: Column Wrap doesn't work on Chinese / CJK text**
+  - Issue: [#4940](https://github.com/rizonesoft/Notepad3/issues/4940)
+- [x] **(Q2) BUG: Scrollbar can't reach bottom when processing very large files**
+  - Issue: [#5092](https://github.com/rizonesoft/Notepad3/issues/5092)
+- [ ] **(Q2) BUG: Accented vowels typed lowercase with Caps Lock on**
+  - Issue: [#5097](https://github.com/rizonesoft/Notepad3/issues/5097)
+- [x] **(Q2) BUG: Ctrl+Drag&Drop disabled while multi-cursor active**
+  - Issue: [#5153](https://github.com/rizonesoft/Notepad3/issues/5153)
+- [x] **(Q2) BUG: Taskbar window order changes after minimize**
+  - Issue: [#5159](https://github.com/rizonesoft/Notepad3/issues/5159)
+- [x] **(Q2) BUG: Menu Bar accelerator keys unreliable in non-English locales**
+  - Issue: [#5169](https://github.com/rizonesoft/Notepad3/issues/5169)
+- [x] **(Q2) BUG: Taskbar icon refuses to combine/group**
+  - Issue: [#5175](https://github.com/rizonesoft/Notepad3/issues/5175)
+- [x] **(Q2) BUG: Regex `{min,max}` quantifier not supported by current grammar**
+  - Issue: [#5180](https://github.com/rizonesoft/Notepad3/issues/5180)
+- [x] **(Q2) BUG: Color dialog RGB fields accept only 2 of 3 digits when typed**
+  - Issue: [#5185](https://github.com/rizonesoft/Notepad3/issues/5185)
 
 ## GitHub Actions
 
@@ -155,6 +212,8 @@
   - [ ] Swift, Zig, Scala, F#, WASM, Vim, OCaml, Smali, GraphViz, Rebol
   - (Maybe) CSS in `<style>` tags: [#2061](https://github.com/rizonesoft/Notepad3/issues/2061) - Embedded language complexity
   - [ ] BUG: CSS keywords: [#4214](https://github.com/rizonesoft/Notepad3/issues/4214) - Update CSS property list
+  - [ ] BUG: CSS syntax highlighting incorrect: [#3572](https://github.com/rizonesoft/Notepad3/issues/3572)
+  - [ ] HTML: [#3470](https://github.com/rizonesoft/Notepad3/issues/3470) - Expand HTML lexer coverage / "full HTML support"
 - [ ] **(Q3) BATCH Code Folding** - Fold `if`/`for` blocks with parentheses
   - Issue: [#4484](https://github.com/rizonesoft/Notepad3/issues/4484)
   - BUG: [#4959](https://github.com/rizonesoft/Notepad3/issues/4959) - Complex for loops highlighting
@@ -196,19 +255,17 @@
   - Issue: [#5403](https://github.com/rizonesoft/Notepad3/issues/5403)
 - [ ] **(Q2) LaTeX Input Method** - LaTeX character insertion (`\alpha` → α)
 - [x] **(Q2) Base64 Encode/Decode** - ✅ IMPLEMENTED via `IDM_EDIT_BASE64ENCODE/DECODE`
-- [ ] **(Q1) Insert Unicode Control Characters** - LRM, RLM, ZWJ, ZWNJ, etc.
+- [x] **(Q1) Insert Unicode Control Characters** - LRM, RLM, ZWJ, ZWNJ, etc.
 - [x] **(Q2) Number Base Conversion** - Binary/Decimal/Octal/Hex - ✅ IMPLEMENTED
   - Issue: [#5059](https://github.com/rizonesoft/Notepad3/issues/5059) - TinyExpr output in hex/binary - ⚠ Validation ❗
 - [ ] **(Q2) Character Map Conversions** - Fullwidth↔Halfwidth, CJK transforms (`LCMapStringEx`)
-- [ ] **(Q3) Code Compress/Pretty** - Minify/beautify code
-  - Issue: [#5515](https://github.com/rizonesoft/Notepad3/issues/5515) - JSON format, compress, escape/unescape
-  - Issue: [#1790](https://github.com/rizonesoft/Notepad3/issues/1790) - Call external formatter per scheme
-  - Issue: [#2839](https://github.com/rizonesoft/Notepad3/issues/2839) - Tidy HTML/XML
-  - (Maybe) Run Scripts: [#4045](https://github.com/rizonesoft/Notepad3/issues/4045) - Execute Python/Perl
-  - Issue: [#4126](https://github.com/rizonesoft/Notepad3/issues/4126) - Custom Execute Document command
 - [x] **(Q1) Insert GUID** - ✅ IMPLEMENTED via `IDM_EDIT_INSERT_GUID` (Ctrl+Shift+.)
 - [ ] **(Q1) Insert Shebang** - Insert interpreter line
 - [x] **(Q1) Insert Timestamps** - ✅ IMPLEMENTED via `IDM_EDIT_INSERT_SHORTDATE/LONGDATE` (Ctrl+F5, Shift+F5) and `CMD_INSERT_TIMESTAMP`
+- [ ] **(Q2) Time/Date Expressions in TinyExpr** - Support `time()` / date arithmetic in expression evaluator
+  - Issue: [#4760](https://github.com/rizonesoft/Notepad3/issues/4760)
+- [ ] **(Q1) Clarify "Remove Duplicate Lines" naming** - Two submenu entries have different meanings, confusing UX
+  - Issue: [#5154](https://github.com/rizonesoft/Notepad3/issues/5154)
 
 ### Navigation
 - [ ] **(Q3) Navigate Backward/Forward** - VS Code-like history navigation
@@ -239,6 +296,18 @@
   - Issue: [#4627](https://github.com/rizonesoft/Notepad3/issues/4627)
 - [x] **(Q2) Find Dialog Position Persistence** - ✅ IMPLEMENTED via `FindReplaceDlgPosX/Y` saved to INI
   - Issue: [#3905](https://github.com/rizonesoft/Notepad3/issues/3905) - ✅ Resolved
+- [ ] **(Q2) Configurable Font Priority/Fallback List** - User-editable preferred Code/Text font chain
+  - Issue: [#4611](https://github.com/rizonesoft/Notepad3/issues/4611)
+- [ ] **(Q2) Improve Selection & Convert Panel layout**
+  - Issue: [#5074](https://github.com/rizonesoft/Notepad3/issues/5074)
+- [ ] **(Q2) Separate Recent Files Menu** - Split MRU out of File menu
+  - Issue: [#5177](https://github.com/rizonesoft/Notepad3/issues/5177)
+- [ ] **(Q3) Discussion: Gray out menu items when no selection**
+  - Issue: [#4938](https://github.com/rizonesoft/Notepad3/issues/4938)
+- [ ] **(Q3) Keep current line visible after Word-Wrap toggle**
+  - Issue: [#4944](https://github.com/rizonesoft/Notepad3/issues/4944)
+- [ ] **(Q2) MiniPath: "Minimize on Close" option**
+  - Issue: [#4946](https://github.com/rizonesoft/Notepad3/issues/4946)
 
 ### Copy/Clipboard
 - [ ] **(Q2) Copy as RTF** - Rich text copy with syntax highlighting

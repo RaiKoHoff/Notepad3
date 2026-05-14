@@ -93,6 +93,7 @@ CONSTANTS_T const Constants = {
     , L"Suppressed Messages"               // Inifile Section "SuppressedMessages"
     , {                                    // SuppressKey — keys under [Suppressed Messages]
           L"AllowClearUndoHistory"
+        , L"InfoDropCap"
         , L"InfoInstanceExist"
         , L"MsgConv1"
         , L"MsgConv2"
@@ -357,6 +358,10 @@ static inline void _SplitUndoTransaction()
 
 static void _DelayClearCallTip(const LONG64 delay);
 static void _DelaySplitUndoTransaction(const LONG64 delay);
+static void _PruneOldDropSnapshots(DWORD maxAgeSecs);
+static bool _IsDropSnapshotPath(const HPATHL hpth);
+static void _RegisterDropSnapshot(const HPATHL hpth);
+static void _CleanupDropSnapshots(bool dropAll);
 
 // ----------------------------------------------------------------------------
 
@@ -1026,6 +1031,9 @@ static void _CleanUpResources(const HWND hwnd, bool bIsInitialized)
         KillTimer(hwnd, ID_PASTEBOARDTIMER);
         KillTimer(hwnd, ID_TINYEXPRCOPYTIMER);
     }
+
+    // Delete any drag-and-drop snapshots this instance still owns.
+    _CleanupDropSnapshots(true);
 
     if (Globals.pStdDarkModeIniStyles) {
         FreeMem(Globals.pStdDarkModeIniStyles);
@@ -2420,6 +2428,17 @@ HWND InitInstance(const HINSTANCE hInstance, int nCmdShow)
 
     Path_Release(hfile_pth);
 
+    // Clean up stale drag-and-drop snapshots left behind by crashed/killed
+    // child instances (older than 24 h).
+    _PruneOldDropSnapshots(24UL * 60UL * 60UL);
+
+    // If this instance was launched with a snapshot path as CLI argument
+    // (i.e. spawned by a parent NP3 in MsgDropFiles), register it so we
+    // own its cleanup on exit.
+    if (_IsDropSnapshotPath(Paths.CurrentFile)) {
+        _RegisterDropSnapshot(Paths.CurrentFile);
+    }
+
     s_bInitAppDone = true;
 
     return Globals.hwndMain;
@@ -3795,10 +3814,294 @@ LRESULT MsgDrawItem(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 //=============================================================================
 //
+//  Drag-and-drop temp-file snapshots
+//
+//  Sources like 7-Zip release (and delete) their temp files as soon as the
+//  drag completes. If we delay (modal save prompt, ShellExecuteEx hand-off
+//  to a new instance), the source is gone before we read it. The helpers
+//  below copy ephemeral drops into <%TEMP%>\Notepad3\drops\ synchronously
+//  inside MsgDropFiles so consumers find a stable on-disk copy. Older
+//  snapshots are pruned on each drop (>1 h) and at startup (>24 h).
+//
+#define DROP_SNAPSHOT_SUBDIR L"Notepad3\\drops"
+
+static bool _GetDropSnapshotDir(HPATHL hpth_out)
+{
+    WCHAR wchTemp[MAX_PATH_EXPLICIT] = { L'\0' };
+    DWORD const len = GetTempPathW(COUNTOF(wchTemp), wchTemp);
+    if ((len == 0) || (len >= COUNTOF(wchTemp))) {
+        return false;
+    }
+    Path_Reset(hpth_out, wchTemp);
+    Path_Append(hpth_out, DROP_SNAPSHOT_SUBDIR);
+    return true;
+}
+
+static bool _PathHasPrefixW(const HPATHL hpth, LPCWSTR pfx)
+{
+    if (!pfx || !*pfx) {
+        return false;
+    }
+    LPCWSTR const p = Path_Get(hpth);
+    if (!p) {
+        return false;
+    }
+    size_t pfxLen = wcslen(pfx);
+    // Trim a trailing separator on the prefix so the boundary check below is uniform.
+    while ((pfxLen > 0) && ((pfx[pfxLen - 1] == L'\\') || (pfx[pfxLen - 1] == L'/'))) {
+        --pfxLen;
+    }
+    if (pfxLen == 0) {
+        return false;
+    }
+    size_t const pLen = wcslen(p);
+    if (pLen < pfxLen) {
+        return false;
+    }
+    if (CompareStringOrdinal(p, (int)pfxLen, pfx, (int)pfxLen, TRUE) != CSTR_EQUAL) {
+        return false;
+    }
+    // Require a path boundary right after the prefix to avoid \Temp matching \TempOther.
+    if (pLen == pfxLen) {
+        return true;
+    }
+    return (p[pfxLen] == L'\\') || (p[pfxLen] == L'/');
+}
+
+static bool _IsEphemeralPath(const HPATHL hpth)
+{
+    if (Path_IsEmpty(hpth)) {
+        return false;
+    }
+
+    WCHAR wchTemp[MAX_PATH_EXPLICIT] = { L'\0' };
+    if (GetTempPathW(COUNTOF(wchTemp), wchTemp) && _PathHasPrefixW(hpth, wchTemp)) {
+        return true;
+    }
+
+    HPATHL hLocalAppData = Path_Allocate(NULL);
+    bool   result = false;
+    if (Path_GetKnownFolder(&FOLDERID_LocalAppData, hLocalAppData)) {
+        HPATHL hCandidate = Path_Copy(hLocalAppData);
+        Path_Append(hCandidate, L"Temp");
+        if (_PathHasPrefixW(hpth, Path_Get(hCandidate))) {
+            result = true;
+        }
+        Path_Release(hCandidate);
+
+        if (!result) {
+            hCandidate = Path_Copy(hLocalAppData);
+            Path_Append(hCandidate, L"Microsoft\\Windows\\INetCache");
+            if (_PathHasPrefixW(hpth, Path_Get(hCandidate))) {
+                result = true;
+            }
+            Path_Release(hCandidate);
+        }
+    }
+    Path_Release(hLocalAppData);
+    return result;
+}
+
+static HPATHL _BuildSnapshotPath(const HPATHL orig, UINT idx)
+{
+    HPATHL hDir = Path_Allocate(NULL);
+    if (!_GetDropSnapshotDir(hDir)) {
+        Path_Release(hDir);
+        return NULL;
+    }
+    HRESULT const hr = Path_CreateDirectoryEx(hDir);
+    if (FAILED(hr) && (hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))) {
+        Path_Release(hDir);
+        return NULL;
+    }
+
+    LPCWSTR const baseName = Path_FindFileName(orig);
+    WCHAR wchLeaf[MAX_PATH_EXPLICIT];
+    StringCchPrintfW(wchLeaf, COUNTOF(wchLeaf), L"np3drop-%lu-%llu-%u-%s",
+                     (unsigned long)GetCurrentProcessId(),
+                     (unsigned long long)GetTickCount64(), idx,
+                     (baseName && *baseName) ? baseName : L"untitled");
+
+    HPATHL hSnap = Path_Copy(hDir);
+    Path_Append(hSnap, wchLeaf);
+    Path_Release(hDir);
+    return hSnap;
+}
+
+static bool _IsProcessAlive(DWORD pid)
+{
+    if (pid == 0) {
+        return false;
+    }
+    HANDLE const h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!h) {
+        return false; // process gone (or denied — treat as gone)
+    }
+    DWORD exitCode = 0;
+    BOOL  const ok = GetExitCodeProcess(h, &exitCode);
+    CloseHandle(h);
+    return ok && (exitCode == STILL_ACTIVE);
+}
+
+static void _PruneOldDropSnapshots(DWORD maxAgeSecs)
+{
+    HPATHL hDir = Path_Allocate(NULL);
+    if (!_GetDropSnapshotDir(hDir) || !Path_IsExistingDirectory(hDir)) {
+        Path_Release(hDir);
+        return;
+    }
+
+    HPATHL hPattern = Path_Copy(hDir);
+    Path_Append(hPattern, L"np3drop-*");
+
+    WIN32_FIND_DATAW fd = { 0 };
+    HANDLE const hFind = Path_FindFirstFile(hPattern, &fd);
+    Path_Release(hPattern);
+    if (hFind == INVALID_HANDLE_VALUE) {
+        Path_Release(hDir);
+        return;
+    }
+
+    // Filename layout: "np3drop-<pid>-<tick>-<idx>-<basename>".
+    // <tick> is GetTickCount64() at creation — survives CopyFileW's mtime
+    // preservation. <pid> lets us skip snapshots that another live NP3 owns.
+    DWORD     const ourPid   = GetCurrentProcessId();
+    ULONGLONG const nowTick  = GetTickCount64();
+    ULONGLONG const maxAgeMs = (ULONGLONG)maxAgeSecs * 1000ULL;
+
+    do {
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            continue;
+        }
+        WCHAR const* p = fd.cFileName;
+        if (wcsncmp(p, L"np3drop-", 8) != 0) {
+            continue;
+        }
+        p += 8;
+        WCHAR*    endp = NULL;
+        DWORD     const filePid = (DWORD)wcstoul(p, &endp, 10);
+        if (!endp || (endp == p) || (*endp != L'-')) {
+            continue; // unexpected layout
+        }
+        p = endp + 1;
+        ULONGLONG const createTick = _wcstoui64(p, &endp, 10);
+        if (!endp || (endp == p) || (*endp != L'-')) {
+            continue;
+        }
+        // Skip snapshots owned by another live NP3 instance.
+        if ((filePid != ourPid) && _IsProcessAlive(filePid)) {
+            continue;
+        }
+        // A reboot resets GetTickCount64, so any file whose tick is in the
+        // future (relative to "now") is from a previous boot — definitely stale.
+        bool const stale = (createTick > nowTick) || ((nowTick - createTick) > maxAgeMs);
+        if (!stale) {
+            continue;
+        }
+        HPATHL hFile = Path_Copy(hDir);
+        Path_Append(hFile, fd.cFileName);
+        // Never delete our own currently-loaded snapshot.
+        if (Path_StrgComparePath(hFile, Paths.CurrentFile, Paths.ModuleDirectory, true) != 0) {
+            Path_DeleteFile(hFile);
+        }
+        Path_Release(hFile);
+    } while (FindNextFileW(hFind, &fd));
+
+    FindClose(hFind);
+    Path_Release(hDir);
+}
+
+
+// ----------------------------------------------------------------------------
+//  Snapshot registry
+//
+//  Per-process list of drag-and-drop snapshots that this instance is
+//  responsible for cleaning up. The age-based pruner alone is too lazy
+//  (snapshots accumulate during long sessions); the registry adds:
+//    * sweep after each MsgDropFiles dispatch (drops any registered snapshot
+//      that is no longer the current document),
+//    * drain at process exit (cleans whatever is left).
+//  Snapshots handed off to spawned child instances are NOT registered by the
+//  spawner — the child registers its own when it sees a snapshot-dir CLI arg.
+//
+typedef struct _DropSnapshotEntry {
+    HPATHL                     hpth;
+    struct _DropSnapshotEntry* next;
+} DropSnapshotEntry;
+
+static DropSnapshotEntry* s_dropSnapshots = NULL;
+
+static bool _IsDropSnapshotPath(const HPATHL hpth)
+{
+    if (Path_IsEmpty(hpth)) {
+        return false;
+    }
+    HPATHL hDir = Path_Allocate(NULL);
+    bool   result = false;
+    if (_GetDropSnapshotDir(hDir)) {
+        result = _PathHasPrefixW(hpth, Path_Get(hDir));
+    }
+    Path_Release(hDir);
+    return result;
+}
+
+static void _RegisterDropSnapshot(const HPATHL hpth)
+{
+    if (!_IsDropSnapshotPath(hpth)) {
+        return;
+    }
+    for (DropSnapshotEntry* e = s_dropSnapshots; e; e = e->next) {
+        if (Path_StrgComparePath(e->hpth, hpth, Paths.ModuleDirectory, true) == 0) {
+            return; // already registered
+        }
+    }
+    DropSnapshotEntry* e = (DropSnapshotEntry*)AllocMem(sizeof(*e), HEAP_ZERO_MEMORY);
+    if (!e) {
+        return;
+    }
+    e->hpth = Path_Copy(hpth);
+    e->next = s_dropSnapshots;
+    s_dropSnapshots = e;
+}
+
+// Delete registered snapshots and remove their entries.
+//   dropAll = false  → keep only the entry that is Paths.CurrentFile (sweep
+//                      orphans after each MsgDropFiles dispatch).
+//   dropAll = true   → drop everything (called from _CleanUpResources at
+//                      process exit).
+static void _CleanupDropSnapshots(bool dropAll)
+{
+    DropSnapshotEntry** pp = &s_dropSnapshots;
+    while (*pp) {
+        DropSnapshotEntry* e = *pp;
+        bool const keep = !dropAll &&
+                          Path_IsNotEmpty(Paths.CurrentFile) &&
+                          (Path_StrgComparePath(e->hpth, Paths.CurrentFile,
+                                                Paths.ModuleDirectory, true) == 0);
+        if (keep) {
+            pp = &e->next;
+            continue;
+        }
+        Path_DeleteFile(e->hpth);
+        Path_Release(e->hpth);
+        *pp = e->next;
+        FreeMem(e);
+    }
+}
+
+
+//=============================================================================
+//
 //  _OnDropOneFile()
+//
+//  Loads a single non-spawning drop into the current window. The Ctrl-and-dirty
+//  spawn-to-new-instance routing is handled by MsgDropFiles' dispatcher; this
+//  helper only sees in-window loads and directory drops.
 //
 static LRESULT _OnDropOneFile(HWND hwnd, HPATHL hFilePath, WININFO* wi)
 {
+    UNREFERENCED_PARAMETER(wi);
+
     if (IsIconic(hwnd)) {
         ShowWindow(hwnd, SW_RESTORE);
     }
@@ -3813,13 +4116,7 @@ static LRESULT _OnDropOneFile(HWND hwnd, HPATHL hFilePath, WININFO* wi)
         }
     }
     else if (Path_IsExistingFile(hFilePath)) {
-        //~ ignore Flags.bReuseWindow
-        bool const sameFile = (Path_StrgComparePath(hFilePath, Paths.CurrentFile, Paths.ModuleDirectory, true) == 0);
-        if (IsKeyDown(VK_CONTROL) || wi) {
-            DialogNewWindow(hwnd, sameFile, hFilePath, wi);
-        } else {
-            FileLoad(hFilePath, fLoadFlags, 0, 0);
-        }
+        FileLoad(hFilePath, fLoadFlags, 0, 0);
     } else {
         // Windows Bug: wParam (HDROP) pointer is corrupted if dropped from 32-bit App
         InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_DROP_NO_FILE);
@@ -3832,33 +4129,155 @@ static LRESULT _OnDropOneFile(HWND hwnd, HPATHL hFilePath, WININFO* wi)
 //
 //  MsgDropFiles() - Handles WM_DROPFILES
 //
+//  Dirty current doc OR Ctrl held -> every file spawns a new NP3 instance
+//  (capped by Settings2.MaxFileDropInstances). Clean current doc -> first
+//  file loads in this window, remaining spawn. Sources under a Windows temp
+//  root are snapshotted synchronously before DragFinish so 7-Zip / Outlook /
+//  archiver temp-file deletion can't race the load.
+//
 LRESULT MsgDropFiles(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     UNREFERENCED_PARAMETER(lParam);
 
     HDROP hDrop = (HDROP)wParam;
-
-    if (hDrop) {
-
-        bool const vkCtrlDown = IsKeyDown(VK_CONTROL);
-
-        HPATHL         hdrop_pth = Path_Allocate(NULL);
-        wchar_t* const drop_buf = Path_WriteAccessBuf(hdrop_pth, STRINGW_MAX_URL_LENGTH);
-        UINT const     cnt = DragQueryFileW(hDrop, UINT_MAX, NULL, 0);
-
-        int const offset = Settings2.LaunchInstanceWndPosOffset;
-        bool const bFullVisible = Settings2.LaunchInstanceFullVisible;
-        for (UINT i = 0; i < cnt; ++i) {
-            WININFO wi = GetMyWindowPlacement(hwnd, NULL, (vkCtrlDown ? (offset * (i + 1)) : 0), bFullVisible);
-            DragQueryFileW(hDrop, i, drop_buf, (UINT)Path_GetBufCount(hdrop_pth));
-            Path_Sanitize(hdrop_pth);
-            _OnDropOneFile(hwnd, hdrop_pth, (((0 == i) && !IsKeyDown(VK_CONTROL)) ? NULL : &wi));
-        }
-
-        DragFinish(hDrop);
-        Path_Release(hdrop_pth);
-        UpdateToolbar_Now(hwnd);
+    if (!hDrop) {
+        return 0;
     }
+
+    bool const vkCtrlDown = IsKeyDown(VK_CONTROL);
+    bool const bDirty     = IsSaveNeeded();
+    bool const bForceNew  = vkCtrlDown || bDirty;
+    UINT const cnt        = DragQueryFileW(hDrop, UINT_MAX, NULL, 0);
+    if (cnt == 0) {
+        DragFinish(hDrop);
+        return 0;
+    }
+
+    // Round-2 race-buster: if the watched current file is gone AND we have
+    // no edits, the user's drop implicitly discards it. Resetting the
+    // watcher events now suppresses both the FSF_Ask modal (FileSave checks
+    // IsFileChangedFlagSet) and any queued WM_FILECHANGEDNOTIFY (the
+    // file-deleted branch is silent when Paths.CurrentFile no longer exists).
+    if (!bDirty && IsFileChangedFlagSet() &&
+        Path_IsNotEmpty(Paths.CurrentFile) && !Path_IsExistingFile(Paths.CurrentFile)) {
+        ResetFileObservationData(true);
+    }
+
+    // Phase 0: opportunistic prune of stale snapshots (>1 h, once per drop).
+    _PruneOldDropSnapshots(60UL * 60UL);
+
+    // Phase 1: synchronously snapshot ephemeral sources before DragFinish.
+    typedef struct _DropEntry {
+        HPATHL eff;   // path the dispatcher will hand off (snapshot or original)
+        HPATHL orig;  // path as DragQueryFileW reported it
+        bool   isDir;
+        bool   isOk;
+    } DropEntry;
+
+    DropEntry* entries = (DropEntry*)AllocMem(sizeof(DropEntry) * cnt, HEAP_ZERO_MEMORY);
+    if (!entries) {
+        DragFinish(hDrop);
+        return 0;
+    }
+
+    {
+        HPATHL         hScratch = Path_Allocate(NULL);
+        wchar_t* const buf      = Path_WriteAccessBuf(hScratch, STRINGW_MAX_URL_LENGTH);
+        for (UINT i = 0; i < cnt; ++i) {
+            DragQueryFileW(hDrop, i, buf, (UINT)Path_GetBufCount(hScratch));
+            Path_Sanitize(hScratch);
+            entries[i].orig = Path_Copy(hScratch);
+            // Single attribute lookup covers both dir and file existence checks.
+            DWORD const attrs = Path_GetFileAttributes(entries[i].orig);
+            entries[i].isOk  = (attrs != INVALID_FILE_ATTRIBUTES);
+            entries[i].isDir = entries[i].isOk && (attrs & FILE_ATTRIBUTE_DIRECTORY);
+            if (entries[i].isOk && !entries[i].isDir && _IsEphemeralPath(entries[i].orig)) {
+                HPATHL snap = _BuildSnapshotPath(entries[i].orig, i);
+                if (snap && CopyFileW(Path_Get(entries[i].orig), Path_Get(snap), FALSE)) {
+                    entries[i].eff = snap;
+                } else {
+                    if (snap) {
+                        Path_Release(snap);
+                    }
+                    entries[i].eff = Path_Copy(entries[i].orig);
+                }
+            } else {
+                entries[i].eff = Path_Copy(entries[i].orig);
+            }
+        }
+        Path_Release(hScratch);
+    }
+
+    DragFinish(hDrop); // safe — sources have been snapshotted (or were already stable)
+
+    // Phase 2: dispatch. Pause the watcher around the dispatch so an external
+    // mtime change to Paths.CurrentFile mid-load can't post WM_FILECHANGEDNOTIFY
+    // into the queue and stack a modal on top of FileSave's prompt.
+    InstallFileWatching(false);
+
+    int const  offset  = Settings2.LaunchInstanceWndPosOffset;
+    bool const fullVis = Settings2.LaunchInstanceFullVisible;
+    int const  cap     = Settings2.MaxFileDropInstances;
+    int        spawned = 0;
+    bool       warned  = false;
+
+    for (UINT i = 0; i < cnt; ++i) {
+        DropEntry* const e = &entries[i];
+        if (!e->isOk) {
+            InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_DROP_NO_FILE);
+        } else if (e->isDir) {
+            _OnDropOneFile(hwnd, e->eff, NULL);
+        } else {
+            // Honour SingleFileInstance: if the *original* path is already
+            // open in another NP3 window, focus that window instead of spawning.
+            HWND hwndSibling = NULL;
+            if (Flags.bSingleFileInstance &&
+                FindOtherInstance(&hwndSibling, e->orig) &&
+                hwndSibling && (hwndSibling != hwnd)) {
+                SetForegroundWindow(hwndSibling);
+                // Snapshot is unused — register so the sweep at end of dispatch
+                // (or the exit drain) cleans it up.
+                _RegisterDropSnapshot(e->eff);
+            } else {
+                bool const sameFile = (Path_StrgComparePath(e->eff, Paths.CurrentFile,
+                                                             Paths.ModuleDirectory, true) == 0);
+                bool const spawnThis = bForceNew || (i > 0);
+                if (spawnThis) {
+                    if (spawned >= cap) {
+                        if (!warned) {
+                            InfoBoxLng(MB_ICONWARNING, Constants.SuppressKey.InfoDropCap,
+                                       IDS_MUI_DROP_CAP_EXCEEDED, cap);
+                            warned = true;
+                        }
+                        // Over cap — snapshot orphan, register for sweep/drain.
+                        _RegisterDropSnapshot(e->eff);
+                    } else {
+                        WININFO wi = GetMyWindowPlacement(hwnd, NULL,
+                                                          offset * (spawned + 1), fullVis);
+                        // NB: don't register — the spawned child registers
+                        // its CLI-arg snapshot at startup and owns cleanup.
+                        DialogNewWindow(hwnd, sameFile, e->eff, &wi);
+                        spawned++;
+                    }
+                } else {
+                    // In-process load — register before _OnDropOneFile so the
+                    // sweep below leaves it alone (it becomes Paths.CurrentFile).
+                    _RegisterDropSnapshot(e->eff);
+                    _OnDropOneFile(hwnd, e->eff, NULL);
+                }
+            }
+        }
+        Path_Release(e->eff);
+        Path_Release(e->orig);
+    }
+    FreeMem(entries);
+
+    // Drop any registered snapshot that is no longer the current document,
+    // then re-arm the watcher on whatever is current now.
+    _CleanupDropSnapshots(false);
+    InstallFileWatching(true);
+
+    UpdateToolbar_Now(hwnd);
     return 0;
 }
 

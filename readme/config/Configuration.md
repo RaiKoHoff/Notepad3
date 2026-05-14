@@ -332,6 +332,12 @@ Pixel offset cascade applied to each new Notepad3 window launched as an addition
 
 When `true` (default), newly launched windows are clamped so they remain fully visible on the target monitor, even if the `LaunchInstanceWndPosOffset` cascade would push them off-screen. Set to `false` to allow partially off-screen positions (e.g. if you rely on the OS to handle multi-monitor placement).
 
+#### `MaxFileDropInstances=20`
+
+Maximum number of new Notepad3 windows spawned in a single drag-and-drop operation. When the current document has unsaved changes (or `Ctrl` is held during the drop), each dropped file opens in its own new window so the dirty document is never disturbed. This setting caps that fan-out — files beyond the cap are skipped with a single warning. Range: `-1`–`100`. Set to `-1` to remove the cap; default is `20`.
+
+Drops originating from a Windows temp root (`%TEMP%`, `%LOCALAPPDATA%\Temp`, `%LOCALAPPDATA%\Microsoft\Windows\INetCache`) — e.g. files dragged from 7-Zip, Outlook attachments, downloads — are first snapshotted into `<%TEMP%>\Notepad3\drops\` so the source can be deleted by the originating process without breaking the load. Snapshots are pruned automatically (older than one hour on each subsequent drop, older than 24 hours at startup).
+
 ### Appearance
 
 #### `RenderingTechnology=1`
