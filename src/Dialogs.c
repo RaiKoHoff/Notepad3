@@ -5344,18 +5344,6 @@ void DialogGrepWin(HWND hwnd, LPCWSTR searchPattern)
             Path_Release(hpath_np3);
             Path_Release(hLngFilePath);
 
-            // search directory
-            HPATHL pthSearchDir = NULL;
-            if (Path_IsNotEmpty(Paths.CurrentFile)) {
-                pthSearchDir = Path_Copy(Paths.CurrentFile);
-                Path_RemoveFileSpec(pthSearchDir);
-            }
-            else {
-                pthSearchDir = Path_Copy(Paths.WorkingDirectory);
-            }
-            IniSectionSetString(globalSection, L"searchpath", Path_Get(pthSearchDir));
-            Path_Release(pthSearchDir);
-
 
             // =================================================================
             // [np3cmds]
@@ -5401,24 +5389,45 @@ void DialogGrepWin(HWND hwnd, LPCWSTR searchPattern)
             ResetIniFileCache();
         }
 
+        // search directory
+        HPATHL pthSearchDir = NULL;
+        if (Path_IsNotEmpty(Paths.CurrentFile)) {
+            pthSearchDir = Path_Copy(Paths.CurrentFile);
+            Path_RemoveFileSpec(pthSearchDir);
+        }
+        else {
+            pthSearchDir = Path_Copy(Paths.WorkingDirectory);
+        }
+
         // grepWin arguments (omit /portable for PortableApps — the launcher sets it)
         HSTRINGW hstrParams = StrgCreate(L"");
         HSTRINGW hstrEscPattern = EscapeStringForCmdLine(searchPattern);
         if (Path_IsExistingFile(hGrepWinIniPath)) {
             if (bIsPortableApps) {
-                StrgFormat(hstrParams, L"/content %s /searchfor:\"%s\"", StrgGet(hstrOptions), StrgGet(hstrEscPattern));
+                StrgFormat(hstrParams,
+                    L"/content %s /searchfor:\"%s\" /searchpath:\"%s\"",
+                    StrgGet(hstrOptions), StrgGet(hstrEscPattern), Path_Get(pthSearchDir));
             }
             else {
-                StrgFormat(hstrParams, L"/portable /content %s /searchini:\"%s\" /name:\"%s\"",
-                    StrgGet(hstrOptions), Path_Get(hGrepWinIniPath), np3cmdSection);
+                StrgFormat(hstrParams,
+                    L"/portable /content %s /searchini:\"%s\" /name:\"%s\" /searchpath:\"%s\"",
+                    StrgGet(hstrOptions), Path_Get(hGrepWinIniPath), np3cmdSection, Path_Get(pthSearchDir));
             }
         }
         else {
-            StrgFormat(hstrParams, bIsPortableApps ? 
-                       L"/content %s /searchfor:\"%s\"" : L"/portable /content %s /searchfor:\"%s\"",
-                       StrgGet(hstrOptions), StrgGet(hstrEscPattern));
+            if (bIsPortableApps) {
+                StrgFormat(hstrParams,
+                    L"/content %s /searchfor:\"%s\" /searchpath:\"%s\"",
+                    StrgGet(hstrOptions), StrgGet(hstrEscPattern), Path_Get(pthSearchDir));
+            }
+            else {
+                StrgFormat(hstrParams,
+                    L"/portable /content %s /searchfor:\"%s\" /searchpath:\"%s\"",
+                    StrgGet(hstrOptions), StrgGet(hstrEscPattern), Path_Get(pthSearchDir));
+            }
         }
         StrgDestroy(hstrEscPattern);
+        Path_Release(pthSearchDir);
 
         SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
         sei.fMask = SEE_MASK_FLAG_NO_UI | SEE_MASK_NOZONECHECKS;
