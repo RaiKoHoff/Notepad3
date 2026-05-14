@@ -202,6 +202,7 @@ BEGIN
     IDS_MUI_EXPORT_FAIL      "Error al exportar la configuración de estilo a ""%s"""
     IDS_MUI_REGEX_INVALID    "Error al evaluar la expresión regular. ¡La expresión es inválida!"
     IDS_MUI_DROP_NO_FILE     "No se recuperó un nombre de archivo válido\nSi se usa una aplicación de 32 bits,\nintente arrastrar el archivo a la barra de herramientas Notepad3"
+    IDS_MUI_DROP_CAP_EXCEEDED "Dropped more files than the configured limit (%i). Increase Settings2.MaxFileDropInstances if needed."
     IDS_MUI_URL_DIR_EXISTS   "¡Directorio especificado por URL existe!"
     IDS_MUI_URL_FILE_EXISTS  "¡Archivo especificado por URL existe!"
     IDS_MUI_URL_PATH_NOT_FOUND

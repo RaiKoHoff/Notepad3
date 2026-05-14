@@ -486,6 +486,7 @@ typedef struct CONSTANTS_T {
     // Add a field here when introducing a new suppressible dialog; never inline a literal at the call site.
     struct {
         const WCHAR* const AllowClearUndoHistory;
+        const WCHAR* const InfoDropCap;
         const WCHAR* const InfoInstanceExist;
         const WCHAR* const MsgConv1;
         const WCHAR* const MsgConv2;
@@ -818,6 +819,7 @@ typedef struct SETTINGS2_T {
     int     SciFontQuality;
     int     LaunchInstanceWndPosOffset;
     bool    LaunchInstanceFullVisible;
+    int     MaxFileDropInstances;   // -1 = unlimited; 1..100 supported (read-only)
     int     UpdateDelayMarkAllOccurrences;
     bool    DenyVirtualSpaceAccess;
     bool    UseOldStyleBraceMatching;

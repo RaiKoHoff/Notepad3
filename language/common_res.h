@@ -200,6 +200,7 @@
 #define IDS_MUI_INIFILE_READONLY        14022
 #define IDS_MUI_DOCUMENT_READONLY       14023
 #define IDS_MUI_ASK_CLEAR_UNDO          14024
+#define IDS_MUI_DROP_CAP_EXCEEDED       14025
 
 #define IDS_MUI_ASK_SAVE                15000
 #define IDS_MUI_ASK_REVERT              15001
