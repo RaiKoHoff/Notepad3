@@ -10875,81 +10875,81 @@ static void  _CalculateStatusbarSections(int vSectionWidth[], sectionTxt_t tchSt
 static double _InterpMultiSelectionTinyExpr(te_int_t* piExprError)
 {
 #define _tmpBufCnt 128
-	char tmpRectSelN[_tmpBufCnt] = { '\0' };
+    char tmpRectSelN[_tmpBufCnt] = { '\0' };
 
-	DocPosU const selCount = SciCall_GetSelections();
-	int const calcBufSize = (int)(_tmpBufCnt * selCount + 1);
-	char * const calcBuffer = (char*)AllocMem(calcBufSize, HEAP_ZERO_MEMORY);
-	WCHAR * const calcBufferW = (WCHAR*)AllocMem(calcBufSize * sizeof(WCHAR), HEAP_ZERO_MEMORY);
+    DocPosU const selCount = SciCall_GetSelections();
+    int const calcBufSize = (int)(_tmpBufCnt * selCount + 1);
+    char * const calcBuffer = (char*)AllocMem(calcBufSize, HEAP_ZERO_MEMORY);
+    WCHAR * const calcBufferW = (WCHAR*)AllocMem(calcBufSize * sizeof(WCHAR), HEAP_ZERO_MEMORY);
 
-	size_t bufPos = 0;
-	bool bLastCharWasDigit = false;
-	bool bAllPlainNumbers = true;
-	bool bHasValue = false;
-	double numberSum = 0.0;
+    size_t bufPos = 0;
+    bool bLastCharWasDigit = false;
+    bool bAllPlainNumbers = true;
+    bool bHasValue = false;
+    double numberSum = 0.0;
 
-	for (DocPosU i = 0; i < selCount; ++i) {
-		DocPos const posSelStart = SciCall_GetSelectionNStart(i);
-		DocPos const posSelEnd = SciCall_GetSelectionNEnd(i);
-		size_t const cchToCopy = (size_t)(posSelEnd - posSelStart);
-		StringCchCopyNA(tmpRectSelN, _tmpBufCnt, SciCall_GetRangePointer(posSelStart, (DocPos)cchToCopy), cchToCopy);
-		StrTrimA(tmpRectSelN, " ");
+    for (DocPosU i = 0; i < selCount; ++i) {
+        DocPos const posSelStart = SciCall_GetSelectionNStart(i);
+        DocPos const posSelEnd = SciCall_GetSelectionNEnd(i);
+        size_t const cchToCopy = (size_t)(posSelEnd - posSelStart);
+        StringCchCopyNA(tmpRectSelN, _tmpBufCnt, SciCall_GetRangePointer(posSelStart, (DocPos)cchToCopy), cchToCopy);
+        StrTrimA(tmpRectSelN, " ");
 
-		if (!StrIsEmptyA(tmpRectSelN)) {
-			char tmpNumber[_tmpBufCnt] = { '\0' };
-			StringCchCopyA(tmpNumber, COUNTOF(tmpNumber), tmpRectSelN);
-			StrDelChrA(tmpNumber, chr_currency);
+        if (!StrIsEmptyA(tmpRectSelN)) {
+            char tmpNumber[_tmpBufCnt] = { '\0' };
+            StringCchCopyA(tmpNumber, COUNTOF(tmpNumber), tmpRectSelN);
+            StrDelChrA(tmpNumber, chr_currency);
 
-			char *pEnd = NULL;
-			double const numberValue = strtod(tmpNumber, &pEnd);
+            char *pEnd = NULL;
+            double const numberValue = strtod(tmpNumber, &pEnd);
 
-			if (pEnd && pEnd != tmpNumber) {
-				while (*pEnd == ' ' || *pEnd == '\t') {
-					++pEnd;
-				}
+            if (pEnd && pEnd != tmpNumber) {
+                while (*pEnd == ' ' || *pEnd == '\t') {
+                    ++pEnd;
+                }
 
-				if (*pEnd == '\0') {
-					numberSum += numberValue;
-					bHasValue = true;
-				} else {
-					bAllPlainNumbers = false;
-				}
-			} else {
-				bAllPlainNumbers = false;
-			}
+                if (*pEnd == '\0') {
+                    numberSum += numberValue;
+                    bHasValue = true;
+                } else {
+                    bAllPlainNumbers = false;
+                }
+            } else {
+                bAllPlainNumbers = false;
+            }
 
-			size_t const lenN = StringCchLenA(tmpRectSelN, COUNTOF(tmpRectSelN));
+            size_t const lenN = StringCchLenA(tmpRectSelN, COUNTOF(tmpRectSelN));
 
-			if (bufPos < (size_t)calcBufSize && lenN + 2 <= ((size_t)calcBufSize - bufPos)) {
-				if (IsDigitA(tmpRectSelN[0]) && bLastCharWasDigit) {
-					calcBuffer[bufPos++] = '+';
-				}
+            if (bufPos < (size_t)calcBufSize && lenN + 2 <= ((size_t)calcBufSize - bufPos)) {
+                if (IsDigitA(tmpRectSelN[0]) && bLastCharWasDigit) {
+                    calcBuffer[bufPos++] = '+';
+                }
 
-				memcpy(calcBuffer + bufPos, tmpRectSelN, lenN);
-				bufPos += lenN;
-				calcBuffer[bufPos] = '\0';
+                memcpy(calcBuffer + bufPos, tmpRectSelN, lenN);
+                bufPos += lenN;
+                calcBuffer[bufPos] = '\0';
 
-				bLastCharWasDigit = IsDigitA(tmpRectSelN[lenN - 1]);
-			}
-		}
-	}
+                bLastCharWasDigit = IsDigitA(tmpRectSelN[lenN - 1]);
+            }
+        }
+    }
 
-	if (bAllPlainNumbers && bHasValue) {
-		*piExprError = 0;
-		FreeMem(calcBufferW);
-		FreeMem(calcBuffer);
-		return numberSum;
-	}
+    if (bAllPlainNumbers && bHasValue) {
+        *piExprError = 0;
+        FreeMem(calcBufferW);
+        FreeMem(calcBuffer);
+        return numberSum;
+    }
 
-	char const defchar = (char)0x24;
-	MultiByteToWideChar(Encoding_SciCP, 0, calcBuffer, -1, calcBufferW, calcBufSize);
-	WideCharToMultiByte(1252, (WC_COMPOSITECHECK | WC_DISCARDNS), calcBufferW, -1, calcBuffer, calcBufSize, &defchar, NULL);
-	StrDelChrA(calcBuffer, chr_currency);
+    char const defchar = (char)0x24;
+    MultiByteToWideChar(Encoding_SciCP, 0, calcBuffer, -1, calcBufferW, calcBufSize);
+    WideCharToMultiByte(1252, (WC_COMPOSITECHECK | WC_DISCARDNS), calcBufferW, -1, calcBuffer, calcBufSize, &defchar, NULL);
+    StrDelChrA(calcBuffer, chr_currency);
 
-	double const result = te_interp(calcBuffer, piExprError);
-	FreeMem(calcBufferW);
-	FreeMem(calcBuffer);
-	return result;
+    double const result = te_interp(calcBuffer, piExprError);
+    FreeMem(calcBufferW);
+    FreeMem(calcBuffer);
+    return result;
 }
 
 
