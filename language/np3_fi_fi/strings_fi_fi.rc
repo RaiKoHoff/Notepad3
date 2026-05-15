@@ -202,15 +202,15 @@ BEGIN
     IDS_MUI_EXPORT_FAIL      "Virhe tyyliasetusten viemisessä kohteeseen ""%s"""
     IDS_MUI_REGEX_INVALID    "Virhe säännöllisen lausekkeen käytössä. Lauseke on virheellinen!"
     IDS_MUI_DROP_NO_FILE     "Kelvollista tiedostonimeä ei saatu\nJos pudotat tiedoston 32-bittisestä sovelluksesta, vedä ja pudota se Notepad3:n työkalupalkkiin"
-    IDS_MUI_DROP_CAP_EXCEEDED "Dropped more files than the configured limit (%i). Increase Settings2.MaxFileDropInstances if needed."
+    IDS_MUI_DROP_CAP_EXCEEDED "Tiedostoja pudotettu enemmän kuin määritetty raja (%i). Lisää tarvittaessa asetusta Asetukset2. MaxFileDropInstances."
     IDS_MUI_URL_DIR_EXISTS   "URL-osoitteessa määritetty hakemisto on olemassa!"
     IDS_MUI_URL_FILE_EXISTS  "URL-osoitteessa määritetty tiedosto on olemassa!"
     IDS_MUI_URL_PATH_NOT_FOUND
                              "URL määriteltyä polkua ei löydy!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Avaa tiedosto klikkaamalla"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Avaa linkki selaimessa klikkaamalla"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Sopimaton sulku"
+    IDS_MUI_NO_ENCLOSING_BRACE "Ei sulkevaa aaltosulkua"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Alkuperäisen tiedoston muokkausaikaleiman säilyttäminen käytössä\nVaihtoehto säilyy tämän istunnon ajan!"
     IDS_MUI_OUT_OFF_OCCMRK   "Esiintymämerkit loppumassa (kirjanmerkki/korostus)!"
