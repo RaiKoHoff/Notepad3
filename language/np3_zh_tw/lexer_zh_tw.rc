@@ -562,7 +562,7 @@ BEGIN
     IDS_LEX_STR_WhileDef    "While 定義"
     IDS_LEX_STR_ForEachDef  "For Each 定義"
     IDS_LEX_STR_DocCmtKw    "文件註解關鍵字"
-    IDS_LEX_STR_UserDef     "User Defined"
+    IDS_LEX_STR_UserDef     "使用者定義"
 END
 
 STRINGTABLE
