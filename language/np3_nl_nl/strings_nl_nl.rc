@@ -202,15 +202,15 @@ BEGIN
     IDS_MUI_EXPORT_FAIL      "Fout bij het exporteren van stijlinstellingen naar ""%s"""
     IDS_MUI_REGEX_INVALID    "Fout bij het evalueren van reguliere expressie. Ongeldige expressie!"
     IDS_MUI_DROP_NO_FILE     "Ongeldige bestandsnaam\nAls een 32-bits toepassing wordt gebruikt,\nprobeer dan het bestand naar de werkbalk Notepad3 te slepen"
-    IDS_MUI_DROP_CAP_EXCEEDED "Dropped more files than the configured limit (%i). Increase Settings2.MaxFileDropInstances if needed."
+    IDS_MUI_DROP_CAP_EXCEEDED "Meer bestanden verwijderd dan de geconfigureerde limiet (%i). Verhoog zonodig Settings2.MaxFileDropInstances."
     IDS_MUI_URL_DIR_EXISTS   "URL opgegeven map bestaat!"
     IDS_MUI_URL_FILE_EXISTS  "URL opgegeven bestand bestaat!"
     IDS_MUI_URL_PATH_NOT_FOUND
                              "URL opgegeven pad niet gevonden!"
     IDS_MUI_URL_OPEN_FILE    "\nAlt + Klik om het bestand te openen"
     IDS_MUI_URL_OPEN_BROWSER "\nCtrl + Klik om de link in de browser te openen"
-    IDS_MUI_UNMATCHED_BRACE  "Unmatched Brace"
-    IDS_MUI_NO_ENCLOSING_BRACE "No Enclosing Brace"
+    IDS_MUI_UNMATCHED_BRACE  "Haakje zonder overeenkomst"
+    IDS_MUI_NO_ENCLOSING_BRACE "Geen afsluitend haakje"
     IDS_MUI_INF_PRSVFILEMODTM
                              "Tijdstempel originele bestandswijziging behouden\nDeze optie blijft gedurende deze sessie actief!"
     IDS_MUI_OUT_OFF_OCCMRK   "Er zijn geen andere markeringen van voorvallen (Bladwijzer/Markering)!"
