@@ -163,6 +163,7 @@ BEGIN
         MENUITEM "복사(&C)\tCtrl+C",               IDM_EDIT_COPY
         MENUITEM "모두 복사(&L)\tAlt+C",            IDM_EDIT_COPYALL
         MENUITEM "복사 추가(&A)\tCtrl+E",           IDM_EDIT_COPYADD
+        MENUITEM "Copy as &RTF",                IDM_EDIT_COPYRTF
         MENUITEM "붙여넣기(&P)\tCtrl+V",              IDM_EDIT_PASTE
         MENUITEM "교환(&W)\tCtrl+K",               IDM_EDIT_SWAP
         MENUITEM "모두 선택(&S)\tCtrl+A",         IDM_EDIT_SELECTALL

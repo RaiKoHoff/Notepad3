@@ -163,6 +163,7 @@ BEGIN
         MENUITEM "复制(&C)\tCtrl+C",                          IDM_EDIT_COPY
         MENUITEM "全部复制(&L)\tAlt+C",                       IDM_EDIT_COPYALL
         MENUITEM "增量复制(&Y)\tCtrl+E",                      IDM_EDIT_COPYADD
+        MENUITEM "Copy as &RTF",                          IDM_EDIT_COPYRTF
         MENUITEM "粘贴(&P)\tCtrl+V",                          IDM_EDIT_PASTE
         MENUITEM "与剪贴板交换(&W)\tCtrl+K",                  IDM_EDIT_SWAP
         MENUITEM "全选(&A)\tCtrl+A",                          IDM_EDIT_SELECTALL

@@ -34,6 +34,7 @@
 
 #include "PathLib.h"
 #include "Edit.h"
+#include "EditRTF.h"
 #include "Styles.h"
 #include "Dialogs.h"
 #include "crypto/crypto.h"
@@ -4860,6 +4861,7 @@ LRESULT MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     EnableCmd(hmenu, IDM_EDIT_COPYALL, !te);
     EnableCmd(hmenu, IDM_EDIT_COPYADD, !te);
+    EnableCmd(hmenu, IDM_EDIT_COPYRTF, !te);
 
     EnableCmd(hmenu, IDM_EDIT_PASTE, pst && !ro);
     EnableCmd(hmenu, IDM_EDIT_SWAP, (!se || pst) && !ro);
@@ -5818,6 +5820,15 @@ static bool _HandleEditBasicCommands(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM
         DocPos const posSelStart = SciCall_IsSelectionEmpty() ? Sci_GetLineStartPosition(SciCall_GetSelectionStart()) : SciCall_GetSelectionStart();
         DocPos const posSelEnd   = SciCall_IsSelectionEmpty() ? Sci_GetLineEndPosition(SciCall_GetSelectionEnd()) : SciCall_GetSelectionEnd();
         EditCopyRangeAppend(Globals.hwndEdit, posSelStart, posSelEnd, true);
+    }
+    break;
+
+
+    case IDM_EDIT_COPYRTF: {
+        if (s_flagPasteBoard) {
+            s_bLastCopyFromMe = true;
+        }
+        EditCopyAsRTF(Globals.hwndEdit);
     }
     break;
 

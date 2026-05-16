@@ -286,6 +286,8 @@
 - [ ] **(Q3) Split View** - View two parts of same document
   - Issue: [#2577](https://github.com/rizonesoft/Notepad3/issues/2577)
 - [ ] **(Q1) Show Unicode Control Characters** - Toggle visibility
+  - [x] ✅ IMPLEMENTED (show non printing chars)
+  - [ ] Show other Unicode Control Characters ???
 - [ ] **(Q2) Line Selection Modes** - VS style, Normal, Old VS
 - [x] **(Q1) Disable Multiple Cursors Option** - ✅ IMPLEMENTED via `IDM_SET_MULTIPLE_SELECTION` toggle
   - Issue: [#4033](https://github.com/rizonesoft/Notepad3/issues/4033) - ✅ Resolved
@@ -298,19 +300,20 @@
   - Issue: [#3905](https://github.com/rizonesoft/Notepad3/issues/3905) - ✅ Resolved
 - [ ] **(Q2) Configurable Font Priority/Fallback List** - User-editable preferred Code/Text font chain
   - Issue: [#4611](https://github.com/rizonesoft/Notepad3/issues/4611)
+  - Related: https://github.com/zufuliu/notepad4/issues/690
 - [ ] **(Q2) Improve Selection & Convert Panel layout**
   - Issue: [#5074](https://github.com/rizonesoft/Notepad3/issues/5074)
 - [ ] **(Q2) Separate Recent Files Menu** - Split MRU out of File menu
   - Issue: [#5177](https://github.com/rizonesoft/Notepad3/issues/5177)
-- [ ] **(Q3) Discussion: Gray out menu items when no selection**
+- [x] **(Q3) Discussion: Gray out menu items when no selection**
   - Issue: [#4938](https://github.com/rizonesoft/Notepad3/issues/4938)
-- [ ] **(Q3) Keep current line visible after Word-Wrap toggle**
+- [x] **(Q3) Keep current line visible after Word-Wrap toggle**
   - Issue: [#4944](https://github.com/rizonesoft/Notepad3/issues/4944)
 - [ ] **(Q2) MiniPath: "Minimize on Close" option**
   - Issue: [#4946](https://github.com/rizonesoft/Notepad3/issues/4946)
 
 ### Copy/Clipboard
-- [ ] **(Q2) Copy as RTF** - Rich text copy with syntax highlighting
+- [x] **(Q2) Copy as RTF** - Rich text copy with syntax highlighting
   - Issue: [#5052](https://github.com/rizonesoft/Notepad3/issues/5052)
   - **Reference**: [Notepad4](https://github.com/zufuliu/notepad4) implements via `IDM_EDIT_COPYRTF`
 - [ ] **(Q2) Copy/Cut/Paste Binary** - Binary data handling

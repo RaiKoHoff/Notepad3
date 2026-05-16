@@ -60,6 +60,9 @@
     <ClCompile Include="Edit.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EditRTF.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Helpers.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -219,8 +222,8 @@
     <ClCompile Include="MuiLanguage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EncodingDetection.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="uchardet\EncodingDetection.cpp">
+      <Filter>Source Files\uchardet</Filter>
     </ClCompile>
     <ClCompile Include="Config\Config.cpp">
       <Filter>Source Files\Config</Filter>
@@ -462,6 +465,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Edit.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EditRTF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">

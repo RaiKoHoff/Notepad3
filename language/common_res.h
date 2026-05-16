@@ -750,6 +750,7 @@
 #define IDM_EDIT_CUT_MARKED             40391
 #define IDM_EDIT_COPY_MARKED            40392
 #define IDM_EDIT_DELETE_MARKED          40393
+#define IDM_EDIT_COPYRTF                40394
 
 #define IDM_VIEW_SCHEME                 41001
 #define IDM_VIEW_USE2NDDEFAULT          41002

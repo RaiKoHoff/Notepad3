@@ -427,8 +427,9 @@
     <ClCompile Include="Dialogs.c" />
     <ClCompile Include="Dlapi.c" />
     <ClCompile Include="Edit.c" />
+    <ClCompile Include="EditRTF.cpp" />
     <ClCompile Include="Encoding.c" />
-    <ClCompile Include="EncodingDetection.cpp" />
+    <ClCompile Include="uchardet\EncodingDetection.cpp" />
     <ClCompile Include="Helpers.c" />
     <ClCompile Include="MuiLanguage.c" />
     <ClCompile Include="Notepad3.c" />
@@ -524,6 +525,7 @@
     <ClInclude Include="Dialogs.h" />
     <ClInclude Include="Dlapi.h" />
     <ClInclude Include="Edit.h" />
+    <ClInclude Include="EditRTF.h" />
     <ClInclude Include="Encoding.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="MuiLanguage.h" />
