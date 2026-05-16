@@ -20,10 +20,14 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <shellapi.h>
 #include <time.h>
+#include <math.h>
+#include <float.h>
+#include <errno.h>
 
 #include "Styles.h"
 #include "Dialogs.h"
@@ -2798,74 +2802,214 @@ void EditSelectToMatchingBrace()
 
 //=============================================================================
 //
+//  EditModifyNumber() — shared helpers
+//
+
+static unsigned int _BumpUInt(unsigned int n, bool bInc)
+{
+    if (bInc && n < UINT_MAX) {
+        return n + 1;
+    }
+    if (!bInc && n > 0) {
+        return n - 1;
+    }
+    return n;
+}
+
+// Parse [s, end) as base-N unsigned. Rejects partial consumption and any
+// value that doesn't fit in unsigned int.
+static bool _ParseUInt32(const char *s, const char *end, int base, unsigned int *out)
+{
+    errno = 0;
+    char *e = NULL;
+    unsigned long long const ull = strtoull(s, &e, base);
+    if (e != end || errno == ERANGE || ull > UINT_MAX) {
+        return false;
+    }
+    *out = (unsigned int)ull;
+    return true;
+}
+
+
+//  Per-radix helpers. Each receives a NUL-terminated, whitespace-trimmed
+//  body and a bInc flag (true = +1, false = -1). On a clean format-
+//  preserving transform it writes the new body into out and returns true;
+//  on rejection (wrong format, > UINT_MAX, etc.) it returns false and
+//  EditModifyNumber tries the next radix or the TinyExpr fallback.
+
+static bool _ModifyDec(const char *s, bool bInc, char *out, size_t outSz)
+{
+    const char *p = s;
+    while (*p >= '0' && *p <= '9') {
+        ++p;
+    }
+    if (p == s || *p != '\0' || (p - s) > 64) {
+        return false;
+    }
+    unsigned int n = 0;
+    if (!_ParseUInt32(s, p, 10, &n)) {
+        return false;
+    }
+    StringCchPrintfA(out, outSz, "%0*u", (int)(p - s), _BumpUInt(n, bInc));
+    return true;
+}
+
+static bool _ModifyHex(const char *s, bool bInc, char *out, size_t outSz)
+{
+    if (s[0] != '0' || (s[1] != 'x' && s[1] != 'X')) {
+        return false;
+    }
+    bool const bUppercasePrefix = (s[1] == 'X');
+    const char *const pDig = s + 2;
+    const char *p = pDig;
+    while ((*p >= '0' && *p <= '9') || (*p >= 'a' && *p <= 'f') || (*p >= 'A' && *p <= 'F')) {
+        ++p;
+    }
+    if (p == pDig || *p != '\0' || (p - pDig) > 64) {
+        return false;
+    }
+    unsigned int n = 0;
+    if (!_ParseUInt32(pDig, p, 16, &n)) {
+        return false;
+    }
+
+    // Digit case: any letter in the digit run wins; if none (e.g. "0x9",
+    // "0x42"), fall back to the prefix case.
+    bool bUppercaseDigits = bUppercasePrefix;
+    for (const char *q = p - 1; q >= pDig; --q) {
+        if (*q >= 'a' && *q <= 'f') { bUppercaseDigits = false; break; }
+        if (*q >= 'A' && *q <= 'F') { bUppercaseDigits = true;  break; }
+    }
+
+    char digits[80];
+    StringCchPrintfA(digits, COUNTOF(digits), bUppercaseDigits ? "%0*X" : "%0*x", (int)(p - pDig), _BumpUInt(n, bInc));
+    StringCchPrintfA(out, outSz, bUppercasePrefix ? "0X%s" : "0x%s", digits);
+    return true;
+}
+
+static bool _ModifyBin(const char *s, bool bInc, char *out, size_t outSz)
+{
+    if (s[0] != '0' || (s[1] != 'b' && s[1] != 'B')) {
+        return false;
+    }
+    bool const bUppercasePrefix = (s[1] == 'B');
+    const char *const pBits = s + 2;
+    const char *p = pBits;
+    while (*p == '0' || *p == '1') {
+        ++p;
+    }
+    if (p == pBits || *p != '\0' || (p - pBits) > 32) {
+        return false;
+    }
+
+    unsigned int n = 0;
+    for (const char *q = pBits; q < p; ++q) {
+        n = (n << 1) | (unsigned int)(*q - '0');
+    }
+    n = _BumpUInt(n, bInc);
+
+    int const iOrigBits = (int)(p - pBits);
+    int iMinBits = 1;
+    for (unsigned int tmp = n; tmp > 1u; tmp >>= 1) {
+        ++iMinBits;
+    }
+    int const iOutBits = (iMinBits > iOrigBits) ? iMinBits : iOrigBits;
+    if ((size_t)(iOutBits + 3) > outSz) {
+        return false;
+    }
+    out[0] = '0';
+    out[1] = bUppercasePrefix ? 'B' : 'b';
+    for (int i = 0; i < iOutBits; ++i) {
+        out[2 + i] = ((n >> (iOutBits - 1 - i)) & 1u) ? '1' : '0';
+    }
+    out[2 + iOutBits] = '\0';
+    return true;
+}
+
+
+//=============================================================================
+//
 //  EditModifyNumber()
 //
-void EditModifyNumber(HWND hwnd,bool bIncrease)
+//  Ctrl+Alt+[+/-] on a selection. Tries each format-preserving path
+//  (decimal / hex / binary), falls back to TinyExpr-wrapped arithmetic
+//  for expressions, floats and negatives. Outer whitespace from the
+//  original selection is re-emitted around the new value. Re-selects
+//  the result so the user can press the hotkey again to keep changing.
+//
+void EditModifyNumber(HWND hwnd, bool bIncrease)
 {
+    UNREFERENCED_PARAMETER(hwnd);
 
     if (Sci_IsMultiOrRectangleSelection()) {
         InfoBoxLng(MB_ICONWARNING, NULL, IDS_MUI_SELRECTORMULTI);
         return;
     }
+    if (SciCall_IsSelectionEmpty()) {
+        return;
+    }
+    if ((DocPos)SciCall_GetSelText(NULL) > 4096) {
+        return;
+    }
 
-    const DocPos iSelStart = SciCall_GetSelectionStart();
-    const DocPos iSelEnd = SciCall_GetSelectionEnd();
+    char szSel[4096] = { '\0' };
+    SciCall_GetSelText(szSel);
+    size_t const iSelLen = strlen(szSel);
 
-    if ((iSelEnd - iSelStart) > 0) {
-        char chNumber[32] = { '\0' };
-        if (SciCall_GetSelText(NULL) < COUNTOF(chNumber)) {
+    // Trim outer whitespace (preserved around the new value).
+    size_t iLeadWS = 0;
+    while (szSel[iLeadWS] == ' ' || szSel[iLeadWS] == '\t') {
+        ++iLeadWS;
+    }
+    size_t iBodyEnd = iSelLen;
+    while (iBodyEnd > iLeadWS && (szSel[iBodyEnd - 1] == ' ' || szSel[iBodyEnd - 1] == '\t')) {
+        --iBodyEnd;
+    }
+    if (iBodyEnd == iLeadWS) {
+        return; // whitespace-only selection
+    }
+    size_t const iTrailWS = iSelLen - iBodyEnd;
 
-            SciCall_GetSelText(chNumber);
+    // NUL-poke szSel so helpers see a zero-terminated trimmed view.
+    char const chSaved = szSel[iBodyEnd];
+    szSel[iBodyEnd] = '\0';
+    const char *const pTrimmed = szSel + iLeadWS;
 
-            if (StrChrIA(chNumber, '-')) {
-                return;
-            }
+    char chBody[256] = { '\0' };
+    bool bHandled = _ModifyDec(pTrimmed, bIncrease, chBody, COUNTOF(chBody))
+                 || _ModifyHex(pTrimmed, bIncrease, chBody, COUNTOF(chBody))
+                 || _ModifyBin(pTrimmed, bIncrease, chBody, COUNTOF(chBody));
 
-            unsigned int iNumber;
-            int iWidth;
-            char chFormat[32] = { '\0' };
-            if (!StrChrIA(chNumber, 'x') && sscanf_s(chNumber, "%ui", &iNumber) == 1) {
-                iWidth = (int)StringCchLenA(chNumber, COUNTOF(chNumber));
-                if (bIncrease && (iNumber < UINT_MAX)) {
-                    iNumber++;
-                }
-                if (!bIncrease && (iNumber > 0)) {
-                    iNumber--;
-                }
+    if (!bHandled) {
+        char szExpr[4128];
+        StringCchPrintfA(szExpr, COUNTOF(szExpr), "(%s)%s", pTrimmed, bIncrease ? "+1" : "-1");
 
-                StringCchPrintfA(chFormat, COUNTOF(chFormat), "%%0%ii", iWidth);
-                StringCchPrintfA(chNumber, COUNTOF(chNumber), chFormat, iNumber);
-                EditReplaceSelection(chNumber, false);
-            } else if (sscanf_s(chNumber, "%x", &iNumber) == 1) {
-                iWidth = (int)StringCchLenA(chNumber, COUNTOF(chNumber)) - 2;
-                if (bIncrease && iNumber < UINT_MAX) {
-                    iNumber++;
-                }
-                if (!bIncrease && iNumber > 0) {
-                    iNumber--;
-                }
-                bool bUppercase = false;
-                for (int i = (int)StringCchLenA(chNumber, COUNTOF(chNumber)) - 1; i >= 0; i--) {
-                    if (IsCharLowerA(chNumber[i])) {
-                        break;
-                    }
-                    if (IsCharUpperA(chNumber[i])) {
-                        bUppercase = true;
-                        break;
-                    }
-                }
-                if (bUppercase) {
-                    StringCchPrintfA(chFormat, COUNTOF(chFormat), "%%#0%iX", iWidth);
-                } else {
-                    StringCchPrintfA(chFormat, COUNTOF(chFormat), "%%#0%ix", iWidth);
-                }
-
-                StringCchPrintfA(chNumber, COUNTOF(chNumber), chFormat, iNumber);
-                EditReplaceSelection(chNumber, false);
-            }
+        te_int_t iErr = 0;
+        double const dResult = te_interp(szExpr, &iErr);
+        if (iErr != 0 || !isfinite(dResult)) {
+            return; // silent no-op
+        }
+        if (fabs(dResult) <= 9.2233720368547758e18 && dResult == (double)(long long)dResult) {
+            StringCchPrintfA(chBody, COUNTOF(chBody), "%lld", (long long)dResult);
+        } else {
+            StringCchPrintfA(chBody, COUNTOF(chBody), "%.15g", dResult);
         }
     }
-    UNREFERENCED_PARAMETER(hwnd);
+    szSel[iBodyEnd] = chSaved; // restore trailing-ws char for the compose step
+
+    // Compose: <leading ws><new body><trailing ws>.
+    size_t const iBodyOutLen = strlen(chBody);
+    char szFinal[4256];
+    if (iLeadWS + iBodyOutLen + iTrailWS >= COUNTOF(szFinal)) {
+        EditReplaceSelection(chBody, false); // pathological size: drop ws
+        return;
+    }
+    memcpy(szFinal, szSel, iLeadWS);
+    memcpy(szFinal + iLeadWS, chBody, iBodyOutLen);
+    memcpy(szFinal + iLeadWS + iBodyOutLen, szSel + iBodyEnd, iTrailWS);
+    szFinal[iLeadWS + iBodyOutLen + iTrailWS] = '\0';
+
+    EditReplaceSelection(szFinal, false);
 }
 
 
