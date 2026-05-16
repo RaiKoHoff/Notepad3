@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "Kies &Woord of Lyne\tCtrl+Spc",                       IDM_EDIT_SELECTWORD
             MENUITEM "Multi-Select &Alles wat Pas\tCtrl+Shift+Spc",         IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "Verdeel en Onttrek &Transaksies by Lynbrekings",      IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Web Sjabloon 1",                          CMD_WEBACTION1
         MENUITEM "Web Sjabloon 2",                          CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "Maak File Explorer Oop",                  IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

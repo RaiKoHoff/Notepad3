@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "शब्द या रेखा चयनित करें (&W)\tCtrl+Spc",            IDM_EDIT_SELECTWORD
             MENUITEM "सारे मिलान बहु-चयनित करें (&A)\tCtrl+Shift+Spc",  IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "पंक्ति-विराम पर पूर्ववत लेनदेन विभाजित करें",     IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "वेब प्रक्रिया 1 खोलें",          CMD_WEBACTION1
         MENUITEM "वेब प्रक्रिया 2 खोलें",          CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "फ़ाइल एक्स्प्लोरर खोलें",         IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

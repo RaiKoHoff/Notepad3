@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "Seleziona &parola o linea\tCtrl+Spc",                          IDM_EDIT_SELECTWORD
             MENUITEM "Multi selezione di &tutte le occorrenze\tCtrl+Maiusc+Spazio",  IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "Separa &transazione annulla azione per ogni linea",            IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Apri azione web 1",             CMD_WEBACTION1
         MENUITEM "Apri azione web 2",             CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "Apri Esplora File",             IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

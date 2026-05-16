@@ -6019,6 +6019,132 @@ static bool _HandleEditBasicCommands(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM
 
 //=============================================================================
 //
+//  _ResolveSelectionForOpen()
+//
+//  Shared preamble for the EditOpen*FromSelection commands:
+//     extract token at selection/caret -> strip line/col suffix -> resolve.
+//  Returns a freshly-allocated HPATHL on success (caller must Path_Release),
+//  or NULL when no token or no resolvable path was found.
+//  *lineNum / *isDir are output-only; either may be NULL.
+//
+static HPATHL _ResolveSelectionForOpen(int* lineNum, bool* isDir)
+{
+    if (lineNum) {
+        *lineNum = -1;
+    }
+    HSTRINGW hToken = ExtractSelectionOrTokenAtCaret();
+    if (StrgIsEmpty(hToken)) {
+        StrgDestroy(hToken);
+        return NULL;
+    }
+
+    LPWSTR const tokBuf = StrgWriteAccessBuf(hToken, 0);
+    SplitFilePathLineColNum(tokBuf, lineNum, NULL);
+    StrgSanitize(hToken);
+
+    HPATHL hpth = Path_Allocate(NULL);
+    bool const ok = ResolveSelectionToPath(StrgGet(hToken), hpth, isDir);
+    StrgDestroy(hToken);
+    if (!ok) {
+        Path_Release(hpth);
+        return NULL;
+    }
+    return hpth;
+}
+
+
+//=============================================================================
+//
+//  EditOpenContainingFolderFromSelection()
+//
+//  Resolves the current selection (or token at the caret) to a filesystem
+//  path and opens Explorer with that file/folder selected.
+//
+//  Implemented in Notepad3.c (not Edit.c) because <shlobj.h> defines
+//  SORT_ASCENDING / SORT_DESCENDING that collide with Edit.c's SortOrderMask.
+//
+void EditOpenContainingFolderFromSelection(void)
+{
+    HPATHL hpth = _ResolveSelectionForOpen(NULL, NULL);
+    if (!hpth) {
+        MessageBeep(MB_ICONHAND);
+        return;
+    }
+
+    PIDLIST_ABSOLUTE pidl = NULL;
+    SHParseDisplayName(Path_Get(hpth), NULL, &pidl, SFGAO_BROWSABLE | SFGAO_FILESYSTEM, NULL);
+    if (pidl) {
+        SHOpenFolderAndSelectItems(pidl, 0, NULL, 0);
+        ILFree(pidl);
+    }
+    Path_Release(hpth);
+}
+
+
+//=============================================================================
+//
+//  EditOpenFileFromSelection()
+//
+//  Resolves the selection (or token at the caret) to a file path, then loads
+//  it into Notepad3 (mirrors the OPEN_IN_NOTEPAD3 branch of the hyperlink
+//  handler). For a directory, opens the file-open dialog rooted there.
+//
+void EditOpenFileFromSelection(HWND hwnd)
+{
+    UNREFERENCED_PARAMETER(hwnd);
+
+    int  lineNum = -1;
+    bool isDir = false;
+    HPATHL hpth = _ResolveSelectionForOpen(&lineNum, &isDir);
+    if (!hpth) {
+        MessageBeep(MB_ICONHAND);
+        return;
+    }
+
+    bool const bReuseWindow = Flags.bReuseWindow;
+    FileLoadFlags fLoadFlags = FLF_None;
+    fLoadFlags |= Settings.SkipUnicodeDetection ? FLF_SkipUnicodeDetect : 0;
+    fLoadFlags |= Settings.SkipANSICodePageDetection ? FLF_SkipANSICPDetection : 0;
+
+    bool success = false;
+    if (!isDir) {
+        if (bReuseWindow) {
+            success = FileLoad(hpth, fLoadFlags, 0, 0);
+            if (success && lineNum > 0) {
+                int const ln = clampi(lineNum - 1, 0, INT_MAX);
+                SciCall_PostMsg(SCI_GOTOLINE, (WPARAM)ln, 0);
+            }
+        }
+        else {
+            WCHAR wchParams[64];
+            StringCchPrintf(wchParams, COUNTOF(wchParams), L"%s /g %i",
+                            Flags.bSingleFileInstance ? L"/ns" : L"/n", clampi(lineNum, 0, INT_MAX));
+            success = LaunchNewInstance(Globals.hwndMain, wchParams, Path_Get(hpth));
+        }
+    }
+    else {
+        if (bReuseWindow) {
+            if (OpenFileDlg(Globals.hwndMain, hpth, hpth)) {
+                success = FileLoad(hpth, fLoadFlags, 0, 0);
+            }
+        }
+        else {
+            WCHAR wchParams[64];
+            StringCchPrintf(wchParams, COUNTOF(wchParams), L"%s",
+                            Flags.bSingleFileInstance ? L"/ns" : L"/n");
+            success = LaunchNewInstance(Globals.hwndMain, wchParams, Path_Get(hpth));
+        }
+    }
+
+    if (!success) {
+        MessageBeep(MB_ICONHAND);
+    }
+    Path_Release(hpth);
+}
+
+
+//=============================================================================
+//
 //  _HandleEditLineManipulation() - Handler for MsgCommand()
 //
 static bool _HandleEditLineManipulation(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
@@ -6320,6 +6446,15 @@ static bool _HandleEditLineManipulation(HWND hwnd, UINT umsg, WPARAM wParam, LPA
     }
     break;
 
+
+    case IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL:
+        EditOpenContainingFolderFromSelection();
+        break;
+
+
+    case IDM_EDIT_OPEN_FILE_FROM_SEL:
+        EditOpenFileFromSelection(hwnd);
+        break;
 
 
     default:
@@ -8888,8 +9023,11 @@ bool HandleHotSpotURLClicked(const DocPos position, const HYPERLINK_OPS operatio
                 StrTrim(szUnEscW, L"/");
 
                 HPATHL hfile_pth = Path_Allocate(szUnEscW);
-                Path_CanonicalizeEx(hfile_pth, Paths.ModuleDirectory);
-                //@@@???Path_CanonicalizeEx(hfile_pth, Paths.WorkingDirectory);
+                // Anchor relative file:// URLs to the directory of the current
+                // document, falling back to the working directory. Never to
+                // Paths.ModuleDirectory — that resolves against Notepad3's
+                // install dir, which is rarely what the author intended.
+                Path_CanonicalizeWithDocAnchor(hfile_pth);
 
                 bool success = false;
                 FileLoadFlags fLoadFlags = FLF_None;
