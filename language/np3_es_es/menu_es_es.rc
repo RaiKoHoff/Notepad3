@@ -163,6 +163,7 @@ BEGIN
         MENUITEM "&Copiar\tCtrl+C",                         IDM_EDIT_COPY
         MENUITEM "C&opiar todo\tAlt+C",                     IDM_EDIT_COPYALL
         MENUITEM "Copiar a&ñadiendo\tCtrl+E",               IDM_EDIT_COPYADD
+        MENUITEM "Copy as &RTF",                            IDM_EDIT_COPYRTF
         MENUITEM "&Pegar\tCtrl+V",                          IDM_EDIT_PASTE
         MENUITEM "Perm&utar\tCtrl+K",                       IDM_EDIT_SWAP
         MENUITEM "&Seleccionar todo\tCtrl+A",               IDM_EDIT_SELECTALL

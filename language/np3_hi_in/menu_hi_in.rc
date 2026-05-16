@@ -163,6 +163,7 @@ BEGIN
         MENUITEM "कॉपी (&C)\tCtrl+C",                  IDM_EDIT_COPY
         MENUITEM "सारा कॉपी करें (&A)\tAlt+C",            IDM_EDIT_COPYALL
         MENUITEM "कॉपी करें और जोड़ें (&Y)\tCtrl+E",       IDM_EDIT_COPYADD
+        MENUITEM "Copy as &RTF",                          IDM_EDIT_COPYRTF
         MENUITEM "चिपकाएं (&P)\tCtrl+V",                IDM_EDIT_PASTE
         MENUITEM "बदलें (&W)\tCtrl+K",                  IDM_EDIT_SWAP
         MENUITEM "सारा चुनें (&S)\tCtrl+A",               IDM_EDIT_SELECTALL

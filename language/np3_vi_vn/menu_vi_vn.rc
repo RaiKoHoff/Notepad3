@@ -163,6 +163,7 @@ BEGIN
         MENUITEM "Sao chép(&C)\tCtrl+C",                           IDM_EDIT_COPY
         MENUITEM "Sao chép tất cả(&L)\tAlt+C",                       IDM_EDIT_COPYALL
         MENUITEM "Sao chép thêm(&A)\tCtrl+E",                      IDM_EDIT_COPYADD
+        MENUITEM "Copy as &RTF",                                   IDM_EDIT_COPYRTF
         MENUITEM "Dán(&P)\tCtrl+V",                      IDM_EDIT_PASTE
         MENUITEM "Hoán đổi(&W)\tCtrl+K",                 IDM_EDIT_SWAP
         MENUITEM "Chọn tất cả(&S)\tCtrl+A",                      IDM_EDIT_SELECTALL
