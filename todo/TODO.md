@@ -313,7 +313,7 @@
   - Issue: [#4946](https://github.com/rizonesoft/Notepad3/issues/4946)
 
 ### Copy/Clipboard
-- [x] **(Q2) Copy as RTF** - Rich text copy with syntax highlighting
+- [x] **(Q2) Copy as RTF** - Rich text copy with syntax highlighting - ✅ IMPLEMENTED
   - Issue: [#5052](https://github.com/rizonesoft/Notepad3/issues/5052)
   - **Reference**: [Notepad4](https://github.com/zufuliu/notepad4) implements via `IDM_EDIT_COPYRTF`
 - [ ] **(Q2) Copy/Cut/Paste Binary** - Binary data handling
@@ -325,8 +325,10 @@
   - `IDM_EDIT_INSERT_PATHNAME` - Copy full path
 
 ### Additional Micro Features
-- [ ] **(Q1) Increment/Decrement Number** - Modify number at cursor (Ctrl+Alt++/-)
-- [ ] **(Q2) Show Hex View** - Display hex representation of selection
+- [x] **(Q1) Increment/Decrement Number** - Modify number at cursor (Ctrl+Alt++/-)
+  - implemented via TinyExpr enhancement 
+- [x] **(Q2) Show Hex View** - Display hex representation of selection
+  - implemented via TinyExpr output format switch
 - [ ] **(Q1) CSV Options Dialog** - Configure CSV delimiter/qualifier
   - [x] CSV Rainbow Lexer (home-brew) has an auto-detect-delimiter
 - [ ] **(Q3) Large File Mode** - Optimized mode for files >2GB
