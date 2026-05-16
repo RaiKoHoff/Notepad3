@@ -163,7 +163,7 @@ BEGIN
         MENUITEM "Kopiera\tCtrl+C",                                 IDM_EDIT_COPY
         MENUITEM "Kopiera allt\tAlt+C",                             IDM_EDIT_COPYALL
         MENUITEM "Lägg till i urklipp\tCtrl+E",                       IDM_EDIT_COPYADD
-        MENUITEM "Copy as &RTF",                                      IDM_EDIT_COPYRTF
+        MENUITEM "Kopiera som &RTF",                                      IDM_EDIT_COPYRTF
         MENUITEM "Klistra in\tCtrl+V",                              IDM_EDIT_PASTE
         MENUITEM "Byt\tCtrl+K",                                     IDM_EDIT_SWAP
         MENUITEM "Markera allt\tCtrl+A",                               IDM_EDIT_SELECTALL
@@ -365,7 +365,7 @@ BEGIN
         MENUITEM "Rensa ändringshistorik"             IDM_VIEW_CHGHIST_CLEAR_UNDOREDO
         MENUITEM SEPARATOR
         MENUITEM "Hotspots för hyperlänkar\tCtrl+Alt+W",                      IDM_VIEW_HYPERLINKHOTSPOTS
-        POPUP "Färgpunkter"
+        POPUP "Hotspots för färgdefinitioner"
         BEGIN
             MENUITEM "&Av",                              IDM_VIEW_COLORDEFHOTSPOTS
             MENUITEM "&RGB+A"                            IDM_VIEW_COLOR_RGBA
