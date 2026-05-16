@@ -72,6 +72,7 @@ np3params, *LPnp3params;
 #define ID_ATOMICSAVETIMER  (0xA005)        // Atomic Save Detection
 #define ID_DEFERMINIMIZETIMER (0xA006)      // Deferred minimize on /B + /I startup
 #define ID_TINYEXPRCOPYTIMER  (0xA007)      // TinyExpr status-bar single-click copy debounce
+#define ID_FGLOCKRELEASETIMER (0xA008)      // Release LockSetForegroundWindow after background URL launch
 
 
 //==== Reuse Window Lock Timeout ==============================================
