@@ -219,8 +219,8 @@
     <ClCompile Include="MuiLanguage.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="EncodingDetection.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="uchardet\EncodingDetection.cpp">
+      <Filter>Source Files\uchardet</Filter>
     </ClCompile>
     <ClCompile Include="Config\Config.cpp">
       <Filter>Source Files\Config</Filter>

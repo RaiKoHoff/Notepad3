@@ -428,7 +428,7 @@
     <ClCompile Include="Dlapi.c" />
     <ClCompile Include="Edit.c" />
     <ClCompile Include="Encoding.c" />
-    <ClCompile Include="EncodingDetection.cpp" />
+    <ClCompile Include="uchardet\EncodingDetection.cpp" />
     <ClCompile Include="Helpers.c" />
     <ClCompile Include="MuiLanguage.c" />
     <ClCompile Include="Notepad3.c" />
