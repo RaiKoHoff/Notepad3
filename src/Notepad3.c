@@ -777,6 +777,21 @@ static VOID CALLBACK TinyExprCopyTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEven
 // ----------------------------------------------------------------------------
 
 
+// Ends the temporary always-on-top window opened around a background URL launch
+// (Ctrl+Shift+Click). Restores Notepad3's normal z-order from Settings.AlwaysOnTop.
+static VOID CALLBACK _ForegroundLockReleaseTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
+{
+    UNREFERENCED_PARAMETER(uMsg);
+    UNREFERENCED_PARAMETER(dwTime);
+    KillTimer(hwnd, idEvent); // one-shot
+    LockSetForegroundWindow(LSFW_UNLOCK);
+    SetWindowPos(hwnd, Settings.AlwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST,
+                 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    SetForegroundWindow(hwnd);
+}
+// ----------------------------------------------------------------------------
+
+
 //=============================================================================
 //
 // InvalidateStyleRedraw
@@ -8899,7 +8914,18 @@ bool HandleHotSpotURLClicked(const DocPos position, const HYPERLINK_OPS operatio
                 Path_Release(hfile_pth);
 
             } else if (operation & OPEN_WITH_BROWSER) {  // open in web browser or associated application
-                
+
+                bool const bBackground = (operation & OPEN_BACKGROUND) != 0;
+                int  const nShowFlag   = bBackground ? SW_SHOWNOACTIVATE : SW_SHOWNORMAL;
+
+                if (bBackground) {
+                    // Pin Notepad3 above the about-to-launch browser; SWP_NOACTIVATE keeps focus.
+                    // The lock prevents the browser's async SetForegroundWindow from winning.
+                    SetWindowPos(Globals.hwndMain, HWND_TOPMOST, 0, 0, 0, 0,
+                                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                    LockSetForegroundWindow(LSFW_LOCK);
+                }
+
                 HPATHL hDirectory = Path_Allocate(NULL);
 
                 if (UrlIsFileUrl(szTextW)) {
@@ -8929,7 +8955,7 @@ bool HandleHotSpotURLClicked(const DocPos position, const HYPERLINK_OPS operatio
                     sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
                     sei.lpParameters = StrgIsNotEmpty(hstr_params) ? StrgGet(hstr_params) : szUnEscW;
                     sei.lpDirectory = Path_Get(hDirectory);
-                    sei.nShow = SW_SHOWNORMAL;
+                    sei.nShow = nShowFlag;
                     bHandled = ShellExecuteExW(&sei);
 
                     StrgDestroy(hstr_params);
@@ -8945,8 +8971,14 @@ bool HandleHotSpotURLClicked(const DocPos position, const HYPERLINK_OPS operatio
                     sei.lpFile = szUnEscW;
                     sei.lpParameters = NULL;
                     sei.lpDirectory = Path_Get(hDirectory);
-                    sei.nShow = SW_SHOWNORMAL;
+                    sei.nShow = nShowFlag;
                     bHandled = ShellExecuteExW(&sei);
+                }
+
+                if (bBackground) {
+                    // 600 ms covers the typical browser async-activation window with margin.
+                    SetForegroundWindow(Globals.hwndMain);
+                    SetTimer(Globals.hwndMain, ID_FGLOCKRELEASETIMER, 600, _ForegroundLockReleaseTimerProc);
                 }
 
                 Path_Release(hDirectory);
@@ -9659,7 +9691,11 @@ static LRESULT _MsgNotifyFromEdit(HWND hwnd, const SCNotification* const scn)
                     HandleHotSpotURLClicked(scn->position, OPEN_IN_NOTEPAD3);
                 }
             } else if (_s_indic_click_modifiers & SCMOD_CTRL) {
-                HandleHotSpotURLClicked(scn->position, OPEN_WITH_BROWSER); // if applicable (file://)
+                // Ctrl+Shift+Click → open in background (browser behind, Notepad3 stays active)
+                HYPERLINK_OPS const op = (_s_indic_click_modifiers & SCMOD_SHIFT)
+                    ? (HYPERLINK_OPS)(OPEN_WITH_BROWSER | OPEN_BACKGROUND)
+                    : OPEN_WITH_BROWSER;
+                HandleHotSpotURLClicked(scn->position, op); // if applicable (file://)
             }
         } else if (SciCall_IndicatorValueAt(INDIC_NP3_COLOR_DEF, scn->position) > 0) {
             if (_s_indic_click_modifiers & SCMOD_CTRL) {
