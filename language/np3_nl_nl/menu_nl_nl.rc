@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "&Woord of regel(s) selecteren\tCtrl+Spc",     IDM_EDIT_SELECTWORD
             MENUITEM "&Alle overeenkomsten selecteren\tCtrl+Shift+Spc", IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "&Ongedaan maken bij regeleinde afbreken",     IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Websjabloon 1 openen",                            CMD_WEBACTION1
         MENUITEM "Websjabloon 2 openen",                            CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "MiniPath verkenner openen",                       IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

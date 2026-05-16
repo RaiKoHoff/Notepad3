@@ -57,6 +57,8 @@ void EditChar2Hex(HWND hwnd);
 void EditHex2Char(HWND hwnd);
 void EditFindMatchingBrace();
 void EditSelectToMatchingBrace();
+void EditOpenContainingFolderFromSelection(void);
+void EditOpenFileFromSelection(HWND hwnd);
 void EditModifyNumber(HWND hwnd, bool bIncrease);
 void EditInsertDateTimeStrg(bool bShortFmt, bool bTimestampFmt);
 void EditUpdateTimestamps();

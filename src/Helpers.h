@@ -486,6 +486,11 @@ bool ReadFileXL(HANDLE hFile, char* const lpBuffer, const size_t nNumberOfBytesT
 bool WriteFileXL(HANDLE hFile, const char* const lpBuffer, const size_t nNumberOfBytesToWrite, size_t* const lpNumberOfBytesWritten);
 
 bool  SplitFilePathLineNum(LPWSTR lpszPath, int *lineNum);
+bool  SplitFilePathLineColNum(LPWSTR lpszPath, int *lineNum, int *colNum);
+
+HSTRINGW ExtractSelectionOrTokenAtCaret(void);
+bool  ResolveSelectionToPath(LPCWSTR token, HPATHL hpthOut, bool *isDir);
+void  Path_CanonicalizeWithDocAnchor(HPATHL hpth);
 
 bool StrLTrimI(LPWSTR pszSource,LPCWSTR pszTrimChars);
 bool StrRTrimI(LPWSTR pszSource,LPCWSTR pszTrimChars);

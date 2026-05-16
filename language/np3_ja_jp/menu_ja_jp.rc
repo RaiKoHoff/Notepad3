@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "単語や行を選択(&W)\tCtrl+Spc",                   IDM_EDIT_SELECTWORD
             MENUITEM "一致文字列すべてに複数カーソル(&A)\tCtrl+Shift+Spc", IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "「元に戻す」の履歴を改行で区切る(&T)",                IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "ウェブ1で開く",                             CMD_WEBACTION1
         MENUITEM "ウェブ2で開く",                             CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "エクスプローラーを開く",                       IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

@@ -341,7 +341,7 @@
   - BUG: [#4952](https://github.com/rizonesoft/Notepad3/issues/4952) - Template vs Action naming inconsistency
 - [ ] **(Q2) Open Path or Link** - Open file path or URL under cursor
   - Issue: [#3926](https://github.com/rizonesoft/Notepad3/issues/3926) - Support relative file:// paths
-- [ ] **(Q1) Open Containing Folder** - Open the folder containing the current file in Explorer
+- [x] **(Q1) Open Containing Folder** - Open the folder containing the current file in Explorer - ✅ IMPLEMENTED
   - **Reference**: [Notepad4](https://github.com/zufuliu/notepad4) implements via `CMD_OPEN_CONTAINING_FOLDER` and `EditOpenSelection(OpenSelectionType_ContainingFolder)`
 
 ### Windows Integration

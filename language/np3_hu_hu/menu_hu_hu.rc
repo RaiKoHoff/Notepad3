@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "Szó vag&y sorok kijelölése\tCtrl+Spc",           IDM_EDIT_SELECTWORD
             MENUITEM "Összes egyezés ki&jelölése\tCtrl+Shift+Spc",     IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "Visszavonás műveletek szétvágása sortöréseknél", IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Webes művelet 1",            CMD_WEBACTION1
         MENUITEM "Webes művelet 2",            CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "Fájlböngésző megnyitása",    IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

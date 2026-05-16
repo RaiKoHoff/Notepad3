@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "选定单词或行(&W)\tCtrl+Spc",             IDM_EDIT_SELECTWORD
             MENUITEM "选定全部匹配(&A)\tCtrl+Shift+Spc",       IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "换行时重定撤销操作边界(&T)",     IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "用超链接模板 1 打开",                    CMD_WEBACTION1
         MENUITEM "用超链接模板 2 打开",                    CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "打开资源管理器",                         IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

@@ -1166,6 +1166,329 @@ bool SplitFilePathLineNum(LPWSTR lpszPath, int* lineNum)
 
 //=============================================================================
 //
+//  _IsAllDigitsW() - non-empty wide string consisting solely of ASCII digits
+//
+static inline bool _IsAllDigitsW(LPCWSTR s)
+{
+    if (!s || *s == L'\0') {
+        return false;
+    }
+    for (; *s; ++s) {
+        if (*s < L'0' || *s > L'9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+//=============================================================================
+//
+//  _StripCommonQuoting() - in-place strip of whitespace + quote-like chars
+//                          that wrap a path/URL token in source/log/doc text.
+//
+static inline void _StripCommonQuoting(HSTRINGW hstr)
+{
+    StrgTrim(hstr, L' ');
+    StrgTrim(hstr, L'\t');
+    StrgTrim(hstr, L'"');
+    StrgTrim(hstr, L'\'');
+    StrgTrim(hstr, L'`');
+    StrgTrim(hstr, L'<');
+    StrgTrim(hstr, L'>');
+}
+
+
+//=============================================================================
+//
+//  SplitFilePathLineColNum()
+//
+//  Strips an optional trailing line/column suffix from lpszPath in place.
+//  Patterns recognised (first match wins):
+//      foo.c(42)        -> line 42
+//      foo.c,42         -> line 42
+//      foo.c:42:7       -> line 42, column 7
+//      foo.c:<expr>     -> falls through to SplitFilePathLineNum (te_interp)
+//
+//  Drive-letter colons ("C:\...") are never treated as line separators.
+//  Returns true if a suffix was stripped.
+//
+bool SplitFilePathLineColNum(LPWSTR lpszPath, int* lineNum, int* colNum)
+{
+    if (lineNum) {
+        *lineNum = -1;
+    }
+    if (colNum) {
+        *colNum = -1;
+    }
+    if (StrIsEmpty(lpszPath)) {
+        return false;
+    }
+
+    size_t len = StrlenW(lpszPath);
+    while (len > 0 && (lpszPath[len - 1] == L' ' || lpszPath[len - 1] == L'\t')) {
+        lpszPath[--len] = L'\0';
+    }
+    if (len == 0) {
+        return false;
+    }
+
+    // Try trailing "(N)"
+    if (lpszPath[len - 1] == L')') {
+        size_t j = len - 1; // points at ')'
+        while (j > 0 && lpszPath[j - 1] >= L'0' && lpszPath[j - 1] <= L'9') {
+            --j;
+        }
+        if (j < (len - 1) && j > 0 && lpszPath[j - 1] == L'(') {
+            int const ln = _wtoi(&lpszPath[j]);
+            if (ln > 0) {
+                lpszPath[j - 1] = L'\0';
+                if (lineNum) {
+                    *lineNum = ln;
+                }
+                return true;
+            }
+        }
+    }
+
+    // Try trailing ",N"
+    {
+        size_t i = len;
+        while (i > 0 && lpszPath[i - 1] >= L'0' && lpszPath[i - 1] <= L'9') {
+            --i;
+        }
+        if (i < len && i > 0 && lpszPath[i - 1] == L',') {
+            int const ln = _wtoi(&lpszPath[i]);
+            if (ln > 0) {
+                lpszPath[i - 1] = L'\0';
+                if (lineNum) {
+                    *lineNum = ln;
+                }
+                return true;
+            }
+        }
+    }
+
+    // Try trailing ":N:M" (line + column). Reject drive-letter colon at pos 1.
+    LPWSTR lastColon = StrRChr(lpszPath, NULL, L':');
+    if (lastColon && lastColon != (lpszPath + 1) && _IsAllDigitsW(lastColon + 1)) {
+        int const second = _wtoi(lastColon + 1);
+        wchar_t const saved = *lastColon;
+        *lastColon = L'\0';
+        LPWSTR prevColon = StrRChr(lpszPath, NULL, L':');
+        if (prevColon && prevColon != (lpszPath + 1) && _IsAllDigitsW(prevColon + 1)) {
+            int const first = _wtoi(prevColon + 1);
+            if (first > 0 && second > 0) {
+                *prevColon = L'\0';
+                if (lineNum) {
+                    *lineNum = first;
+                }
+                if (colNum) {
+                    *colNum = second;
+                }
+                return true;
+            }
+        }
+        *lastColon = saved;
+    }
+
+    // Single-colon fallback (preserves te_interp expression support)
+    return SplitFilePathLineNum(lpszPath, lineNum);
+}
+
+
+//=============================================================================
+//
+//  _IsTokenBoundary() - true for chars that delimit a path/URL token
+//                       when no selection is present.
+//
+static inline bool _IsTokenBoundary(char c)
+{
+    switch (c) {
+    case ' ': case '\t': case '\r': case '\n':
+    case '\'': case '`': case '"':
+    case '<': case '>': case '|': case '*':
+    case ',': case ';':
+        return true;
+    default:
+        return false;
+    }
+}
+
+
+//=============================================================================
+//
+//  ExtractSelectionOrTokenAtCaret()
+//
+//  Returns a freshly-allocated HSTRINGW (caller must StrgDestroy()) holding
+//  the current selection, or - if the selection is empty - the span around
+//  the caret bounded by [\s'`"<>|*,;]. Newline-truncates selections.
+//  Strips surrounding whitespace and quote-like characters.
+//
+HSTRINGW ExtractSelectionOrTokenAtCaret(void)
+{
+    HSTRINGW hstr = StrgCreate(NULL);
+
+    DocPos byteStart = 0;
+    DocPos byteEnd = 0;
+
+    if (!SciCall_IsSelectionEmpty()) {
+        byteStart = SciCall_GetSelectionStart();
+        byteEnd = SciCall_GetSelectionEnd();
+        // truncate selection at first \r, \n, \t
+        for (DocPos p = byteStart; p < byteEnd; ++p) {
+            char const c = SciCall_GetCharAt(p);
+            if (c == '\r' || c == '\n' || c == '\t') {
+                byteEnd = p;
+                break;
+            }
+        }
+    }
+    else {
+        DocPos const pos = SciCall_GetCurrentPos();
+        DocLn  const ln = SciCall_LineFromPosition(pos);
+        DocPos const lineStart = SciCall_PositionFromLine(ln);
+        DocPos const lineEnd = SciCall_GetLineEndPosition(ln);
+        byteStart = pos;
+        while (byteStart > lineStart && !_IsTokenBoundary(SciCall_GetCharAt(byteStart - 1))) {
+            --byteStart;
+        }
+        byteEnd = pos;
+        while (byteEnd < lineEnd && !_IsTokenBoundary(SciCall_GetCharAt(byteEnd))) {
+            ++byteEnd;
+        }
+    }
+
+    if (byteEnd > byteStart) {
+        DocPos const length = byteEnd - byteStart;
+        const char* const pszRange = SciCall_GetRangePointer(byteStart, length);
+        if (pszRange) {
+            int const wlen = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, NULL, 0);
+            if (wlen > 0) {
+                LPWSTR const buf = StrgWriteAccessBuf(hstr, (size_t)wlen + 1);
+                int const written = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, buf, wlen);
+                buf[written] = L'\0';
+                StrgSanitize(hstr);
+            }
+        }
+    }
+
+    if (StrgIsNotEmpty(hstr)) {
+        _StripCommonQuoting(hstr);
+    }
+
+    return hstr;
+}
+
+
+//=============================================================================
+//
+//  Path_CanonicalizeWithDocAnchor()
+//
+//  In-place canonicalisation using the document-anchor priority:
+//     1) directory of Paths.CurrentFile (when non-empty)
+//     2) Paths.WorkingDirectory (fallback)
+//     never Paths.ModuleDirectory.
+//
+//  Safe to call for both relative and absolute paths — Path_CanonicalizeEx
+//  only joins the anchor when the path IS relative.
+//
+void Path_CanonicalizeWithDocAnchor(HPATHL hpth)
+{
+    HPATHL hAnchor = Path_Allocate(NULL);
+    if (Path_IsNotEmpty(Paths.CurrentFile)) {
+        Path_Reset(hAnchor, Path_Get(Paths.CurrentFile));
+        Path_RemoveFileSpec(hAnchor);
+    }
+    if (Path_IsEmpty(hAnchor) && Path_IsNotEmpty(Paths.WorkingDirectory)) {
+        Path_Reset(hAnchor, Path_Get(Paths.WorkingDirectory));
+    }
+    Path_CanonicalizeEx(hpth, hAnchor);
+    Path_Release(hAnchor);
+}
+
+
+//=============================================================================
+//
+//  ResolveSelectionToPath()
+//
+//  Best-effort resolution of a selection token to an absolute filesystem path.
+//
+//  Steps:
+//    - Strip a leading file:// / file:/// prefix via PathCreateFromUrlW.
+//    - Expand %VAR% environment references.
+//    - If relative: canonicalise against (1) the directory of Paths.CurrentFile
+//      when non-empty, otherwise (2) Paths.WorkingDirectory.
+//      NEVER against Paths.ModuleDirectory.
+//    - Probe filesystem; set *isDir true for an existing directory.
+//
+//  Returns true iff the resolved path exists. hpthOut is always populated
+//  with the best-effort resolution (caller may inspect on false).
+//
+bool ResolveSelectionToPath(LPCWSTR token, HPATHL hpthOut, bool* isDir)
+{
+    if (isDir) {
+        *isDir = false;
+    }
+    if (!hpthOut) {
+        return false;
+    }
+    Path_Empty(hpthOut, true);
+    if (StrIsEmpty(token)) {
+        return false;
+    }
+
+    // Defensive: callers may pass un-trimmed input. '<' '>' are shell-quote /
+    // mail-style URL wrappers, never legitimate at a path-token boundary —
+    // safe to strip even though they are valid filename chars mid-name.
+    HSTRINGW htmp = StrgCreate(token);
+    _StripCommonQuoting(htmp);
+
+    if (StrgIsEmpty(htmp)) {
+        StrgDestroy(htmp);
+        return false;
+    }
+
+    // file:// / file:/// -> Windows path. Try Shell's PathCreateFromUrlW first;
+    // on failure (malformed URL), fall back to a manual prefix strip so the
+    // canonicalization step below still has a usable best-effort path.
+    LPCWSTR const raw = StrgGet(htmp);
+    if (StrCmpNIW(raw, L"file://", 7) == 0) {
+        WCHAR szPath[INTERNET_MAX_URL_LENGTH + 1] = { L'\0' };
+        DWORD cch = COUNTOF(szPath);
+        if (SUCCEEDED(PathCreateFromUrlW(raw, szPath, &cch, 0))) {
+            StrgReset(htmp, szPath);
+        }
+        else {
+            size_t const skip = (StrCmpNIW(raw, L"file:///", 8) == 0) ? 8 : 7;
+            HSTRINGW hStripped = StrgCreate(raw + skip);
+            StrgSwap(htmp, hStripped);
+            StrgDestroy(hStripped);
+        }
+    }
+
+    // Path_CanonicalizeEx already runs ExpandEnvironmentStrgs(hstr, true) and
+    // strips quotes — no need to expand env vars manually here.
+    Path_Reset(hpthOut, StrgGet(htmp));
+    StrgDestroy(htmp);
+
+    Path_CanonicalizeWithDocAnchor(hpthOut);
+
+    if (Path_IsExistingFile(hpthOut)) {
+        return true;
+    }
+    if (Path_IsExistingDirectory(hpthOut)) {
+        if (isDir) {
+            *isDir = true;
+        }
+        return true;
+    }
+    return false;
+}
+
+
+//=============================================================================
+//
 //  FormatNumberStr()
 //
 size_t FormatNumberStr(LPWSTR lpNumberStr, size_t cch, int fixedWidth)

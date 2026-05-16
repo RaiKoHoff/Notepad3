@@ -317,6 +317,9 @@ BEGIN
             MENUITEM "Vybrať &slovo alebo riadok\tCtrl+Spc",           IDM_EDIT_SELECTWORD
             MENUITEM "&Viacnásobný výber všetkých zhôd\tCtrl+Shift+Spc",  IDM_EDIT_SELECTALLMATCHES
             MENUITEM SEPARATOR
+            MENUITEM "Open &Containing Folder of Selection",                IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+            MENUITEM "Open &File from Selection",                           IDM_EDIT_OPEN_FILE_FROM_SEL
+            MENUITEM SEPARATOR
             MENUITEM "Rozdeliť a&kciu Späť po zalomení riadku",        IDM_VIEW_SPLIT_UNDOTYPSEQ_LNBRK
         END
         MENUITEM SEPARATOR
@@ -596,6 +599,9 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Webová šablóna 1",                       CMD_WEBACTION1
         MENUITEM "Webová šablóna 2",                       CMD_WEBACTION2
+        MENUITEM SEPARATOR
+        MENUITEM "Open Containing Folder of Selection", IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL
+        MENUITEM "Open File from Selection",            IDM_EDIT_OPEN_FILE_FROM_SEL
         MENUITEM "Otvoriť Prieskumníka",                   IDM_FILE_EXPLORE_DIR
     END
     POPUP "+"

@@ -751,6 +751,8 @@
 #define IDM_EDIT_COPY_MARKED            40392
 #define IDM_EDIT_DELETE_MARKED          40393
 #define IDM_EDIT_COPYRTF                40394
+#define IDM_EDIT_OPEN_CONTAINING_FOLDER_SEL  40395
+#define IDM_EDIT_OPEN_FILE_FROM_SEL          40396
 
 #define IDM_VIEW_SCHEME                 41001
 #define IDM_VIEW_USE2NDDEFAULT          41002
