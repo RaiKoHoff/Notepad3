@@ -51,178 +51,178 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Dialogs.c">
+    <ClCompile Include="Dialogs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Dlapi.c">
+    <ClCompile Include="Dlapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Edit.c">
+    <ClCompile Include="Edit.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FindReplace.c">
+    <ClCompile Include="FindReplace.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="EditRTF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Helpers.c">
+    <ClCompile Include="Helpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Print.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Styles.c">
+    <ClCompile Include="Styles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Notepad3.c">
+    <ClCompile Include="Notepad3.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Encoding.c">
+    <ClCompile Include="Encoding.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAbaqus.c">
+    <ClCompile Include="StyleLexers\styleLexAbaqus.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAPDL.c">
+    <ClCompile Include="StyleLexers\styleLexAPDL.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexASM.c">
+    <ClCompile Include="StyleLexers\styleLexASM.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAU3.c">
+    <ClCompile Include="StyleLexers\styleLexAU3.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAVS.c">
+    <ClCompile Include="StyleLexers\styleLexAVS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAwk.c">
+    <ClCompile Include="StyleLexers\styleLexAwk.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexBASH.c">
+    <ClCompile Include="StyleLexers\styleLexBASH.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexBAT.c">
+    <ClCompile Include="StyleLexers\styleLexBAT.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCMAKE.c">
+    <ClCompile Include="StyleLexers\styleLexCMAKE.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCOFFEESCRIPT.c">
+    <ClCompile Include="StyleLexers\styleLexCOFFEESCRIPT.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCONF.c">
+    <ClCompile Include="StyleLexers\styleLexCONF.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCPP.c">
+    <ClCompile Include="StyleLexers\styleLexCPP.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCS.c">
+    <ClCompile Include="StyleLexers\styleLexCS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCSS.c">
+    <ClCompile Include="StyleLexers\styleLexCSS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexD.c">
+    <ClCompile Include="StyleLexers\styleLexD.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexDIFF.c">
+    <ClCompile Include="StyleLexers\styleLexDIFF.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexGo.c">
+    <ClCompile Include="StyleLexers\styleLexGo.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexHTML.c">
+    <ClCompile Include="StyleLexers\styleLexHTML.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexINNO.c">
+    <ClCompile Include="StyleLexers\styleLexINNO.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexJAVA.c">
+    <ClCompile Include="StyleLexers\styleLexJAVA.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexJS.c">
+    <ClCompile Include="StyleLexers\styleLexJS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexJSON.c">
+    <ClCompile Include="StyleLexers\styleLexJSON.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexJSON5.c">
+    <ClCompile Include="StyleLexers\styleLexJSON5.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexLUA.c">
+    <ClCompile Include="StyleLexers\styleLexLUA.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexMAK.c">
+    <ClCompile Include="StyleLexers\styleLexMAK.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexMARKDOWN.c">
+    <ClCompile Include="StyleLexers\styleLexMARKDOWN.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexMATLAB.c">
+    <ClCompile Include="StyleLexers\styleLexMATLAB.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexNSIS.c">
+    <ClCompile Include="StyleLexers\styleLexNSIS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexPAS.c">
+    <ClCompile Include="StyleLexers\styleLexPAS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexPL.c">
+    <ClCompile Include="StyleLexers\styleLexPL.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexPROPS.c">
+    <ClCompile Include="StyleLexers\styleLexPROPS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexPS.c">
+    <ClCompile Include="StyleLexers\styleLexPS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexPY.c">
+    <ClCompile Include="StyleLexers\styleLexPY.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexR.c">
+    <ClCompile Include="StyleLexers\styleLexR.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexRC.c">
+    <ClCompile Include="StyleLexers\styleLexRC.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexRegistry.c">
+    <ClCompile Include="StyleLexers\styleLexRegistry.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexRUBY.c">
+    <ClCompile Include="StyleLexers\styleLexRUBY.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexRust.c">
+    <ClCompile Include="StyleLexers\styleLexRust.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexSQL.c">
+    <ClCompile Include="StyleLexers\styleLexSQL.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexStandard.c">
+    <ClCompile Include="StyleLexers\styleLexStandard.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexTCL.c">
+    <ClCompile Include="StyleLexers\styleLexTCL.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexVB.c">
+    <ClCompile Include="StyleLexers\styleLexVB.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexVBS.c">
+    <ClCompile Include="StyleLexers\styleLexVBS.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexVHDL.c">
+    <ClCompile Include="StyleLexers\styleLexVHDL.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexXML.c">
+    <ClCompile Include="StyleLexers\styleLexXML.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexYAML.c">
+    <ClCompile Include="StyleLexers\styleLexYAML.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexNim.c">
+    <ClCompile Include="StyleLexers\styleLexNim.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="MuiLanguage.c">
+    <ClCompile Include="MuiLanguage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="uchardet\EncodingDetection.cpp">
@@ -231,16 +231,16 @@
     <ClCompile Include="Config\Config.cpp">
       <Filter>Source Files\Config</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexTOML.c">
+    <ClCompile Include="StyleLexers\styleLexTOML.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexCSV.c">
+    <ClCompile Include="StyleLexers\styleLexCSV.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexLaTex.c">
+    <ClCompile Include="StyleLexers\styleLexLaTex.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="Resample.c">
+    <ClCompile Include="Resample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DarkMode\DarkMode.cpp">
@@ -414,46 +414,43 @@
     <ClCompile Include="uchardet\uchardet\src\CharDistribution.cpp">
       <Filter>Source Files\uchardet</Filter>
     </ClCompile>
-    <ClCompile Include="uchardet\uchardet\src\uchardet.cpp">
-      <Filter>Source Files\uchardet</Filter>
-    </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexDart.c">
+    <ClCompile Include="StyleLexers\styleLexDart.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexKotlin.c">
+    <ClCompile Include="StyleLexers\styleLexKotlin.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\EditLexer.c">
+    <ClCompile Include="StyleLexers\EditLexer.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexJulia.c">
+    <ClCompile Include="StyleLexers\styleLexJulia.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexKiX.c">
+    <ClCompile Include="StyleLexers\styleLexKiX.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexFortran.c">
+    <ClCompile Include="StyleLexers\styleLexFortran.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAHK.c">
+    <ClCompile Include="StyleLexers\styleLexAHK.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexAHK2.c">
+    <ClCompile Include="StyleLexers\styleLexAHK2.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
-    <ClCompile Include="DynStrg.c">
+    <ClCompile Include="DynStrg.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PathLib.c">
+    <ClCompile Include="PathLib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="tinyexprcpp\tinyexpr.cpp">
       <Filter>Source Files\tinyexprcpp</Filter>
     </ClCompile>
-    <ClCompile Include="tinyexprcpp\tinyexpr_cif.cpp">
+    <ClCompile Include="tinyexprcpp\np3tinyexpr.cpp">
       <Filter>Source Files\tinyexprcpp</Filter>
     </ClCompile>
-    <ClCompile Include="StyleLexers\styleLexVerilog.c">
+    <ClCompile Include="StyleLexers\styleLexVerilog.cpp">
       <Filter>Source Files\StyleLexers</Filter>
     </ClCompile>
     <ClCompile Include="timsort\timsort.c">
@@ -647,7 +644,7 @@
     <ClInclude Include="tinyexprcpp\tinyexpr.h">
       <Filter>Source Files\tinyexprcpp</Filter>
     </ClInclude>
-    <ClInclude Include="tinyexprcpp\tinyexpr_cif.h">
+    <ClInclude Include="tinyexprcpp\np3tinyexpr.h">
       <Filter>Source Files\tinyexprcpp</Filter>
     </ClInclude>
     <ClInclude Include="timsort\timsort.h">

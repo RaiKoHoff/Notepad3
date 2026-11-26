@@ -30,11 +30,7 @@ After loading-related changes, verify in fresh sessions: Copilot `/instructions`
 
 ### Verification metadata pilot
 
-Only [PathLib](domain/pathlib.md) and [configuration](domain/configuration-and-ini.md) currently pilot metadata. Existing pages without it remain accepted. Headers use `status`, a full `verified-at` source commit, `owner`, and `anchors` entries with repository-relative `path` plus a literal `symbol`. A path-only anchor must instead include a `reason`. Keep the YAML subset simple: scalar fields and the anchor list, no multiline values or aliases.
-
-Use `agent-observed` for code-backed agent findings; only @RaiKoHoff may approve `human-verified` status. Ownership routes review; it does not certify correctness. Each pilot states its evidence scope so the commit does not imply every sentence was verified. Uncertain observations stay in [Open questions](open-questions.md). Do not bulk-stamp old pages with the latest commit. Move `verified-at` forward only after repeating the evidence the page's scope names, including any test run; otherwise the new commit certifies checks nobody repeated.
-
-The checker rejects broken/escaping links, undeclared topic folders, mismatched routing triggers, forbidden adapters, broken skill targets, skill front-matter names that differ from their folder, adapter copies that differ from the rules they restate, a missing root instruction file, index, or docs folder, malformed declared metadata, missing/untracked anchor files, absent literal symbols, and invalid/non-ancestor verification commits. Recognizable repository paths in prose code spans must exist; a missing ignored path warns because it may be generated, and an unknown-root path also warns. A forbidden adapter in a parent folder of the repository warns, because it stops Claude Code from reading `AGENTS.md`. Source changes or dirty anchored files warn "possibly stale" once per file, not "wrong"; shallow missing history warns "verification unavailable". These are structural checks, not semantic or runtime-loading proof. Run checker regression cases with `pwsh -NoProfile -File Build\scripts\tests\Test-Docs.Tests.ps1` when changing the checker.
+See [Verification metadata pilot](playbooks/verification-metadata.md) for metadata rules, checker coverage and limitations.
 
 ### Maintenance and pruning
 
@@ -52,10 +48,13 @@ The checker rejects broken/escaping links, undeclared topic folders, mismatched 
 | Bug fix, small feature, characterization test, focused check, or doc proposal | [Maintenance playbooks](playbooks/maintenance.md) (read only the relevant procedure) |
 | Instructions, routing, adapters, skills, or the docs checker | [Review the agent docs](playbooks/docs-review.md) |
 | Harvest session insights into the agent trail | [Trail harvest](playbooks/trail-harvest.md) |
+| Adding or reviewing agent-trail verification metadata | [Verification metadata pilot](playbooks/verification-metadata.md) |
 | Menus, commands, source layout, coding conventions, buffers | [Codebase and conventions](architecture/codebase-and-conventions.md) |
+| Main source layout, menu dispatch, or bundled external tools | [Source layout and external tools](architecture/source-layout.md) |
 | Scintilla message replacements, zoom call-tip positioning, or Scintilla upgrades | [Scintilla API usage](architecture/scintilla-api-usage.md) |
 | Build, MSBuild, CI, test scripts, Python scripting | [Windows build and test](build-and-test/windows-build-and-test.md) |
-| `Edit.c` load/save, atomic save, file watching, Open/MRU dialogs | [File I/O](domain/file-io.md) |
+| Selecting native regression runners or interpreting their coverage | [Focused native tests](build-and-test/focused-native-tests.md) |
+| `Edit.cpp` load/save, atomic save, file watching, Open/MRU dialogs | [File I/O](domain/file-io.md) |
 | Any Win32 file/path call on `HPATHL` | [PathLib](domain/pathlib.md) |
 | Encoding selection or UTF-16/32 handling | [Encoding detection](domain/encoding-detection.md) |
 | Encoding diagnostics, detector regression tests, or coverage boundaries | [Encoding diagnostics and tests](domain/encoding-diagnostics-and-tests.md) |
@@ -65,5 +64,5 @@ The checker rejects broken/escaping links, undeclared topic folders, mismatched 
 | INI settings, persistence | [Configuration and INI](domain/configuration-and-ini.md) |
 | Dark mode, rendering, theme-change redraw | [Dark mode and rendering](domain/ui-rendering.md) |
 | Startup, activation, AppID, new-window reuse | [Startup and window lifecycle](domain/startup-and-window-lifecycle.md) |
-| Expression evaluation (`=?`, Go To, line numbering), `tinyexpr_cif` | [TinyExpr++ wrapper](domain/tinyexpr-wrapper.md) |
+| Expression evaluation (`=?`, Go To, line numbering), `np3tinyexpr` | [TinyExpr++ wrapper](domain/tinyexpr-wrapper.md) |
 | Unverified findings / what would verify them | [Open questions](open-questions.md) |

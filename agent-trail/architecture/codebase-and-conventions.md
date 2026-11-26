@@ -2,55 +2,7 @@
 
 When to read: Menus, commands, source layout, coding conventions, buffers
 
-## Project
-
-Notepad3 is a Windows-only Win32 C/C++ text editor built on Scintilla/Lexilla, distributed under BSD-3. It includes MiniPath (`Ctrl+M`) and integrates the pre-built portable grepWin tool (`Ctrl+Shift+F`). The solution is `Notepad3.sln`; builds use Visual Studio 2026 and toolset v145.
-
-## Source map
-
-| File | Purpose |
-|---|---|
-| `src\Notepad3.c/h` | `wWinMain`, `MainWndProc`, global state, `MsgCommand()`, toolbar setup, word-wrap configuration, middle-click auto-scroll |
-| `src\Edit.c/h` | Encoding, clipboard, indent, sort, bookmarks, folding, autocomplete, URL/color highlighting |
-| `src\FindReplace.c/h` | Find/Replace dialog, search state, PCRE2-backed matching, replacement, occurrence marking |
-| `src\Styles.c/h` | Scintilla styling, lexer selection, themes, margins |
-| `src\Dialogs.c/h` | Dialogs and DPI-aware UI |
-| `src\Config\Config.cpp/h` | INI load/save and MRU |
-| `src\Encoding.c/h` | Character encoding detection/conversion |
-| `src\SciCall.h` | Type-safe wrappers for Scintilla direct calls |
-| `src\DynStrg.c/h` | `HSTRINGW` dynamic wide-string handle |
-| `src\PathLib.c/h` | `HPATHL` path handle and long-path-aware Win32 wrappers |
-| `src\TypeDefs.h` | `DocPos`, `DocLn`, `cpi_enc_t`, OS targeting, compiler macros |
-| `src\MuiLanguage.c/h` | MUI language DLL loading |
-| `src\StyleLexers\styleLex<name>.c` | Per-language `EDITLEXER` definitions |
-
-## Menu and command dispatch
-
-- `MsgInitMenu()` (`WM_INITMENU`) controls menu enable/check state.
-- `MsgCommand()` (`WM_COMMAND`) delegates to static sub-handlers that return `true` when they handle a command:
-
-| Handler | Scope |
-|---|---|
-| `_HandleFileCommands` | `IDM_FILE_*` |
-| `_HandleEncodingCommands` | `IDM_ENCODING_*`, `IDM_LINEENDINGS_*` |
-| `_HandleEditBasicCommands` | `IDM_EDIT_UNDO`..`CMD_VK_INSERT` |
-| `_HandleEditLineManipulation` | `IDM_EDIT_ENCLOSESELECTION`..`IDM_EDIT_INSERT_GUID` |
-| `_HandleEditTextTransform` | `IDM_EDIT_LINECOMMENT`..`IDM_EDIT_HEX2CHAR` |
-| `_HandleEditFind` | `IDM_EDIT_FINDMATCHINGBRACE`..`IDM_EDIT_GOTOLINE` |
-| `_HandleViewAndSettingsCommands` | `IDM_VIEW_*`, `IDM_SET_*` |
-| `_HandleHelpCommands` | `IDM_HELP_*` |
-| `_HandleCmdCommands` | `CMD_*` |
-| `_HandleToolbarCommands` | `IDT_*` through `s_ToolbarDispatch[]` |
-
-## Libraries and external tools
-
-- `scintilla\` and `lexilla\`, each with NP3 patch records in its `np3_patches` folder and offline documentation in its `doc` folder. Read their current [Scintilla](../../scintilla/version.txt) and [Lexilla](../../lexilla/version.txt) version files instead of relying on copied version numbers.
-- `scintilla\pcre2\` ([version](../../scintilla/pcre2/version.txt)), `src\uchardet\`, `src\tinyexprcpp\`, `src\uthash\`, and `src\crypto\` (Rijndael/SHA-256 for AES-256).
-- grepWin is external and is not built from source. Pre-built executables are in `grepWin\portables\`; language files are in `grepWin\translations\`.
-  - Runtime lookup in `src\Dialogs.c`: `Settings2.GrepWinPath` → `<ModuleDir>\grepWin\grepWin-x{64,86}_portable.exe` → `%APPDATA%\Rizonesoft\Notepad3\grepWin\`.
-  - `grepWinLangFileName[]` (and `grepWinLangFileNamePortableApps[]`) in `MuiLanguage.c` maps Notepad3 locales to `.lang` filenames, written to `grepwin.ini` before launch.
-  - `Build\make_portable_*.cmd` packages both portable executables, LICENSE, and all `.lang` files.
-  - ARM64 uses the x64 executable via emulation (`#if defined(_M_ARM64)` in `Notepad3.c`).
+For the source map, command dispatch, and bundled tools, see [Source layout and external tools](source-layout.md).
 
 ## Coding conventions
 
@@ -58,6 +10,7 @@ Notepad3 is a Windows-only Win32 C/C++ text editor built on Scintilla/Lexilla, d
 - Use `strsafe.h`; deprecated string functions are disabled.
 - Use `DocPos` / `DocPosU` / `DocLn` for document positions/lines, `cpi_enc_t` for encodings, and `HSTRINGW` / `HPATHL` instead of raw wide-string buffers. `NOMINMAX` is global; use typed equivalents or `min()` / `max()`.
 - Use existing global state structs (`Globals`, `Settings`, `Settings2`, `Flags`, `Paths`); do not add globals.
+- C-style COM `lpVtbl` calls require the corresponding interface form in C++; preserve ownership and calling conventions ([directory list](../../src/Dlapi.cpp#L215-L248), [file dialog](../../src/Dialogs.cpp#L7570-L7598)).
 - Always use `SciCall.h` wrappers for Scintilla calls; add a missing wrapper there rather than using `SendMessage`. Naming: `DeclareSciCall{V|R}{0|01|1|2}` (`V`=void, `R`=return; `01`=lParam-only). The message argument is the suffix after `SCI_`.
 
 ```c
@@ -68,6 +21,7 @@ DeclareSciCallR1(SupportsFeature, SUPPORTSFEATURE, bool, int, feature);  // bool
 ```
 
 - Group undoable edits with `UndoTransActionBegin()` / `EndUndoTransAction()` (`Notepad3.h`); they suppress document-change notifications only at the outermost undo level. For bulk edits that must also suppress redraw, nest `LimitNotifyEvents()` / `RestoreNotifyEvents()`.
+- These guards use MSVC SEH `__try` / `__finally`. Keep C++ objects requiring destruction in a separate helper: MSVC rejects a function combining them with `__try` (C2712). See [`EditModifyLines` / `_EditModifyLinesImpl`](../../src/Edit.cpp#L3562-L3849) and the [guard macros](../../src/Notepad3.h#L185-L186).
 - `InfoBoxLng()` returns `MAKELONG(button, mode)`. When a suppression key is non-NULL, a saved-answer replay sets the high word; do not compare the raw result with `IDNO`. Use `IsYesOkay()`, `IsRetryContinue()`, `IsNoCancelClose()`, or extract `INFOBOX_ANSW(r)` / `INFOBOX_MODE(r)`.
 - For new Scintilla/Lexilla APIs, consult the vendored versions in `scintilla\version.txt` and `lexilla\version.txt` and the offline docs under `scintilla\doc\` and `lexilla\doc\`.
 
@@ -79,17 +33,17 @@ Before an approved vendored-library change, consult the [Lexilla patch registry]
 
 ### Find/Replace dialog text limits
 
-- `CB_LIMITTEXT` (`FNDRPL_BUFFER`) does not apply to `WM_SETTEXT`; bound text before calling `ComboBox_SetText*`, or an oversized value freezes the single-line combo edit (see the `bFindReplCopySelOrClip` block in `EditFindReplaceDlgProc`, `src\FindReplace.c`).
+- `CB_LIMITTEXT` (`FNDRPL_BUFFER`) does not apply to `WM_SETTEXT`; bound text before calling `ComboBox_SetText*`, or an oversized value freezes the single-line combo edit (see the `bFindReplCopySelOrClip` block in `EditFindReplaceDlgProc`, `src\FindReplace.cpp`).
 - `ComboBox_SetText*` fires `CBN_EDITCHANGE` synchronously; reset one-shot flags before calling it.
 - `_FindInTarget` has an 8192-byte `chFind` buffer; a longer pattern makes `WideCharToMultiByte` fail (`len` = -1) and Scintilla reports "not found".
 
 ### Find/Replace dialog placement
 
-- For live recreation, capture the old screen rectangle and restore against its monitor. [`SetDlgPos`](../../src/Dialogs.c#L6157) is for owner-relative settings and clamps to the owner's monitor; [`_RestoreFindReplaceDlgPosition`](../../src/FindReplace.c#L828) uses the old rectangle's monitor and fits the dialog again after any DPI resize.
+- For live recreation, capture the old screen rectangle and restore against its monitor. [`SetDlgPos`](../../src/Dialogs.cpp#L6166) is for owner-relative settings and clamps to the owner's monitor; [`_RestoreFindReplaceDlgPosition`](../../src/FindReplace.cpp#L830) uses the old rectangle's monitor and fits the dialog again after any DPI resize.
 
 ### Dynamic string/path buffer lifetime
 
-`StrgCreate(NULL)` can return a valid handle without allocating its text buffer; `StrgGet(h) == NULL` before initialization is normal, not proof of allocation failure. Initialize the fresh handle with `StrgReset(h, text)` and check its result (`> 0`) before using the text ([source](../../src/DynStrg.c#L432-L473): `StrgCreate`, `StrgReset`, `StrgGet`).
+`StrgCreate(NULL)` can return a valid handle without allocating its text buffer; `StrgGet(h) == NULL` before initialization is normal, not proof of allocation failure. Initialize the fresh handle with `StrgReset(h, text)` and check its result (`> 0`) before using the text ([source](../../src/DynStrg.cpp#L432-L473): `StrgCreate`, `StrgReset`, `StrgGet`).
 
 Never use a pointer returned by `Path_WriteAccessBuf()` / `StrgWriteAccessBuf()` after an operation that may reallocate or swap the same handle's buffer. Examples include `Path_CanonicalizeEx`, `Path_Swap` / `StrgSwap`, `Path_ExpandEnvStrings` / `ExpandEnvironmentStrgs`, `Path_Append` / `Path_Reset`, `StrgCat` / `StrgInsert` / `StrgFormat` / `StrgReset`, and `Path_NormalizeEx` / `Path_AbsoluteFromApp` / `Path_RelativeToApp`.
 

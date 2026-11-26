@@ -258,7 +258,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <CompileAsWinRT>false</CompileAsWinRT>
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <OmitFramePointers>false</OmitFramePointers>
       <SmallerTypeCheck>false</SmallerTypeCheck>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -331,7 +331,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <CompileAsWinRT>false</CompileAsWinRT>
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableEnhancedInstructionSet />
       <OmitFramePointers>false</OmitFramePointers>
       <SmallerTypeCheck>false</SmallerTypeCheck>
@@ -405,7 +405,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <CompileAsWinRT>false</CompileAsWinRT>
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableEnhancedInstructionSet>
       </EnableEnhancedInstructionSet>
       <OmitFramePointers>false</OmitFramePointers>
@@ -480,7 +480,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>
@@ -566,7 +566,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <EnableEnhancedInstructionSet>
@@ -652,7 +652,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OmitFramePointers>true</OmitFramePointers>
@@ -737,7 +737,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OmitFramePointers>true</OmitFramePointers>
@@ -822,7 +822,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OmitFramePointers>true</OmitFramePointers>
@@ -908,7 +908,7 @@
       <AdditionalOptions>/Zc:threadSafeInit /utf-8 %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <ExceptionHandling>Async</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <OmitFramePointers>true</OmitFramePointers>
@@ -981,24 +981,24 @@
     <ClCompile Include="crypto\rijndael-alg-fst.c" />
     <ClCompile Include="crypto\rijndael-api-fst.c" />
     <ClCompile Include="crypto\sha-256.c" />
-    <ClCompile Include="DynStrg.c" />
-    <ClCompile Include="PathLib.c" />
-    <ClCompile Include="StyleLexers\EditLexer.c" />
-    <ClCompile Include="StyleLexers\styleLexAbaqus.c" />
-    <ClCompile Include="StyleLexers\styleLexAHK.c" />
-    <ClCompile Include="StyleLexers\styleLexAHK2.c" />
-    <ClCompile Include="StyleLexers\styleLexDart.c" />
-    <ClCompile Include="StyleLexers\styleLexFortran.c" />
-    <ClCompile Include="StyleLexers\styleLexJulia.c" />
-    <ClCompile Include="StyleLexers\styleLexKiX.c" />
-    <ClCompile Include="StyleLexers\styleLexKotlin.c" />
-    <ClCompile Include="StyleLexers\styleLexVerilog.c" />
+    <ClCompile Include="DynStrg.cpp" />
+    <ClCompile Include="PathLib.cpp" />
+    <ClCompile Include="StyleLexers\EditLexer.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAbaqus.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAHK.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAHK2.cpp" />
+    <ClCompile Include="StyleLexers\styleLexDart.cpp" />
+    <ClCompile Include="StyleLexers\styleLexFortran.cpp" />
+    <ClCompile Include="StyleLexers\styleLexJulia.cpp" />
+    <ClCompile Include="StyleLexers\styleLexKiX.cpp" />
+    <ClCompile Include="StyleLexers\styleLexKotlin.cpp" />
+    <ClCompile Include="StyleLexers\styleLexVerilog.cpp" />
     <ClCompile Include="timsort\timsort.c" />
     <ClCompile Include="timsort\timsort_r.c" />
     <ClCompile Include="tinyexprcpp\tinyexpr.cpp">
       <DisableSpecificWarnings>4702;%(DisableSpecificWarnings)</DisableSpecificWarnings>
     </ClCompile>
-    <ClCompile Include="tinyexprcpp\tinyexpr_cif.cpp" />
+    <ClCompile Include="tinyexprcpp\np3tinyexpr.cpp" />
     <ClCompile Include="uchardet\uchardet\src\CharDistribution.cpp" />
     <ClCompile Include="uchardet\uchardet\src\JpCntx.cpp" />
     <ClCompile Include="uchardet\uchardet\src\LangModels\LangAfricaansModel.cpp" />
@@ -1051,15 +1051,14 @@
     <ClCompile Include="uchardet\uchardet\src\nsSJISProber.cpp" />
     <ClCompile Include="uchardet\uchardet\src\nsUniversalDetector.cpp" />
     <ClCompile Include="uchardet\uchardet\src\nsUTF8Prober.cpp" />
-    <ClCompile Include="uchardet\uchardet\src\uchardet.cpp" />
     <ClCompile Include="Config\Config.cpp" />
     <ClCompile Include="DarkMode\DarkMode.cpp" />
-    <ClCompile Include="Dialogs.c" />
-    <ClCompile Include="Dlapi.c" />
-    <ClCompile Include="Edit.c" />
-    <ClCompile Include="FindReplace.c" />
+    <ClCompile Include="Dialogs.cpp" />
+    <ClCompile Include="Dlapi.cpp" />
+    <ClCompile Include="Edit.cpp" />
+    <ClCompile Include="FindReplace.cpp" />
     <ClCompile Include="EditRTF.cpp" />
-    <ClCompile Include="Encoding.c" />
+    <ClCompile Include="Encoding.cpp" />
     <ClCompile Include="uchardet\EncodingDetection.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
       </ExcludedFromBuild>
@@ -1080,61 +1079,61 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_AVX2|ARM64'">
       </ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="Helpers.c" />
-    <ClCompile Include="MuiLanguage.c" />
-    <ClCompile Include="Notepad3.c" />
+    <ClCompile Include="Helpers.cpp" />
+    <ClCompile Include="MuiLanguage.cpp" />
+    <ClCompile Include="Notepad3.cpp" />
     <ClCompile Include="Print.cpp" />
-    <ClCompile Include="Resample.c" />
-    <ClCompile Include="StyleLexers\styleLexAPDL.c" />
-    <ClCompile Include="StyleLexers\styleLexASM.c" />
-    <ClCompile Include="StyleLexers\styleLexAU3.c" />
-    <ClCompile Include="StyleLexers\styleLexAVS.c" />
-    <ClCompile Include="StyleLexers\styleLexAwk.c" />
-    <ClCompile Include="StyleLexers\styleLexBASH.c" />
-    <ClCompile Include="StyleLexers\styleLexBAT.c" />
-    <ClCompile Include="StyleLexers\styleLexCMAKE.c" />
-    <ClCompile Include="StyleLexers\styleLexCOFFEESCRIPT.c" />
-    <ClCompile Include="StyleLexers\styleLexCONF.c" />
-    <ClCompile Include="StyleLexers\styleLexCPP.c" />
-    <ClCompile Include="StyleLexers\styleLexCS.c" />
-    <ClCompile Include="StyleLexers\styleLexCSS.c" />
-    <ClCompile Include="StyleLexers\styleLexCSV.c" />
-    <ClCompile Include="StyleLexers\styleLexD.c" />
-    <ClCompile Include="StyleLexers\styleLexDIFF.c" />
-    <ClCompile Include="StyleLexers\styleLexGo.c" />
-    <ClCompile Include="StyleLexers\styleLexHTML.c" />
-    <ClCompile Include="StyleLexers\styleLexINNO.c" />
-    <ClCompile Include="StyleLexers\styleLexJAVA.c" />
-    <ClCompile Include="StyleLexers\styleLexJS.c" />
-    <ClCompile Include="StyleLexers\styleLexJSON.c" />
-    <ClCompile Include="StyleLexers\styleLexJSON5.c" />
-    <ClCompile Include="StyleLexers\styleLexLaTex.c" />
-    <ClCompile Include="StyleLexers\styleLexLUA.c" />
-    <ClCompile Include="StyleLexers\styleLexMAK.c" />
-    <ClCompile Include="StyleLexers\styleLexMARKDOWN.c" />
-    <ClCompile Include="StyleLexers\styleLexMATLAB.c" />
-    <ClCompile Include="StyleLexers\styleLexNim.c" />
-    <ClCompile Include="StyleLexers\styleLexNSIS.c" />
-    <ClCompile Include="StyleLexers\styleLexPAS.c" />
-    <ClCompile Include="StyleLexers\styleLexPL.c" />
-    <ClCompile Include="StyleLexers\styleLexPROPS.c" />
-    <ClCompile Include="StyleLexers\styleLexPS.c" />
-    <ClCompile Include="StyleLexers\styleLexPY.c" />
-    <ClCompile Include="StyleLexers\styleLexR.c" />
-    <ClCompile Include="StyleLexers\styleLexRC.c" />
-    <ClCompile Include="StyleLexers\styleLexRegistry.c" />
-    <ClCompile Include="StyleLexers\styleLexRUBY.c" />
-    <ClCompile Include="StyleLexers\styleLexRust.c" />
-    <ClCompile Include="StyleLexers\styleLexSQL.c" />
-    <ClCompile Include="StyleLexers\styleLexStandard.c" />
-    <ClCompile Include="StyleLexers\styleLexTCL.c" />
-    <ClCompile Include="StyleLexers\styleLexTOML.c" />
-    <ClCompile Include="StyleLexers\styleLexVB.c" />
-    <ClCompile Include="StyleLexers\styleLexVBS.c" />
-    <ClCompile Include="StyleLexers\styleLexVHDL.c" />
-    <ClCompile Include="StyleLexers\styleLexXML.c" />
-    <ClCompile Include="StyleLexers\styleLexYAML.c" />
-    <ClCompile Include="Styles.c" />
+    <ClCompile Include="Resample.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAPDL.cpp" />
+    <ClCompile Include="StyleLexers\styleLexASM.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAU3.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAVS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexAwk.cpp" />
+    <ClCompile Include="StyleLexers\styleLexBASH.cpp" />
+    <ClCompile Include="StyleLexers\styleLexBAT.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCMAKE.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCOFFEESCRIPT.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCONF.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCPP.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCSS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexCSV.cpp" />
+    <ClCompile Include="StyleLexers\styleLexD.cpp" />
+    <ClCompile Include="StyleLexers\styleLexDIFF.cpp" />
+    <ClCompile Include="StyleLexers\styleLexGo.cpp" />
+    <ClCompile Include="StyleLexers\styleLexHTML.cpp" />
+    <ClCompile Include="StyleLexers\styleLexINNO.cpp" />
+    <ClCompile Include="StyleLexers\styleLexJAVA.cpp" />
+    <ClCompile Include="StyleLexers\styleLexJS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexJSON.cpp" />
+    <ClCompile Include="StyleLexers\styleLexJSON5.cpp" />
+    <ClCompile Include="StyleLexers\styleLexLaTex.cpp" />
+    <ClCompile Include="StyleLexers\styleLexLUA.cpp" />
+    <ClCompile Include="StyleLexers\styleLexMAK.cpp" />
+    <ClCompile Include="StyleLexers\styleLexMARKDOWN.cpp" />
+    <ClCompile Include="StyleLexers\styleLexMATLAB.cpp" />
+    <ClCompile Include="StyleLexers\styleLexNim.cpp" />
+    <ClCompile Include="StyleLexers\styleLexNSIS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexPAS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexPL.cpp" />
+    <ClCompile Include="StyleLexers\styleLexPROPS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexPS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexPY.cpp" />
+    <ClCompile Include="StyleLexers\styleLexR.cpp" />
+    <ClCompile Include="StyleLexers\styleLexRC.cpp" />
+    <ClCompile Include="StyleLexers\styleLexRegistry.cpp" />
+    <ClCompile Include="StyleLexers\styleLexRUBY.cpp" />
+    <ClCompile Include="StyleLexers\styleLexRust.cpp" />
+    <ClCompile Include="StyleLexers\styleLexSQL.cpp" />
+    <ClCompile Include="StyleLexers\styleLexStandard.cpp" />
+    <ClCompile Include="StyleLexers\styleLexTCL.cpp" />
+    <ClCompile Include="StyleLexers\styleLexTOML.cpp" />
+    <ClCompile Include="StyleLexers\styleLexVB.cpp" />
+    <ClCompile Include="StyleLexers\styleLexVBS.cpp" />
+    <ClCompile Include="StyleLexers\styleLexVHDL.cpp" />
+    <ClCompile Include="StyleLexers\styleLexXML.cpp" />
+    <ClCompile Include="StyleLexers\styleLexYAML.cpp" />
+    <ClCompile Include="Styles.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\language\ColorDlg.h" />
@@ -1148,7 +1147,7 @@
     <ClInclude Include="timsort\timsort-impl.h" />
     <ClInclude Include="timsort\timsort.h" />
     <ClInclude Include="tinyexprcpp\tinyexpr.h" />
-    <ClInclude Include="tinyexprcpp\tinyexpr_cif.h" />
+    <ClInclude Include="tinyexprcpp\np3tinyexpr.h" />
     <ClInclude Include="uchardet\uchardet\src\CharDistribution.h" />
     <ClInclude Include="uchardet\uchardet\src\JpCntx.h" />
     <ClInclude Include="uchardet\uchardet\src\nsBig5Prober.h" />

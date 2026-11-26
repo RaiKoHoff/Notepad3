@@ -40,6 +40,9 @@
 #define STRSAFE_NO_CB_FUNCTIONS
 #define STRSAFE_NO_DEPRECATE      // don't allow deprecated functions
 #include <strsafe.h>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
 #include <string_view>
 
 //~#include <future>                 // async detection
@@ -55,7 +58,8 @@ extern "C" {
 //~#include "compact_enc_det/compact_enc_det.h" ~ deprecated
 
 // UCHARDET - Universal Character Detection (by Mozilla)
-#include "uchardet/uchardet/src/uchardet.h"
+#include "uchardet/uchardet/src/nscore.h"
+#include "uchardet/uchardet/src/nsUniversalDetector.h"
 
 #include "resource.h"
 
@@ -457,6 +461,29 @@ constexpr cpi_enc_t _MapStdEncodingString2CPI(const char* encStrg, float* pConfi
 //   UCHARDET (Universal CharacterSet Detector)
 // ============================================================================
 
+class AppCharsetDetector final : public nsUniversalDetector {
+public:
+    explicit AppCharsetDetector(PRUint32 languageFilter)
+        : nsUniversalDetector(NS_FILTER_ALL)
+    {
+        SetLanguageFilter(languageFilter);
+    }
+
+    const char* Charset() const noexcept { return charset_ ? charset_.get() : ""; }
+    float Confidence() const noexcept { return confidence_; }
+
+private:
+    void Report(const char* charset, float confidence) override
+    {
+        charset_.reset();
+        charset_.reset(_strdup(charset));
+        confidence_ = confidence;
+    }
+
+    std::unique_ptr<char, decltype(&std::free)> charset_{nullptr, &std::free};
+    float confidence_ = 0.0f;
+};
+
 cpi_enc_t AnalyzeText_UCHARDET(
     const char* const text, const size_t len,
     float* pConfidence, char* encodingStrg, int cch)
@@ -464,33 +491,17 @@ cpi_enc_t AnalyzeText_UCHARDET(
     cpi_enc_t cpiEncoding = CPI_NONE;
     float confidence = 0.0f;
 
-    uchardet_t hUcharDet = uchardet_new();
+    AppCharsetDetector detector(static_cast<PRUint32>(Settings2.UchardetLanguageFilter));
+    nsresult const result = detector.HandleData(text, static_cast<PRUint32>(len));
+    detector.DataEnd();
 
-    uchardet_set_language_filter(hUcharDet, static_cast<unsigned int>(Settings2.UchardetLanguageFilter));
-
-    int const result = uchardet_handle_data(hUcharDet, text, len);
-
-    uchardet_data_end(hUcharDet); // transfer report
-
-    switch (result) {
-    case HANDLE_DATA_RESULT_NEED_MORE_DATA:  // need more data is a result too
-    case HANDLE_DATA_RESULT_DETECTED: {
-        const char* charset = uchardet_get_charset(hUcharDet);
+    if (result != NS_ERROR_OUT_OF_MEMORY) {
+        const char* charset = detector.Charset();
         StringCchCopyA(encodingStrg, cch, charset);  // UCHARDET
 
-        confidence = uchardet_get_confidence(hUcharDet);
+        confidence = detector.Confidence();
         cpiEncoding = _MapStdEncodingString2CPI(charset, &confidence);
     }
-    break;
-
-    case HANDLE_DATA_RESULT_ERROR:
-    default:
-        cpiEncoding = CPI_NONE;
-        confidence = 0.0f;
-        break;
-    }
-
-    uchardet_delete(hUcharDet);
 
     *pConfidence = clampf(confidence, 0.0f, 1.0f);
     return cpiEncoding;

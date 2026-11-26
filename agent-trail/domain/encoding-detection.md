@@ -2,7 +2,7 @@
 
 When to read: Encoding selection or UTF-16/32 handling
 
-Encoding detection is implemented in `src\uchardet\EncodingDetection.cpp` and is called from `EditLoadFile()` in `src\Edit.c`. It combines explicit declarations, byte signatures, structural checks, and UCHARDET analysis; no single heuristic is authoritative for every input.
+Encoding detection is implemented in `src\uchardet\EncodingDetection.cpp` and is called from `EditLoadFile()` in `src\Edit.cpp`. It combines explicit declarations, byte signatures, structural checks, and UCHARDET analysis; no single heuristic is authoritative for every input.
 
 ## Detection flow
 
@@ -49,6 +49,7 @@ Boundaries without nearby line breaks can still split multibyte characters or st
 
 ## Implementation constraints
 
+- The application uses a concrete C++ `nsUniversalDetector` subclass instead of the bundled C facade. Its `Report` copies the charset and stores confidence; its getter returns an empty string when no charset is stored. Set the NP3 language filter before feeding data and preserve the subsequent encoding mapping ([application](../../src/uchardet/EncodingDetection.cpp), [abstract detector](../../src/uchardet/uchardet/src/nsUniversalDetector.h#L64-L76), [retained C facade](../../src/uchardet/uchardet/src/uchardet.cpp#L43-L95)). The [detector regression](encoding-diagnostics-and-tests.md#regression-coverage) stubs the low-level call; local real-model parity coverage is separate.
 - `IsTextUnicode()` supplies fallback evidence, not validation. Preserve flag inspection, strict surrogate validation, UTF-8/NUL guards, and final-selection precedence when changing this path.
 - `bHasBOM`/`bIsUTF8Sig` describe input bytes, not a requested save format. Never manufacture a signature flag from a forced BOM-bearing encoding: the loader uses these flags to skip bytes. For forced UTF-16, only a physical BOM matching the selected byte order is consumed.
 - The detector returns an `ENC_DET_T` value rather than storing the result in a shared result global. The routine still reads application settings and updates current-file-variable state; this alone does not make the overall load path thread-safe.

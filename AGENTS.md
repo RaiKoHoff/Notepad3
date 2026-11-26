@@ -20,6 +20,7 @@ Notepad3 is a Windows-only Win32 C/C++ editor built on Scintilla/Lexilla. Start 
 - Preserve user changes in the worktree. Do not revert unrelated edits.
 - If intended behavior is unclear or the change requires unrelated refactoring, dependency changes, or altering a vendored patch, stop and ask with a recommended approach.
 - Ask before installing dependencies, committing, pushing, dispatching CI, or running commands not listed here or in the relevant linked procedure. A documented command is not permission to bypass its stop conditions or perform network/destructive operations.
+- Python tooling: check whether the optional `.venv` exists; if used, activate and deactivate it in the same shell call. See [Python environment](agent-trail/build-and-test/windows-build-and-test.md#python-environment).
 - Never print, copy, or commit credentials or secrets; report only where they are.
 - Done means the requested behavior is addressed, focused checks pass, and the diff contains no unrelated changes. State baseline failures, unrun checks, and remaining uncertainty rather than claiming success.
 

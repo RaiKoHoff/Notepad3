@@ -9,8 +9,8 @@ When to read: Search/replace, PCRE2, URL hotspots
 - `translateRegExpr()` maps Notepad3 regex syntax to PCRE2 syntax. It translates `\<` and `\>` word-boundary markers to lookarounds and `\uHHHH` to `\x{HHHH}`.
 - `convertReplExpr()` normalizes `\1`-`\9` capture references to `$1`-`$9` and processes `\n`, `\t`, `\xHH`, and `\uHHHH`.
 - Supported replacement backreferences include `$0`-`$99`, `\0`-`\9`, `${name}`, and `${+name}`.
-- The standalone `RegExFind()` entry point is used by `EditURLDecode()` in `src\Edit.c`.
+- The standalone `RegExFind()` entry point is used by `EditURLDecode()` in `src\Edit.cpp`.
 
 ## URL hotspots
 
-`HYPLNK_REGEX_FULL` in `src\Edit.c` recognizes `https?://`, `ftp://`, `file:///`, `file://`, `mailto:`, `www.`, and `ftp.` forms. The pattern permits selected punctuation inside parenthesized URL segments and requires a non-punctuation final character to avoid consuming sentence punctuation. `HYPLNK_REGEX_FILEREF` separately recognizes bare file paths (drive, UNC or `.`/`..` relative) followed by `:line`, `:line:col` or `(line)`.
+`HYPLNK_REGEX_FULL` in `src\Edit.cpp` recognizes `https?://`, `ftp://`, `file:///`, `file://`, `mailto:`, `www.`, and `ftp.` forms. The pattern permits selected punctuation inside parenthesized URL segments and requires a non-punctuation final character to avoid consuming sentence punctuation. `HYPLNK_REGEX_FILEREF` separately recognizes bare file paths (drive, UNC or `.`/`..` relative) followed by `:line`, `:line:col` or `(line)`.

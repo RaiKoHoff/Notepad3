@@ -601,7 +601,7 @@ msbuild Notepad3.sln /m /p:Configuration=Release /p:Platform=x64
 Most languages already have a lexer in Lexilla — your job is to wire it up to Notepad3's style table. Roughly:
 
 1. Add a `styleLexXXX.c` under `src/StyleLexers/` with an `EDITLEXER` definition.
-2. Register it in the `Styles.c` lexer array.
+2. Register it in the `Styles.cpp` lexer array.
 3. Add the localization string IDs for menu/UI text.
 
 There are a few easy-to-miss touchpoints (comment-toggle handlers, property setters, theme INI sections) — see the **"Adding a Lexer"** section of [`CLAUDE.md`](../../CLAUDE.md) for the complete checklist.

@@ -13,7 +13,7 @@ The runtime toggle is `IDM_EDIT_TOGGLE_PASTEBOARD`; `/B` enables Pasteboard Mode
 
 ## Taskbar Shift+Click and new windows
 
-- `Helpers.c` sets the window's AppUserModel properties, including `PKEY_AppUserModel_RelaunchCommand`. Explorer creates an implicit shortcut from these properties and does not refresh an existing shortcut when they change.
+- `Helpers.cpp` sets the window's AppUserModel properties, including `PKEY_AppUserModel_RelaunchCommand`. Explorer creates an implicit shortcut from these properties and does not refresh an existing shortcut when they change.
 - A Shift+Click launch can be identified from `STARTUPINFO` (`STARTF_TITLEISLINKNAME` and the shortcut path in `lpTitle`). `Start-Process <that .lnk>` emulates this launch for testing.
 - The launched process reads the shortcut's AppID and finds the topmost enabled window in that AppID group. If that window acknowledges `WM_NEWWINDOWREQUEST` within the timeout, the launching process exits; an older or hung instance may not acknowledge it.
 - If there is no acknowledging target, the launched process adopts the AppID and opens a new window.
@@ -22,4 +22,4 @@ The runtime toggle is `IDM_EDIT_TOGGLE_PASTEBOARD`; `/B` enables Pasteboard Mode
 
 ## Startup with a directory argument
 
-- A directory passed as the startup path opens the file dialog rooted in that directory (`Notepad3.c` startup path handling). `OpenFileDlg()` may receive the same `HPATHL` as both output and initial-directory input; it must copy the initial directory before clearing the output path (`Dialogs.c`).
+- A directory passed as the startup path opens the file dialog rooted in that directory (`Notepad3.cpp` startup path handling). `OpenFileDlg()` may receive the same `HPATHL` as both output and initial-directory input; it must copy the initial directory before clearing the output path (`Dialogs.cpp`).

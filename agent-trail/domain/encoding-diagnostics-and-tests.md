@@ -45,5 +45,7 @@ For cross-process editor-load checks, `WM_GETTEXTW` retrieves UTF-16 text but Wi
 
 The BOM-less UTF-16 fixtures have 289 UTF-16 code units, 220 dominant-position NULs, and two opposite-position NULs (valid surrogate units 0xDE00 and 0xDC00), so strong classification must tolerate a few opposite-position NULs. Bundled UCHARDET reports Windows-1252 at 50% for both; the combined preference weight raises that to 60% on a Windows-1252 system, which must still not override the validated UTF-16 evidence. UCHARDET has no BOM-less UTF-16 prober; its UTF-16 recognition in `nsUniversalDetector::HandleData()` is BOM-based.
 
+The local `test\test_modules\TestUchardet.ps1` runner compares the extracted application detector call against the retained C facade using real language models on x86 or x64. It covers language filters, BOMs, legacy and stateful samples, output-buffer truncation, and a test-injected charset-copy failure. Encoding mapping is stubbed; it does not exercise the full editor load path or inject prober allocation failures.
+
 Do not rely on the Boolean `IsTextUnicode()` return: it is false for the BE fixture even though useful reverse-order flags are set; inspect the flags.
 

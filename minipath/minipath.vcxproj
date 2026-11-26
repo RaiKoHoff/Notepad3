@@ -204,7 +204,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
     </ClCompile>
@@ -271,7 +271,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
     </ClCompile>
@@ -341,7 +341,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
     </ClCompile>
@@ -412,7 +412,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -458,7 +458,7 @@
       <FloatingPointModel>Fast</FloatingPointModel>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -511,7 +511,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -564,7 +564,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -619,7 +619,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>None</DebugInformationFormat>
@@ -673,7 +673,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <ExceptionHandling>Sync</ExceptionHandling>
+      <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <DebugInformationFormat>None</DebugInformationFormat>

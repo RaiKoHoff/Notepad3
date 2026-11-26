@@ -3,7 +3,7 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-lexer-sorting-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
-    $source = Get-Content (Join-Path $root 'src\Styles.c') -Raw
+    $source = Get-Content (Join-Path $root 'src\Styles.cpp') -Raw
     $functions = foreach ($name in @('Style_GetLexerDisplayName', '_GetLexerIndex', '_CompareLexersByDisplayName', '_FindLexerTreeItem', '_GetListViewLexer')) {
         $start = [regex]::Match($source, "(?m)^(?:static )?[^\r\n]+ \b$name\(")
         if (!$start.Success) { throw "Missing $name" }

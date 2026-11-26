@@ -1,0 +1,5 @@
+STRINGTABLE
+BEGIN
+    40100 "fallback"
+    40101 "%s %d"
+END

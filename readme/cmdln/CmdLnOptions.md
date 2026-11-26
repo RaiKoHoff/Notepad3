@@ -1,6 +1,6 @@
 # Notepad3 Command-Line Options
 
-Complete reference for every option, switch, and positional argument accepted by `Notepad3.exe`. The in-app help dialog (`Notepad3 /?`) is the abbreviated form of this document; the parser source of truth is `ParseCommandLine()` / `ParseCmdLnOption()` in `src/Notepad3.c`.
+Complete reference for every option, switch, and positional argument accepted by `Notepad3.exe`. The in-app help dialog (`Notepad3 /?`) is the abbreviated form of this document; the parser source of truth is `ParseCommandLine()` / `ParseCmdLnOption()` in `src/Notepad3.cpp`.
 
 > Notepad3 inherits its CLI surface from [Notepad2](https://www.flos-freeware.ch/notepad2.html) and [Notepad2-mod](https://xhmikosr.github.io/notepad2-mod/). Most switches behave identically to those predecessors; Notepad3-specific additions and behavioral differences are flagged with **(N3)**.
 
@@ -118,8 +118,8 @@ Jump to the specified position after loading.
 - The column part is optional; column 1 is assumed if omitted.
 
 ```
-Notepad3.exe /g 250 src\Notepad3.c
-Notepad3.exe /g 1872,5 src\Notepad3.c
+Notepad3.exe /g 250 src\Notepad3.cpp
+Notepad3.exe /g 1872,5 src\Notepad3.cpp
 Notepad3.exe /g -1 log.txt
 ```
 
@@ -358,7 +358,7 @@ Notepad3.exe /utf8sig /crlf d:\temp\Test.txt
 Notepad3.exe /v d:\reports\daily.log
 
 :: Open at line 250 column 5, force single-instance per-file
-Notepad3.exe /rs /g 250,5 src\Notepad3.c
+Notepad3.exe /rs /g 250,5 src\Notepad3.cpp
 
 :: Pasteboard collection, start in tray, hold Ctrl during the
 :: ~2-second pre-minimize window to keep the editor visible

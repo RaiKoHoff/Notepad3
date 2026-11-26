@@ -537,8 +537,8 @@ typedef struct GLOBALS_T {
     HWND      hwndMain;
     HANDLE    hndlProcessHeap;
     HWND      hwndEdit;
-    HANDLE    hwndToolbar;
-    HANDLE    hwndRebar;
+    HWND      hwndToolbar;
+    HWND      hwndRebar;
     HWND      hwndStatus;
     DWORD     dwLastError;
     HMENU     hMainMenu;

@@ -115,7 +115,7 @@ Comment=italic; fore:#608B4E; back:#1E1E1E
 ```
 
 - Italic, no explicit font (inherits Common Base), explicit fg and bg.
-- Key (`Comment`) matches a fixed slot inside `styleLexCPP.c`. You cannot invent new style names; you edit the ones the lexer defines.
+- Key (`Comment`) matches a fixed slot inside `styleLexCPP.cpp`. You cannot invent new style names; you edit the ones the lexer defines.
 
 ---
 
@@ -572,10 +572,10 @@ For developers wanting to look up behaviour described above:
 | Topic | Primary file(s) |
 |---|---|
 | Data structures (`EDITLEXER`, `EDITSTYLE`, `KEYWORDLIST`) | `src/StyleLexers/EditLexer.h` |
-| Schema array, loading, saving, layering | `src/Styles.c` — `g_pLexArray[]`, `_ReadFromIniCache()`, `Style_ToIniSection()`, `Style_CanonicalSectionToIniCache()`, `Style_ExportToFile()` |
-| Auto-detection pipeline | `src/Styles.c` — `Style_SetLexerFromFile()`, `Style_MatchLexer()`, `Style_WildcardMatchLexer()`, `Style_SniffShebang()` |
-| Customize Schemes dialog | `src/Styles.c` — `Style_CustomizeSchemesDlg()`, `Style_CustomizeSchemesDlgProc()` |
-| Select Scheme dialog | `src/Styles.c` — `Style_SelectLexerDlg()`, `Style_SelectLexerDlgProc()` |
-| Theme menu & switching | `src/Styles.c` — `_FillThemesMenuTable()`, `Style_InsertThemesMenu()`, `Style_DynamicThemesMenuCmd()`, `Style_ImportTheme()` |
+| Schema array, loading, saving, layering | `src/Styles.cpp` — `g_pLexArray[]`, `_ReadFromIniCache()`, `Style_ToIniSection()`, `Style_CanonicalSectionToIniCache()`, `Style_ExportToFile()` |
+| Auto-detection pipeline | `src/Styles.cpp` — `Style_SetLexerFromFile()`, `Style_MatchLexer()`, `Style_WildcardMatchLexer()`, `Style_SniffShebang()` |
+| Customize Schemes dialog | `src/Styles.cpp` — `Style_CustomizeSchemesDlg()`, `Style_CustomizeSchemesDlgProc()` |
+| Select Scheme dialog | `src/Styles.cpp` — `Style_SelectLexerDlg()`, `Style_SelectLexerDlgProc()` |
+| Theme menu & switching | `src/Styles.cpp` — `_FillThemesMenuTable()`, `Style_InsertThemesMenu()`, `Style_DynamicThemesMenuCmd()`, `Style_ImportTheme()` |
 | Menu command IDs | `language/common_res.h` — `IDM_VIEW_SCHEME`, `IDM_VIEW_USE2NDDEFAULT`, `IDM_VIEW_SCHEMECONFIG`, `IDM_THEMES_STD_CFG`, `IDM_THEMES_FACTORY_RESET` |
 | Shipped themes | `Build/themes/Dark.ini`, `Obsidian.ini`, `Sombra.ini` |

@@ -87,7 +87,7 @@ recognised:
 |---|---|
 | Drive letter + separator | `C:\foo\bar.c:42` · `c:/foo/bar.c(42)` |
 | UNC | `\\server\share\foo\bar.c:42` |
-| Relative | `.\src\Helpers.c:42` · `../include/foo.h:42:7` |
+| Relative | `.\src\Helpers.cpp:42` · `../include/foo.h:42:7` |
 
 A bare path without a line spec — for example `C:\Windows` typed in prose —
 is **not** highlighted. That's intentional, to keep false positives down.
@@ -101,12 +101,12 @@ when opening:
 
 | Pattern | Example | Meaning |
 |---|---|---|
-| `:N` | `Helpers.c:42` | Line 42 |
-| `:N:M` | `Helpers.c:42:7` | Line 42, column 7 (column currently ignored) |
-| `(N)` | `Helpers.c(42)` | Line 42 |
-| `,N` | `Helpers.c,42` | Line 42 |
+| `:N` | `Helpers.cpp:42` | Line 42 |
+| `:N:M` | `Helpers.cpp:42:7` | Line 42, column 7 (column currently ignored) |
+| `(N)` | `Helpers.cpp(42)` | Line 42 |
+| `,N` | `Helpers.cpp,42` | Line 42 |
 
-The parser is digit-only — `Helpers.c:42+1` is **not** interpreted as
+The parser is digit-only — `Helpers.cpp:42+1` is **not** interpreted as
 "line 43"; it's treated as a non-match and the path is opened without a
 jump.
 

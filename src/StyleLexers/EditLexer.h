@@ -48,7 +48,7 @@ typedef struct _editlexer
 
 // -----------------------------------------------------------------------------
 
-// Default Style (styleLexStandard.c) Indices
+// Default Style (styleLexStandard.cpp) Indices
 typedef enum LexDefaultStyles
 {
     STY_DEFAULT = 0,

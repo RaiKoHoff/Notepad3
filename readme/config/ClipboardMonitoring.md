@@ -86,11 +86,11 @@ Clipboard Monitoring and **Monitoring Log** (tailing a file) are mutually exclus
 
 These descriptions were checked against source, not an interactive Windows GUI test; human review is pending.
 
-- [`src/Notepad3.c:1019`](../../src/Notepad3.c#L1019): `PasteBoard_Start` and `PasteBoard_Stop` manage activation; `InitInstance` at line 2451 implements startup capture, and `WM_CLIPBOARDUPDATE` at line 2669 schedules subsequent pastes.
-- [`src/Notepad3.c:13542`](../../src/Notepad3.c#L13542): `PasteBoardTimerProc` handles caret insertion, separators, timestamps, debouncing, and duplicate detection.
-- [`src/Notepad3.c:2112`](../../src/Notepad3.c#L2112): `_DeferMinimizeTimerProc` checks Ctrl and clipboard pasteability.
-- [`src/Notepad3.c:12735`](../../src/Notepad3.c#L12735): `FileSave` gates the optional `MsgDiscardUntitled` prompt on Untitled + active Pasteboard + the setting.
+- [`src/Notepad3.cpp:1029`](../../src/Notepad3.cpp#L1029): `PasteBoard_Start` and `PasteBoard_Stop` manage activation; `InitInstance` at line 2323 implements startup capture, and `WM_CLIPBOARDUPDATE` at line 2551 schedules subsequent pastes.
+- [`src/Notepad3.cpp:13949`](../../src/Notepad3.cpp#L13949): `PasteBoardTimerProc` handles caret insertion, separators, timestamps, debouncing, and duplicate detection.
+- [`src/Notepad3.cpp:1986`](../../src/Notepad3.cpp#L1986): `_DeferMinimizeTimerProc` checks Ctrl and clipboard pasteability.
+- [`src/Notepad3.cpp:13010`](../../src/Notepad3.cpp#L13010): `FileSave` gates the optional `MsgDiscardUntitled` prompt on Untitled + active Pasteboard + the setting.
 - [`src/Config/Config.cpp:1425`](../../src/Config/Config.cpp#L1425) and [line 1523](../../src/Config/Config.cpp#L1523): `LoadSettings` loads the five Pasteboard settings and clears the remembered discard answer when its gate is disabled.
-- [`src/Dialogs.c:467`](../../src/Dialogs.c#L467) and [line 514](../../src/Dialogs.c#L514): `_InfoBoxLngDlgProc` and `InfoBoxLng` handle saved answers and the opt-out checkbox.
+- [`src/Dialogs.cpp`](../../src/Dialogs.cpp): `_InfoBoxLngDlgProc` and `InfoBoxLng` handle saved answers and the opt-out checkbox.
 
 For other startup switches, see the [command-line reference](../cmdln/CmdLnOptions.md#pasteboard-clipboard-collector-b).

@@ -3,7 +3,7 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-zoom-position-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
-    $source = Get-Content (Join-Path $root 'src\Notepad3.c') -Raw
+    $source = Get-Content (Join-Path $root 'src\Notepad3.cpp') -Raw
     $types = Get-Content (Join-Path $root 'src\TypeDefs.h') -Raw
     $enum = [regex]::Match($types, '(?ms)^typedef enum ZOOM_TOOLTIP_POSITION \{.*?^\} ZOOM_TOOLTIP_POSITION;')
     $cycle = [regex]::Match($source, '(?m)^#define _MQ_TIMER_CYCLE [^\r\n]+')

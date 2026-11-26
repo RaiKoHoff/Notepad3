@@ -7,7 +7,7 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-encoding-' + [guid]::NewGuid(
 try {
     $source = Get-Content (Join-Path $root 'src\uchardet\EncodingDetection.cpp') -Raw
     $header = Get-Content (Join-Path $root 'src\Encoding.h') -Raw
-    $utf8 = Get-Content (Join-Path $root 'src\Encoding.c') -Raw
+    $utf8 = Get-Content (Join-Path $root 'src\Encoding.cpp') -Raw
     function Get-Function([string]$text, [string]$signature) {
         $start = $text.IndexOf($signature, [StringComparison]::Ordinal)
         if ($start -lt 0) { throw "Missing function: $signature" }

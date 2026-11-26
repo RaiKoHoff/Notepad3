@@ -36,7 +36,7 @@ The TinyExpr status field can display the result in three integer-result formats
 
 In hex / binary, fractional results are rounded to the nearest integer (round-half-away-from-zero). Negative values are shown in **two's-complement** (`-1` → `0xFFFFFFFF` / 32 ones). Values outside the supported integer range, `NaN`, and `Inf` fall back to the decimal `%.8G` representation for that single evaluation.
 
-**Effective bit width** is chosen at runtime via `te_supports_64bit()` — currently 32 bits on the standard MSVC build (where the parser's `double` has a 53-bit mantissa). The display widens automatically to 64 bits if the parser is ever rebuilt with a 64-bit-precise numeric type.
+**Effective bit width** is chosen via `np3::tinyexpr::supports_64bit()` — currently 32 bits on the standard MSVC build (where the parser's `double` has a 53-bit mantissa). The display widens automatically to 64 bits if the parser is ever rebuilt with a 64-bit-precise numeric type.
 
 **Empty selection placeholder** also reflects the active mode: `--`, `0x--`, or `0b--`.
 
@@ -383,31 +383,11 @@ IF(2,5 > 1; 10; 20)=?     → 10
 
 ---
 
-## C API: Boolean-Aware Evaluation (developer reference)
+## Boolean-Aware Display
 
-The C wrapper around TinyExpr++ exposes an evaluator that renders results
-of boolean-looking expressions as the words `true` / `false`, so callers
-don't have to invent their own classification scheme:
-
-```c
-#include "tinyexpr_cif.h"
-
-const char *te_interp_str(const char *expression, te_int_t *error);
-```
-
-The function evaluates the expression once and returns a thread-local
-internal buffer. The returned pointer remains valid until the next call
-from the same thread; `*error` follows the same convention as `te_interp()`
-(`0` on success, 1-based parse-error position on failure).
-
-| Returned string | When |
-|-----------------|------|
-| `"true"` / `"false"` | Expression is lexically logical **and** evaluates to exactly `1.0` / `0.0`. |
-| `"nan"`, `"inf"`, `"-inf"` | Result is non-finite (e.g., `0/0`, `LN(0)`, comparison involving `NaN`). |
-| Integer-like (`%.21g`) | Finite value whose fractional part is below `1e-15` and whose magnitude is below `1e21`. |
-| Decimal (`%.15g`) | All other finite results. |
-
-The numeric formatting mirrors Notepad3's `TinyExprToStringA` exactly, so values returned by `te_interp_str()` match what the status bar / `=?` inline-replacement would render. Hex / binary output modes are UI-level concerns and remain in `TinyExprToStringA` proper.
+The status bar and inline evaluation display logical expressions that evaluate
+to exactly `1.0` or `0.0` as `true` or `false`. Other results use the selected
+numeric output mode.
 
 ### When is an expression classified as logical?
 
@@ -449,8 +429,7 @@ boolean.
 > **Why both checks?** A purely value-based test would mis-label `1+0` as
 > a boolean. A purely lexical test would mis-label `IF(a>b, 5, 10)`
 > (which evaluates to `5` or `10`, not `0`/`1`). The intersection is much
-> closer to user intent. `te_interp()` and `te_compile()` remain
-> unchanged for callers that prefer to handle classification themselves.
+> closer to user intent.
 
 ---
 

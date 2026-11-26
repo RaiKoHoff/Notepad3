@@ -4,7 +4,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-if (!$Notepad3Source) { $Notepad3Source = Join-Path $root 'src\Notepad3.c' }
+if (!$Notepad3Source) { $Notepad3Source = Join-Path $root 'src\Notepad3.cpp' }
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-webtemplates-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
@@ -49,7 +49,7 @@ try {
     if (!$vs) { throw 'Visual C++ build tools not found' }
     $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
     $test = Join-Path $PSScriptRoot 'TestWebTemplates.cpp'
-    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && rc /nologo /I`"$root\src`" /fo WebTemplateResources.res WebTemplateResources.rc && cl /nologo /c /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$root\scintilla\include`" `"$root\src\DynStrg.c`" /Fo:DynStrg.obj && cl /nologo /EHsc /std:c++20 /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$temp`" /I`"$root\scintilla\include`" `"$test`" DynStrg.obj WebTemplateResources.res /Fe:TestWebTemplates.exe /link shlwapi.lib user32.lib"
+    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && rc /nologo /I`"$root\src`" /fo WebTemplateResources.res WebTemplateResources.rc && cl /nologo /c /std:c++20 /EHa /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$root\scintilla\include`" `"$root\src\DynStrg.cpp`" /Fo:DynStrg.obj && cl /nologo /EHsc /std:c++20 /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$temp`" /I`"$root\scintilla\include`" `"$test`" DynStrg.obj WebTemplateResources.res /Fe:TestWebTemplates.exe /link shlwapi.lib user32.lib"
     if ($LASTEXITCODE -ne 0) { throw 'WebTemplate test build failed' }
     & (Join-Path $temp 'TestWebTemplates.exe')
     if ($LASTEXITCODE -ne 0) { throw 'WebTemplate tests failed' }

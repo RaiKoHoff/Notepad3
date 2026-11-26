@@ -39,7 +39,7 @@
 
 // ----------------------------------------------------------------------------
 
-// === MinimizeToTray Functions - see comments in Dialogs.c  ===
+// === MinimizeToTray Functions - see comments in Dialogs.cpp  ===
 bool HasDrawAnimation();
 void MinimizeWndToTray(HWND hWnd);
 void MinimizeWndToTaskbar(HWND hWnd);
