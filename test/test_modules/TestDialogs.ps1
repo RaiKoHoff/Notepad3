@@ -40,6 +40,23 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Dialogs test build failed' }
     & (Join-Path $temp 'TestDialogs.exe')
     if ($LASTEXITCODE -ne 0) { throw 'Dialogs tests failed' }
+
+    $start = [regex]::Match($source, '(?m)^static void FileMRULookupIcon\(')
+    if (!$start.Success) { throw 'Missing FileMRULookupIcon' }
+    $body = $source.IndexOf('{', $start.Index)
+    $end = [regex]::Match($source.Substring($body), '(?m)^}')
+    if (!$end.Success) { throw 'Missing FileMRULookupIcon end' }
+    $worker = Join-Path $temp 'MRUIconWorker.cpp'
+    Set-Content -LiteralPath $worker -Encoding utf8 -Value @(
+        '#include "TestMRUIconSupport.h"', 'extern "C" {',
+        ($source.Substring($start.Index, $body + $end.Index + 1 - $start.Index) -replace '^static ', ''), '}'
+    )
+    $includes = "/I`"$PSScriptRoot`" /I`"$root\src`" /I`"$root\scintilla\include`" /I`"$root\lexilla`" /I`"$root\lexilla\include`""
+    $workerFlags = "/nologo /utf-8 /O2 /Gy /MT /W4 /WX /DNDEBUG /DD_NP3_WIN10_DARK_MODE /DUNICODE /D_UNICODE $includes"
+    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && cl /c $workerFlags /std:c++20 /EHa `"$worker`" /Fo:MRUIconWorker.obj && cl /c $workerFlags /std:c++20 /EHa `"$root\src\PathLib.cpp`" /Fo:PathLib.obj && cl /c $workerFlags /std:c++20 /EHa `"$root\src\DynStrg.cpp`" /Fo:DynStrg.obj && cl $workerFlags /std:c17 `"$PSScriptRoot\TestMRUIcon.c`" MRUIconWorker.obj PathLib.obj DynStrg.obj /Fe:TestMRUIcon.exe /link /OPT:REF shell32.lib shlwapi.lib ole32.lib uuid.lib user32.lib comctl32.lib"
+    if ($LASTEXITCODE -ne 0) { throw 'MRU icon test build failed' }
+    & (Join-Path $temp 'TestMRUIcon.exe')
+    if ($LASTEXITCODE -ne 0) { throw 'MRU icon tests failed' }
 } finally {
     Get-ChildItem $temp -File | Remove-Item
     Remove-Item $temp

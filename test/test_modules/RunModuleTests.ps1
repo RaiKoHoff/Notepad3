@@ -15,6 +15,7 @@ $architectureTests = @(
     'TestDialogs.ps1'
     'TestEdit.ps1'
     'TestNotepad3.ps1'
+    'TestFileWatcher.ps1'
     'TestTinyExpr.ps1'
     'TestUchardet.ps1'
     'TestExceptionPolicy.ps1'

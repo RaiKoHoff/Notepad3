@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
 #include <wchar.h>
 #include "Helpers.h"
 #include "PathLib.h"
@@ -22,9 +23,29 @@ LRESULT WINAPI Scintilla_DirectFunction(HANDLE handle, UINT message, WPARAM wpar
 static int failures;
 #define CHECK(expr) do { if (!(expr)) { fprintf(stderr, "line %d: %s\n", __LINE__, #expr); ++failures; } } while (0)
 
+static volatile LONG failThreadWait;
+static jmp_buf failFastTarget;
+static unsigned int failFastCode;
+
+DWORD WINAPI TestWaitForSingleObject(HANDLE handle, DWORD milliseconds)
+{
+    if (InterlockedExchange(&failThreadWait, 0)) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return WAIT_FAILED;
+    }
+    return WaitForSingleObject(handle, milliseconds);
+}
+
+__declspec(noreturn) void TestFastFail(unsigned int code)
+{
+    failFastCode = code;
+    longjmp(failFastTarget, 1);
+}
+
 typedef struct WorkerContext {
     BackgroundWorker* worker;
     HANDLE started;
+    HANDLE delay;
     DWORD waitResult;
     bool pathValidAfterCancel;
 } WorkerContext;
@@ -34,9 +55,16 @@ static unsigned int __stdcall WaitForCancellation(void* parameter)
     WorkerContext* context = (WorkerContext*)parameter;
     SetEvent(context->started);
     context->waitResult = WaitForSingleObject(context->worker->eventCancel, 5000);
+    if (context->delay && WaitForSingleObject(context->delay, 10000) != WAIT_OBJECT_0) abort();
     LPCWSTR path = Path_Get(context->worker->hFilePath);
     context->pathValidAfterCancel = path && wcscmp(path, L"C:\\worker\\file.txt") == 0;
     return 0;
+}
+
+static unsigned int __stdcall UnexpectedSecondStart(void* parameter)
+{
+    (void)parameter;
+    abort();
 }
 
 int main(void)
@@ -77,7 +105,7 @@ int main(void)
 
     HPATHL input = Path_Allocate(L"C:\\worker\\file.txt");
     BackgroundWorker worker = { 0 };
-    WorkerContext context = { &worker, CreateEventW(NULL, TRUE, FALSE, NULL), WAIT_FAILED, false };
+    WorkerContext context = { &worker, CreateEventW(NULL, TRUE, FALSE, NULL), NULL, WAIT_FAILED, false };
     CHECK(input && context.started);
     if (!input || !context.started) return 1;
     BackgroundWorker_Init(&worker, NULL, input);
@@ -86,9 +114,33 @@ int main(void)
     CHECK(worker.hFilePath != input);
     BackgroundWorker_Start(&worker, WaitForCancellation, &context);
     CHECK(WaitForSingleObject(context.started, 5000) == WAIT_OBJECT_0);
+    HANDLE const firstThread = worker.workerThread;
+    BackgroundWorker_Start(&worker, UnexpectedSecondStart, NULL);
+    CHECK(worker.workerThread == firstThread);
     BackgroundWorker_Cancel(&worker);
     CHECK(context.waitResult == WAIT_OBJECT_0 && context.pathValidAfterCancel);
     CHECK(!BackgroundWorker_Continue(&worker));
+
+    CHECK(ResetEvent(context.started));
+    context.delay = CreateEventW(NULL, TRUE, FALSE, NULL);
+    CHECK(context.delay != NULL);
+    if (!context.delay) return 1;
+    BackgroundWorker_Start(&worker, WaitForCancellation, &context);
+    CHECK(WaitForSingleObject(context.started, 5000) == WAIT_OBJECT_0);
+    HANDLE const thread = worker.workerThread;
+    InterlockedExchange(&failThreadWait, 1);
+    failFastCode = 0;
+    if (setjmp(failFastTarget) == 0) {
+        BackgroundWorker_Cancel(&worker);
+        CHECK(false);
+    } else {
+        CHECK(failFastCode == FAST_FAIL_FATAL_APP_EXIT);
+    }
+    CHECK(SetEvent(context.delay));
+    CHECK(worker.workerThread == thread);
+    BackgroundWorker_Cancel(&worker);
+    CloseHandle(context.delay);
+    context.delay = NULL;
 
     CHECK(ResetEvent(context.started));
     context.waitResult = WAIT_FAILED;

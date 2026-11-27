@@ -14,9 +14,11 @@ extern "C" {
 #endif
 LPVOID WINAPI TestHeapAlloc(HANDLE heap, DWORD flags, SIZE_T bytes);
 LPVOID WINAPI TestHeapReAlloc(HANDLE heap, DWORD flags, LPVOID memory, SIZE_T bytes);
+BOOL WINAPI TestHeapFree(HANDLE heap, DWORD flags, LPVOID memory);
 #ifdef __cplusplus
 }
 #endif
 
 #define HeapAlloc TestHeapAlloc
 #define HeapReAlloc TestHeapReAlloc
+#define HeapFree TestHeapFree

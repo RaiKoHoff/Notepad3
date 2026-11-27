@@ -8,6 +8,10 @@ static bool failAlloc;
 static bool failReAlloc;
 static int allocFailures;
 static int reallocFailures;
+static LPVOID trackedHandle;
+static LPVOID trackedData;
+static int handleFrees;
+static int dataFrees;
 
 LPVOID WINAPI TestHeapAlloc(HANDLE heap, DWORD flags, SIZE_T bytes)
 {
@@ -29,8 +33,48 @@ LPVOID WINAPI TestHeapReAlloc(HANDLE heap, DWORD flags, LPVOID memory, SIZE_T by
     return HeapReAlloc(heap, flags, memory, bytes);
 }
 
+BOOL WINAPI TestHeapFree(HANDLE heap, DWORD flags, LPVOID memory)
+{
+    if (memory == trackedHandle) ++handleFrees;
+    if (memory == trackedData) ++dataFrees;
+    return HeapFree(heap, flags, memory);
+}
+
 static int failures;
 #define CHECK(expr) do { if (!(expr)) { fprintf(stderr, "line %d: %s\n", __LINE__, #expr); ++failures; } } while (0)
+
+static void CheckDestruction(LPCWSTR initial)
+{
+    HSTRINGW value = StrgCreate(initial);
+    CHECK(value != NULL);
+    if (!value) return;
+    trackedHandle = value;
+    trackedData = (LPVOID)StrgGet(value);
+    handleFrees = dataFrees = 0;
+    StrgDestroy(value);
+    CHECK(handleFrees == 1);
+    CHECK(dataFrees == (trackedData ? 1 : 0));
+    trackedHandle = trackedData = NULL;
+}
+
+static void CheckFreeKeepsHandle(void)
+{
+    HSTRINGW value = StrgCreate(L"initial");
+    CHECK(value != NULL);
+    if (!value) return;
+    trackedHandle = value;
+    trackedData = (LPVOID)StrgGet(value);
+    handleFrees = dataFrees = 0;
+    StrgFree(value);
+    CHECK(handleFrees == 0 && dataFrees == 1);
+    CHECK(StrgReset(value, L"reused") == 1);
+    CHECK(wcscmp(StrgGet(value), L"reused") == 0);
+    trackedData = (LPVOID)StrgGet(value);
+    dataFrees = 0;
+    StrgDestroy(value);
+    CHECK(handleFrees == 1 && dataFrees == 1);
+    trackedHandle = trackedData = NULL;
+}
 
 static void CheckEscaping(LPCWSTR input)
 {
@@ -51,6 +95,11 @@ static void CheckEscaping(LPCWSTR input)
 
 int main(void)
 {
+    CheckDestruction(NULL);
+    CheckDestruction(L"example");
+    CheckFreeKeepsHandle();
+    StrgDestroy(NULL);
+
     failAlloc = true;
     CHECK(StrgCreate(NULL) == NULL);
     CHECK(allocFailures == 1);

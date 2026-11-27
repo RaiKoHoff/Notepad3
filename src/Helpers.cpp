@@ -21,6 +21,7 @@
 #include <shellapi.h>
 #include <propkey.h>
 #include <ctype.h>
+#include <intrin.h>
 #include <wchar.h>
 
 extern "C" {
@@ -586,26 +587,24 @@ void BackgroundWorker_Init(BackgroundWorker* worker, HWND hwnd, const HPATHL hFi
         worker->hwnd = hwnd;
         // manual (not automatic) reset & initial state: not signaled (TRUE, FALSE)
         worker->eventCancel = CreateEvent(NULL, TRUE, FALSE, NULL);
-        if (!IS_VALID_HANDLE(worker->eventCancel)) {
-            worker->eventCancel = INVALID_HANDLE_VALUE;
-        }
         worker->workerThread = INVALID_HANDLE_VALUE;
-        worker->hFilePath = Path_Allocate(Path_Get(hFilePath));
+        if (IS_VALID_HANDLE(worker->eventCancel)) {
+            worker->hFilePath = Path_Allocate(Path_Get(hFilePath));
+            if (worker->hFilePath) {
+                return;
+            }
+            CloseHandle(worker->eventCancel);
+        }
+        worker->eventCancel = INVALID_HANDLE_VALUE;
     }
 }
 
 void BackgroundWorker_Start(BackgroundWorker* worker, _beginthreadex_proc_type routine, LPVOID property)
 {
-    if (worker) {
-        if (IS_VALID_HANDLE(worker->eventCancel)) {
-            ResetEvent(worker->eventCancel); // init should be 'not signaled'
-        }
-        //~worker->workerThread = CreateThread(NULL, 0, routine, property, 0, NULL);  // MD(d) dll
+    if (worker && IS_VALID_HANDLE(worker->eventCancel) && !IS_VALID_HANDLE(worker->workerThread) &&
+        ResetEvent(worker->eventCancel)) {
         uintptr_t const thread = _beginthreadex(NULL, 0, routine, property, 0, NULL); // MT(d) static
-        HANDLE const hOld = InterlockedExchangePointer(&(worker->workerThread), (thread != 0LL) ? (HANDLE)thread : INVALID_HANDLE_VALUE);
-        if (IS_VALID_HANDLE(hOld)) {
-            CloseHandle(hOld); // prevent handle leak from re-entrant Start
-        }
+        worker->workerThread = thread ? (HANDLE)thread : INVALID_HANDLE_VALUE;
     }
 }
 
@@ -614,34 +613,13 @@ void BackgroundWorker_Cancel(BackgroundWorker* worker) {
         if (IS_VALID_HANDLE(worker->eventCancel)) {
             SetEvent(worker->eventCancel); // signal
         }
-        HANDLE const workerThread = InterlockedExchangePointer(&(worker->workerThread), INVALID_HANDLE_VALUE);
+        HANDLE const workerThread = worker->workerThread;
         if (IS_VALID_HANDLE(workerThread)) {
-            DWORD const dwTimeout = 5000; // 5 seconds for graceful exit
-            ULONGLONG const dwStart = GetTickCount64();
-
-            // Wait for thread exit, only pumping cross-thread SendMessage to prevent deadlocks.
-            // Posted messages (WM_TIMER, WM_COMMAND, etc.) are left in the queue — dispatching
-            // them here could cause reentrancy in the caller (e.g., mid-FileSave).
-            while (true) {
-                ULONGLONG const dwElapsed = GetTickCount64() - dwStart;
-                DWORD const dwRemaining = (DWORD)((dwElapsed < dwTimeout) ? (dwTimeout - dwElapsed) : 0);
-                DWORD const dwWait = MsgWaitForMultipleObjects(1, &workerThread, FALSE, dwRemaining, QS_SENDMESSAGE);
-                if (dwWait == WAIT_OBJECT_0) {
-                    break; // thread exited
-                }
-                if (dwWait == WAIT_OBJECT_0 + 1) {
-                    // Process only sent messages (cross-thread SendMessage), not posted messages
-                    MSG msg;
-                    PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE);
-                    continue;
-                }
-                // WAIT_TIMEOUT or WAIT_FAILED — ensure thread is dead before cleanup
-                if (dwWait == WAIT_TIMEOUT) {
-                    WaitForSingleObject(workerThread, INFINITE);
-                }
-                break;
+            if (WaitForSingleObject(workerThread, INFINITE) != WAIT_OBJECT_0) {
+                __fastfail(FAST_FAIL_FATAL_APP_EXIT);
             }
             CloseHandle(workerThread);
+            worker->workerThread = INVALID_HANDLE_VALUE;
         }
     }
 }

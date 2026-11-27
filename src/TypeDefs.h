@@ -934,22 +934,6 @@ typedef struct BackgroundWorker {
 
 //=============================================================================
 
-typedef struct FCOBSRVDATA_T {
-
-    volatile LONG64   iFileChangeNotifyTime; // multi-threaded
-    volatile LONG     iObservationGeneration; // seqlock: incremented before+after fdCurFile writes
-
-    WIN32_FIND_DATA   fdCurFile;
-    HANDLE            hEventFileChanged;
-    HANDLE            hEventFileDeleted;
-
-    HANDLE            hFileChanged;  // FindFirstChangeNotification()
-    BackgroundWorker  worker;
-
-} FCOBSRVDATA_T, *PFCOBSRVDATA_T;
-
-#define INIT_FCOBSRV_T { 0LL, 0L, { 0 }, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, { NULL, INVALID_HANDLE_VALUE, INVALID_HANDLE_VALUE, NULL } }
-
 #define MIN_FC_POLL_INTERVAL (200LL)
 #define MAX_FC_POLL_INTERVAL ((24LL * 60 * 60 * 1000) << 1) // max: 48h
 
@@ -1014,10 +998,12 @@ typedef struct EditFileIOStatus {
 
     DocLn eolCount[3];
     DocLn indentCount[5];
+    bool hasLoadedFileSnapshot;
+    WIN32_FILE_ATTRIBUTE_DATA loadedFileSnapshot;
 
 } EditFileIOStatus;
 
-#define INIT_FILEIO_STATUS { CPI_ANSI_DEFAULT, SC_EOL_CRLF, false, false, false, false, false, false, false, I_MIX_LN, {0,0,0}, {0,0,0,0,0} }
+#define INIT_FILEIO_STATUS { CPI_ANSI_DEFAULT, SC_EOL_CRLF, false, false, false, false, false, false, false, I_MIX_LN, {0,0,0}, {0,0,0,0,0}, false, {0,{}, {}, {},0,0} }
 
 //=============================================================================
 

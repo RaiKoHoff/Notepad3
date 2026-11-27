@@ -1118,6 +1118,7 @@ bool EditLoadFile(
     status->bUTF8WithNul = false;
     status->bUnknownExt = false;
     status->bEncryptedRaw = false;
+    status->hasLoadedFileSnapshot = false;
     Flags.bHugeFileLoadState = false;
 
     bool       bReadSuccess = false;
@@ -1144,6 +1145,7 @@ bool EditLoadFile(
     // calculate buffer size and limits
 
     LARGE_INTEGER liFileSize = { 0, 0 };
+    bool const hasWriteTime = GetFileTime(hFile, NULL, NULL, &status->loadedFileSnapshot.ftLastWriteTime);
     bool const okay = GetFileSizeEx(hFile, &liFileSize);
     ///DWORD const fileSizeMB = (DWORD)liFileSize.HighPart * (DWORD_MAX >> 20) + (liFileSize.LowPart >> 20);
 
@@ -1235,6 +1237,9 @@ bool EditLoadFile(
     Globals.dwLastError = GetLastError();
 
     CloseHandle(hFile);
+    status->loadedFileSnapshot.nFileSizeHigh = (DWORD)liFileSize.HighPart;
+    status->loadedFileSnapshot.nFileSizeLow = liFileSize.LowPart;
+    status->hasLoadedFileSnapshot = hasWriteTime;
 
     bReadSuccess = ((readFlag & DECRYPT_FATAL_ERROR) || (readFlag & DECRYPT_FREAD_FAILED)) ? false : true;
 

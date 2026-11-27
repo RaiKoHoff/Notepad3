@@ -375,6 +375,8 @@ static void _PruneOldDropSnapshots(DWORD maxAgeSecs);
 static bool _IsDropSnapshotPath(const HPATHL hpth);
 static void _RegisterDropSnapshot(const HPATHL hpth);
 static void _CleanupDropSnapshots(bool dropAll);
+static LRESULT HandleFileWatchFailure(WPARAM wParam, LPARAM lParam);
+static void InstallFileWatchingImpl(bool install, bool resetFlags, const WIN32_FILE_ATTRIBUTE_DATA* baseline);
 typedef struct _topmost_wnd_t {
     LPCWSTR pszAppID;
     HWND    hwnd;
@@ -548,91 +550,137 @@ void UpdateDocumentReadOnlyState()
 // HasCurrentFileChanged
 //
 
-static FCOBSRVDATA_T s_FileChgObsvrData = INIT_FCOBSRV_T;
+struct FileWatchRun {
+    HWND hwnd;
+    ULONG generation;
+    HANDLE cancel;
+    HANDLE baselineChanged;
+    HPATHL file;
+    HPATHL directory;
+    volatile LONG refs;
+    bool immediate;
+    bool periodic;
+    DWORD interval;
+};
 
-// ----------------------------------------------------------------------------
+static struct FileWatchState {
+    SRWLOCK lock;
+    ULONG generation;
+    ULONG baselineVersion;
+    WIN32_FILE_ATTRIBUTE_DATA baseline;
+    bool hasBaseline;
+    bool changed;
+    bool deleted;
+    bool uiPolling;
+    FileWatchRun* run;
+} s_fileWatch = { SRWLOCK_INIT };
 
 static inline bool IsFileChangedFlagSet() {
-    return IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)
-        && (WaitForSingleObject(s_FileChgObsvrData.hEventFileChanged, 0) == WAIT_OBJECT_0);
+    AcquireSRWLockShared(&s_fileWatch.lock);
+    bool const changed = s_fileWatch.changed;
+    ReleaseSRWLockShared(&s_fileWatch.lock);
+    return changed;
 }
 
 static inline bool IsFileDeletedFlagSet() {
-    return IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)
-        && (WaitForSingleObject(s_FileChgObsvrData.hEventFileDeleted, 0) == WAIT_OBJECT_0);
+    AcquireSRWLockShared(&s_fileWatch.lock);
+    bool const deleted = s_fileWatch.deleted;
+    ReleaseSRWLockShared(&s_fileWatch.lock);
+    return deleted;
 }
 
-static inline bool RaiseFlagIfCurrentFileChanged() {
+static inline void ProbeFileWatch(const HPATHL path, ULONG generation) {
+    if (Path_IsEmpty(path)) { return; }
+    for (;;) {
+        AcquireSRWLockShared(&s_fileWatch.lock);
+        bool const active = generation == s_fileWatch.generation;
+        ULONG const version = s_fileWatch.baselineVersion;
+        ReleaseSRWLockShared(&s_fileWatch.lock);
+        if (!active) { return; }
 
-    if (Path_IsEmpty(Paths.CurrentFile)) {
-        return false;
-    }
-    WIN32_FIND_DATA fdUpdated = { 0 };
-    if (!Path_GetFileAttributesEx(Paths.CurrentFile, GetFileExInfoStandard, &fdUpdated)) {
-        // The current file has been removed
-        if (IsFileDeletedFlagSet()) {
-            return false;
-        }
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)) {
-            SetEvent(s_FileChgObsvrData.hEventFileChanged);
-        }
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)) {
-            SetEvent(s_FileChgObsvrData.hEventFileDeleted);
-        }
-        return true;
-    }
-    if (IsFileDeletedFlagSet()) {
-        // The current file has been restored
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)) {
-            ResetEvent(s_FileChgObsvrData.hEventFileDeleted);
-        }
-    }
-    
-    // Seqlock read: detect torn reads of fdCurFile during concurrent ResetFileObservationData
-    LONG const genBefore = InterlockedCompareExchange(&(s_FileChgObsvrData.iObservationGeneration), 0, 0);
-    if (genBefore & 1) {
-        return false; // write in progress — skip this cycle, next poll will retry
-    }
+        WIN32_FILE_ATTRIBUTE_DATA current = {};
+        bool const exists = Path_GetFileAttributesEx(path, GetFileExInfoStandard, &current);
 
-    bool const changed = (s_FileChgObsvrData.fdCurFile.nFileSizeLow != fdUpdated.nFileSizeLow) || (s_FileChgObsvrData.fdCurFile.nFileSizeHigh != fdUpdated.nFileSizeHigh)
-                         //~|| (CompareFileTime(&(s_FileChgObsvrData.fdCurFile.ftLastWriteTime), &fdUpdated.ftLastWriteTime) != 0)
-                         || (s_FileChgObsvrData.fdCurFile.ftLastWriteTime.dwLowDateTime != fdUpdated.ftLastWriteTime.dwLowDateTime)
-                         || (s_FileChgObsvrData.fdCurFile.ftLastWriteTime.dwHighDateTime != fdUpdated.ftLastWriteTime.dwHighDateTime);
-
-    LONG const genAfter = InterlockedCompareExchange(&(s_FileChgObsvrData.iObservationGeneration), 0, 0);
-    if (genBefore != genAfter) {
-        return false; // torn read — skip this cycle, next poll will retry
-    }
-
-    if (changed) {
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)) {
-            SetEvent(s_FileChgObsvrData.hEventFileChanged);
+        AcquireSRWLockExclusive(&s_fileWatch.lock);
+        if (generation != s_fileWatch.generation) {
+            ReleaseSRWLockExclusive(&s_fileWatch.lock);
+            return;
         }
+        if (version != s_fileWatch.baselineVersion) {
+            ReleaseSRWLockExclusive(&s_fileWatch.lock);
+            continue;
+        }
+        if (!exists) {
+            s_fileWatch.changed |= !s_fileWatch.deleted;
+            s_fileWatch.deleted = true;
+        } else {
+            auto const& baseline = s_fileWatch.baseline;
+            s_fileWatch.changed |= s_fileWatch.deleted ||
+                (s_fileWatch.hasBaseline &&
+                 (baseline.nFileSizeLow != current.nFileSizeLow ||
+                  baseline.nFileSizeHigh != current.nFileSizeHigh ||
+                  CompareFileTime(&baseline.ftLastWriteTime, &current.ftLastWriteTime) != 0));
+            s_fileWatch.deleted = false;
+            if (!s_fileWatch.hasBaseline) {
+                s_fileWatch.baseline = current;
+                s_fileWatch.hasBaseline = true;
+            }
+        }
+        ReleaseSRWLockExclusive(&s_fileWatch.lock);
+        return;
     }
-    return changed;
 }
 // ----------------------------------------------------------------------------
 
-static inline void ResetFileObservationData(const bool bResetEvt) {
-    if (bResetEvt) {
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)) {
-            ResetEvent(s_FileChgObsvrData.hEventFileChanged);
-        }
-        if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)) {
-            ResetEvent(s_FileChgObsvrData.hEventFileDeleted);
-        }
+static inline void SetFileObservationData(bool resetFlags, const WIN32_FILE_ATTRIBUTE_DATA* baseline) {
+    AcquireSRWLockExclusive(&s_fileWatch.lock);
+    if (resetFlags) {
+        s_fileWatch.changed = s_fileWatch.deleted = false;
     }
-    if (Path_IsNotEmpty(Paths.CurrentFile)) {
-        // Seqlock write: increment generation before and after updating fdCurFile
-        // so the observer thread can detect torn reads
-        InterlockedIncrement(&(s_FileChgObsvrData.iObservationGeneration));
-        if (!GetFileAttributesEx(Path_Get(Paths.CurrentFile), GetFileExInfoStandard, &(s_FileChgObsvrData.fdCurFile)))
-        {
-            ZeroMemory(&(s_FileChgObsvrData.fdCurFile), sizeof(WIN32_FIND_DATA));
-        }
-        InterlockedIncrement(&(s_FileChgObsvrData.iObservationGeneration));
+    s_fileWatch.hasBaseline = baseline != NULL;
+    if (baseline) {
+        s_fileWatch.baseline = *baseline;
     }
+    ++s_fileWatch.baselineVersion;
+    if (s_fileWatch.run) {
+        SetEvent(s_fileWatch.run->baselineChanged);
+    }
+    ReleaseSRWLockExclusive(&s_fileWatch.lock);
+}
 
+static inline void ResetFileObservationData(const bool bResetEvt) {
+    WIN32_FILE_ATTRIBUTE_DATA snapshot = {};
+    bool const valid = Path_IsNotEmpty(Paths.CurrentFile) &&
+        Path_GetFileAttributesEx(Paths.CurrentFile, GetFileExInfoStandard, &snapshot);
+    SetFileObservationData(bResetEvt, valid ? &snapshot : NULL);
+}
+
+static inline void ReleaseFileWatchRun(FileWatchRun* run) {
+    if (InterlockedDecrement(&run->refs) == 0) {
+        if (run->cancel) { CloseHandle(run->cancel); }
+        if (run->baselineChanged) { CloseHandle(run->baselineChanged); }
+        Path_Release(run->file);
+        Path_Release(run->directory);
+        GlobalFree(run);
+    }
+}
+
+static inline void StopFileWatch(HWND hwnd) {
+    if (hwnd) {
+        KillTimer(hwnd, ID_WATCHTIMER);
+        KillTimer(hwnd, ID_ATOMICSAVETIMER);
+    }
+    s_fileWatch.uiPolling = false;
+
+    AcquireSRWLockExclusive(&s_fileWatch.lock);
+    if (++s_fileWatch.generation == 0) { ++s_fileWatch.generation; }
+    FileWatchRun* const run = s_fileWatch.run;
+    s_fileWatch.run = NULL;
+    ReleaseSRWLockExclusive(&s_fileWatch.lock);
+    if (run) {
+        SetEvent(run->cancel);
+        ReleaseFileWatchRun(run);
+    }
 }
 // ----------------------------------------------------------------------------
 
@@ -1076,7 +1124,6 @@ static void _CleanUpResources(const HWND hwnd, bool bIsInitialized)
 {
     if (hwnd) {
         KillTimer(hwnd, IDT_TIMER_MRKALL);
-        KillTimer(hwnd, ID_WATCHTIMER);
         KillTimer(hwnd, ID_LOGROTATETIMER);
         KillTimer(hwnd, ID_AUTOSAVETIMER);
         KillTimer(hwnd, ID_PASTEBOARDTIMER);
@@ -1098,16 +1145,7 @@ static void _CleanUpResources(const HWND hwnd, bool bIsInitialized)
         FreeMem(pmqc);
     }
 
-    BackgroundWorker_Destroy(&(s_FileChgObsvrData.worker));
-
-    if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)) {
-        CloseHandle(s_FileChgObsvrData.hEventFileChanged);
-        s_FileChgObsvrData.hEventFileChanged = INVALID_HANDLE_VALUE;
-    }
-    if (IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)) {
-        CloseHandle(s_FileChgObsvrData.hEventFileDeleted);
-        s_FileChgObsvrData.hEventFileDeleted = INVALID_HANDLE_VALUE;
-    }
+    StopFileWatch(hwnd);
 
     // ---------------------------------------------
 
@@ -2067,19 +2105,6 @@ HWND InitInstance(const HINSTANCE hInstance, int nCmdShow)
         nCmdShow = SW_SHOWMAXIMIZED;
     }
 
-    // manual (not automatic) reset & initial state: not signaled (TRUE, FALSE)
-    s_FileChgObsvrData.hEventFileChanged = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (!IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileChanged)) {
-        InfoBoxLastError(L"CreateEvent(hEventFileChanged)", GetLastError());
-        return NULL;
-    }
-    s_FileChgObsvrData.hEventFileDeleted = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if (!IS_VALID_HANDLE(s_FileChgObsvrData.hEventFileDeleted)) {
-        CloseHandle(s_FileChgObsvrData.hEventFileChanged);
-        InfoBoxLastError(L"CreateEvent(hEventFileDeleted)", GetLastError());
-        return NULL;
-    }
-
     if (Settings.TransparentMode) {
         SetWindowTransparentMode(hwndMain, true, Settings2.OpacityLevel);
     }
@@ -2202,12 +2227,15 @@ HWND InitInstance(const HINSTANCE hInstance, int nCmdShow)
             bOpened = FileLoad(hpthFileToOpen, fLoadFlags, 0, 0);
             if (bOpened) {
                 if (s_IsThisAnElevatedRelaunch) {
+                    InstallFileWatching(false);
                     if (Path_IsNotEmpty(hfile_pth)) {
                         Path_NormalizeEx(hfile_pth, Paths.WorkingDirectory, true, false);
                         Path_Reset(Paths.CurrentFile, Path_Get(hfile_pth));
                     } else {
                         Path_Empty(Paths.CurrentFile, false);
                     }
+                    ResetFileObservationData(true);
+                    InstallFileWatching(true);
                     if (!s_flagLexerSpecified) {
                         Style_SetLexerFromFile(Globals.hwndEdit, Paths.CurrentFile);
                     }
@@ -2526,6 +2554,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
 
     case WM_FILECHANGEDNOTIFY:
         return MsgFileChangeNotify(hwnd, wParam, lParam);
+
+    case WM_FILEWATCHFAILED:
+        return HandleFileWatchFailure(wParam, lParam);
 
     //case WM_PARENTNOTIFY:
     //  if (iLoWParam & WM_DESTROY) {
@@ -4399,16 +4430,6 @@ LRESULT MsgDropFiles(HWND hwnd, WPARAM wParam, LPARAM lParam)
         return 0;
     }
 
-    // Round-2 race-buster: if the watched current file is gone AND we have
-    // no edits, the user's drop implicitly discards it. Resetting the
-    // watcher events now suppresses both the FSF_Ask modal (FileSave checks
-    // IsFileChangedFlagSet) and any queued WM_FILECHANGEDNOTIFY (the
-    // file-deleted branch is silent when Paths.CurrentFile no longer exists).
-    if (!bDirty && IsFileChangedFlagSet() &&
-        Path_IsNotEmpty(Paths.CurrentFile) && !Path_IsExistingFile(Paths.CurrentFile)) {
-        ResetFileObservationData(true);
-    }
-
     // Phase 0: opportunistic prune of stale snapshots (>1 h, once per drop).
     _PruneOldDropSnapshots(60UL * 60UL);
 
@@ -4460,6 +4481,12 @@ LRESULT MsgDropFiles(HWND hwnd, WPARAM wParam, LPARAM lParam)
     // mtime change to Paths.CurrentFile mid-load can't post WM_FILECHANGEDNOTIFY
     // into the queue and stack a modal on top of FileSave's prompt.
     InstallFileWatching(false);
+
+    // Discard a clean, deleted document without rearming its save prompt.
+    if (!bDirty && (IsFileChangedFlagSet() || IsFileDeletedFlagSet()) &&
+        Path_IsNotEmpty(Paths.CurrentFile) && !Path_IsExistingFile(Paths.CurrentFile)) {
+        SetFileObservationData(true, NULL);
+    }
 
     int const  offset  = Settings2.LaunchInstanceWndPosOffset;
     bool const fullVis = Settings2.LaunchInstanceFullVisible;
@@ -12427,7 +12454,6 @@ static inline void _ResetFileWatchingMode() {
     }
 
     FileWatching.FileWatchingMode = Settings.FileWatchingMode;
-    ResetFileObservationData(true);
 }
 
 bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocPos curPos, const DocLn visLn)
@@ -12461,7 +12487,9 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
             Flags.bPreserveFileModTime = DefaultFlags.bPreserveFileModTime;
         }
 
+        InstallFileWatching(false);
         Path_Empty(Paths.CurrentFile, false);
+        SetFileObservationData(true, NULL);
         Flags.bDocViewOnlyFromFileAttr = false;
         _SetEnumWindowsItems(Globals.hwndMain);
         if (!s_flagKeepTitleExcerpt) {
@@ -12481,7 +12509,6 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
 
         // Restart file watching
         AutoSaveStop();
-        InstallFileWatching(false); // terminate old
         if (Settings.ResetFileWatching) {
             _ResetFileWatchingMode();
         }
@@ -12565,6 +12592,7 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
                 hFile = INVALID_HANDLE_VALUE;
             }
             if (fSuccess) {
+                fioStatus.hasLoadedFileSnapshot = GetFileTime(hFile, NULL, NULL, &fioStatus.loadedFileSnapshot.ftLastWriteTime);
                 FileVars_GetFromData(NULL, 0, &Globals.fvCurFile); // init/reset
                 EditSetNewText(Globals.hwndEdit, "", 0, false, false);
                 SciCall_SetEOLMode(Settings.DefaultEOLMode);
@@ -12615,6 +12643,7 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
             Flags.bPreserveFileModTime = DefaultFlags.bPreserveFileModTime;
         }
 
+        InstallFileWatching(false); // terminate previous before changing the current path
         //~Path_Swap(Paths.CurrentFile, hopen_file); ~ hopen_file needed later
         Path_Reset(Paths.CurrentFile, Path_Get(hopen_file)); // dup
 
@@ -12652,7 +12681,6 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
 
         // Install watching of the current file
         AutoSaveStop();
-        InstallFileWatching(false); // terminate previous
         if (!bReloadFile && Settings.ResetFileWatching) {
             _ResetFileWatchingMode();
         }
@@ -12739,8 +12767,7 @@ bool FileLoad(const HPATHL hfile_pth, const FileLoadFlags fLoadFlags, const DocP
 
     Path_Release(hopen_file);
 
-    ResetFileObservationData(true);
-    InstallFileWatching(fSuccess);
+    InstallFileWatchingImpl(fSuccess, true, fioStatus.hasLoadedFileSnapshot ? &fioStatus.loadedFileSnapshot : NULL);
 
     if (curPos > 0) {
         SciCall_GotoPos(curPos);
@@ -12992,7 +13019,6 @@ bool FileSave(FileSaveFlags fSaveFlags)
     if (!(fSaveFlags & FSF_SaveAs) && !(fSaveFlags & FSF_SaveAlways) && !bSaveNeeded) {
         _MRU_UpdateSession();
         AutoSaveStop();
-        ResetFileObservationData(true);
         return true;
     }
 
@@ -13108,6 +13134,7 @@ bool FileSave(FileSaveFlags fSaveFlags)
 
     if (fSuccess) {
 
+        if (!(fSaveFlags & FSF_SaveCopy)) { ResetFileObservationData(true); }
         if (!(fSaveFlags & FSF_SaveCopy) && !Flags.bDoRelaunchElevated) {
             _MRU_AddSession();
             AddFilePathToRecentDocs(Paths.CurrentFile);
@@ -13164,6 +13191,7 @@ bool FileSave(FileSaveFlags fSaveFlags)
                     InstallFileWatching(false);
                     fSuccess = FileIO(false, Paths.CurrentFile, &fioStatus, FLF_None, FSF_EndSession, true);
                     if (fSuccess) {
+                        if (!(fSaveFlags & FSF_SaveCopy)) { ResetFileObservationData(true); }
                         if (!(fSaveFlags & FSF_SaveCopy) && !Flags.bDoRelaunchElevated) {
                             _MRU_AddSession();
                             AddFilePathToRecentDocs(Paths.CurrentFile);
@@ -13188,7 +13216,6 @@ bool FileSave(FileSaveFlags fSaveFlags)
 
     if (fSuccess) {
         AutoSaveStop();
-        ResetFileObservationData(true);
     }
 
     UpdateToolbar();
@@ -14033,12 +14060,19 @@ static void CALLBACK AtomicSaveTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
 //
 //  MsgFileChangeNotify() - Handles WM_FILECHANGEDNOTIFY
 //
+static inline bool IsStaleFileWatchMessage(WPARAM wParam, LPARAM lParam)
+{
+    if (!wParam) { return false; }
+    AcquireSRWLockShared(&s_fileWatch.lock);
+    bool const stale = (ULONG)wParam != s_fileWatch.generation || (ULONG)lParam != s_fileWatch.baselineVersion;
+    ReleaseSRWLockShared(&s_fileWatch.lock);
+    return stale;
+}
+
 LRESULT MsgFileChangeNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    UNREFERENCED_PARAMETER(wParam);
-    UNREFERENCED_PARAMETER(lParam);
-
     if (!IsWindow(hwnd) || IsAppClosing()) { return TRUE; }
+    if (IsStaleFileWatchMessage(wParam, lParam)) { return TRUE; }
 
     SET_FCT_GUARD(TRUE);
 
@@ -14125,22 +14159,18 @@ LRESULT MsgFileChangeNotify(HWND hwnd, WPARAM wParam, LPARAM lParam)
 //
 //=============================================================================
 
-static inline void NotifyIfFileHasChanged()
+static inline bool PostFileWatchChange(HWND hwnd, ULONG generation)
 {
-    bool notify = false;
-    if (IsFileChangedFlagSet()) {
-        // Consume the flag to prevent duplicate notifications from concurrent push+poll paths
-        ResetEvent(s_FileChgObsvrData.hEventFileChanged);
-        notify = true;
+    bool retry = false;
+    AcquireSRWLockExclusive(&s_fileWatch.lock);
+    if (generation == s_fileWatch.generation && (s_fileWatch.changed || s_fileWatch.deleted)) {
+        retry = !PostMessage(hwnd, WM_FILECHANGEDNOTIFY, generation, (LPARAM)(ULONG_PTR)s_fileWatch.baselineVersion);
+        if (!retry) {
+            s_fileWatch.changed = false;
+        }
     }
-    if (IsFileDeletedFlagSet()) {
-        notify = true; // don't reset deleted flag here — handler needs it
-    }
-    if (notify || RaiseFlagIfCurrentFileChanged()) {
-        PostMessage(Globals.hwndMain, WM_FILECHANGEDNOTIFY, 0, 0);
-    }
-    // reset Timeout interval
-    InterlockedExchange64(&(s_FileChgObsvrData.iFileChangeNotifyTime), GetTicks_ms());
+    ReleaseSRWLockExclusive(&s_fileWatch.lock);
+    return retry;
 }
 // ----------------------------------------------------------------------------
 
@@ -14151,15 +14181,27 @@ static void CALLBACK WatchTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWOR
     UNREFERENCED_PARAMETER(dwTime);
     UNREFERENCED_PARAMETER(idEvent);
     UNREFERENCED_PARAMETER(uMsg);
-    UNREFERENCED_PARAMETER(hwnd);
-
-    LONG64 const diff = (GetTicks_ms() - InterlockedCompareExchange64(&(s_FileChgObsvrData.iFileChangeNotifyTime), 0LL, 0LL));
-    // Directory-Observer is not notified for continuously updated (log-)files
-    if (diff > FileWatching.FileCheckInterval) {
-        NotifyIfFileHasChanged();
+    if (s_fileWatch.uiPolling && !IsAppClosing()) {
+        ULONG const generation = s_fileWatch.generation;
+        ProbeFileWatch(Paths.CurrentFile, generation);
+        PostFileWatchChange(hwnd, generation);
     }
 }
 // ----------------------------------------------------------------------------
+
+static LRESULT HandleFileWatchFailure(WPARAM wParam, LPARAM)
+{
+    if ((ULONG)wParam == s_fileWatch.generation && !IsAppClosing()) {
+        AcquireSRWLockExclusive(&s_fileWatch.lock);
+        FileWatchRun* const run = s_fileWatch.run;
+        s_fileWatch.run = NULL;
+        ReleaseSRWLockExclusive(&s_fileWatch.lock);
+        if (run) { ReleaseFileWatchRun(run); }
+        s_fileWatch.uiPolling = SetTimer(Globals.hwndMain, ID_WATCHTIMER,
+            (UINT)FileWatching.FileCheckInterval, WatchTimerProc) != 0;
+    }
+    return 0;
+}
 
 #define LOG_ROTATE_MAX_RETRIES 20  // 20 * 500ms = 10 seconds
 
@@ -14227,139 +14269,134 @@ static void CALLBACK AtomicSaveTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
 // ----------------------------------------------------------------------------
 
 
-unsigned int WINAPI FileChangeObserver(LPVOID lpParam)
+static unsigned int WINAPI FileChangeObserver(LPVOID parameter)
 {
-    PFCOBSRVDATA_T const pFCOBSVData = (PFCOBSRVDATA_T)(LONG_PTR)lpParam;
-
-    unsigned int retcode = 0;
-
-    if (pFCOBSVData) {
-
-        BackgroundWorker* const worker = &(pFCOBSVData->worker);
-
-        assert(!IS_VALID_HANDLE(pFCOBSVData->hFileChanged) && "ChangeHandle not properly closed!");
-
-        pFCOBSVData->hFileChanged = FindFirstChangeNotificationW(Path_Get(pFCOBSVData->worker.hFilePath), false,
+    auto* const run = static_cast<FileWatchRun*>(parameter);
+    constexpr DWORD retryInterval = 100;
+    HANDLE directoryChange = INVALID_HANDLE_VALUE;
+    if (Path_IsNotEmpty(run->directory) && WaitForSingleObject(run->cancel, 0) == WAIT_TIMEOUT) {
+        directoryChange = FindFirstChangeNotificationW(Path_Get(run->directory), FALSE,
             FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME |
-            FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE |
-            FILE_NOTIFY_CHANGE_LAST_WRITE);
-
-        if (!IS_VALID_HANDLE(pFCOBSVData->hFileChanged)) {
-            pFCOBSVData->hFileChanged = INVALID_HANDLE_VALUE;
-            BackgroundWorker_End(worker, 1);
-            return 1;
-        }
-
-        while (BackgroundWorker_Continue(worker)) {
-
-            switch (WaitForSingleObject(pFCOBSVData->hFileChanged, 100)) {
-
-            case WAIT_TIMEOUT:
-                // okay, check BGWorker cancellation or wait again until done
-                break;
-
-            case WAIT_OBJECT_0:
-                // check if current file is trigger for directory notification
-                if (RaiseFlagIfCurrentFileChanged()) {
-                    if ((Settings2.FileWatchingMethod == FWMTH_PUSH) || (FileWatching.FileCheckInterval <= MIN_FC_POLL_INTERVAL)) {
-                        NotifyIfFileHasChanged(); // immediate notification
-                    }
-                }
-                FindNextChangeNotification(pFCOBSVData->hFileChanged);
-                break;
-
-            case WAIT_ABANDONED:
-            case WAIT_FAILED:
-            default:
-                if (IS_VALID_HANDLE(worker->eventCancel)) {
-                    SetEvent(worker->eventCancel); // signal self-stop (don't call Cancel from within thread)
-                }
-                retcode = 1;
-                break;
-            }
-        }
-
-        if (IS_VALID_HANDLE(pFCOBSVData->hFileChanged)) {
-            FindCloseChangeNotification(pFCOBSVData->hFileChanged); // stop monitoring
-        }
-        pFCOBSVData->hFileChanged = INVALID_HANDLE_VALUE;
-
-        BackgroundWorker_End(worker, retcode);
+            FILE_NOTIFY_CHANGE_ATTRIBUTES | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE);
     }
-    return retcode;
+
+    LONG64 nextPoll = GetTicks_ms() + run->interval;
+    bool probe = true; // Reconcile after registration, even if registration failed.
+    bool retry = false;
+    bool waitFailed = false;
+    while (WaitForSingleObject(run->cancel, 0) == WAIT_TIMEOUT) {
+        bool const push = IS_VALID_HANDLE(directoryChange);
+        bool const periodic = run->periodic || !push;
+        bool const pollNow = periodic && GetTicks_ms() >= nextPoll;
+        if (probe || pollNow) {
+            ProbeFileWatch(run->file, run->generation);
+        }
+        if (retry || pollNow || (probe && run->immediate)) {
+            retry = PostFileWatchChange(run->hwnd, run->generation);
+        }
+        if (pollNow) { nextPoll = GetTicks_ms() + run->interval; }
+
+        DWORD timeout = retry ? retryInterval : INFINITE;
+        if (periodic) {
+            LONG64 const remaining = nextPoll - GetTicks_ms();
+            DWORD const untilPoll = (DWORD)(remaining > 0 ? remaining : 0);
+            if (untilPoll < timeout) { timeout = untilPoll; }
+        }
+
+        HANDLE const events[] = { run->cancel, run->baselineChanged, directoryChange };
+        DWORD const wait = WaitForMultipleObjects(push ? 3 : 2, events, FALSE, timeout);
+        if (wait == WAIT_OBJECT_0) { break; }
+        if (wait == WAIT_OBJECT_0 + 2 && push) {
+            if (!FindNextChangeNotification(directoryChange)) {
+                FindCloseChangeNotification(directoryChange);
+                directoryChange = INVALID_HANDLE_VALUE;
+            }
+        } else if (wait != WAIT_TIMEOUT && wait != WAIT_OBJECT_0 + 1) {
+            waitFailed = true;
+            break;
+        }
+        probe = wait != WAIT_TIMEOUT;
+    }
+
+    if (waitFailed) {
+        do {
+            AcquireSRWLockShared(&s_fileWatch.lock);
+            bool const done = run->generation != s_fileWatch.generation ||
+                PostMessage(run->hwnd, WM_FILEWATCHFAILED, run->generation, 0);
+            ReleaseSRWLockShared(&s_fileWatch.lock);
+            if (done) { break; }
+        } while (WaitForSingleObject(run->cancel, retryInterval) == WAIT_TIMEOUT);
+    }
+    if (IS_VALID_HANDLE(directoryChange)) { FindCloseChangeNotification(directoryChange); }
+    ReleaseFileWatchRun(run);
+    return waitFailed ? 1 : 0;
 }
 // ----------------------------------------------------------------------------
 
+static bool StartFileWatch()
+{
+    auto* const run = static_cast<FileWatchRun*>(GlobalAlloc(GPTR, sizeof(FileWatchRun)));
+    if (!run) { return false; }
 
-void InstallFileWatching(const bool bInstall) {
-
-    static HANDLE _hCurrFileHandle = INVALID_HANDLE_VALUE;  // exclusive lock
-
-    // don't install FileWathing on own Settings IniFile
-    if (bInstall && Flags.bSettingsFileSoftLocked) {
-        return;
+    run->refs = 1;
+    run->hwnd = Globals.hwndMain;
+    run->generation = s_fileWatch.generation;
+    run->cancel = CreateEvent(NULL, TRUE, FALSE, NULL);
+    run->baselineChanged = CreateEvent(NULL, FALSE, FALSE, NULL);
+    run->file = Path_Copy(Paths.CurrentFile);
+    run->directory = Path_Copy(run->file);
+    if (!Path_RemoveFileSpec(run->directory)) {
+        Path_Release(run->directory);
+        run->directory = NULL; // The worker can still poll the file.
+    }
+    run->periodic = Settings2.FileWatchingMethod == FWMTH_BOTH;
+    run->immediate = !run->periodic || FileWatching.FileCheckInterval <= MIN_FC_POLL_INTERVAL;
+    run->interval = (DWORD)FileWatching.FileCheckInterval;
+    if (!run->cancel || !run->baselineChanged || Path_IsEmpty(run->file) ||
+        CompareStringOrdinal(Path_Get(run->file), -1, Path_Get(Paths.CurrentFile), -1, FALSE) != CSTR_EQUAL) {
+        ReleaseFileWatchRun(run);
+        return false;
     }
 
-    HPATHL hdir_pth = Path_Copy(Paths.CurrentFile);
-    Path_RemoveFileSpec(hdir_pth);
+    run->refs = 2; // The UI and worker each own a reference.
+    HANDLE const thread = reinterpret_cast<HANDLE>(_beginthreadex(NULL, 0, FileChangeObserver, run, 0, NULL));
+    if (!thread) {
+        run->refs = 1;
+        ReleaseFileWatchRun(run);
+        return false;
+    }
+    CloseHandle(thread);
+    s_fileWatch.run = run; // Only the UI reads or writes the active run pointer.
+    return true;
+}
 
-    bool const bFileDirExists = Path_IsNotEmpty(Paths.CurrentFile) && Path_IsExistingDirectory(hdir_pth);
-    bool const bFileExists = bFileDirExists && Path_IsExistingFile(Paths.CurrentFile);
+static void InstallFileWatchingImpl(bool install, bool resetFlags, const WIN32_FILE_ATTRIBUTE_DATA* baseline)
+{
+    static HANDLE _hCurrFileHandle = INVALID_HANDLE_VALUE;  // exclusive lock
 
-    bool const bExclusiveLock = (FileWatching.FileWatchingMode == FWM_EXCLUSIVELOCK);
-    bool const bWatchFile = (FileWatching.FileWatchingMode != FWM_DONT_CARE) && !bExclusiveLock;
+    StopFileWatch(Globals.hwndMain);
 
-    // always release exclusive file lock in any case
     if (IS_VALID_HANDLE(_hCurrFileHandle)) {
         CloseHandle(_hCurrFileHandle);
         _hCurrFileHandle = INVALID_HANDLE_VALUE;
     }
 
-    // static init
-    if (!IS_VALID_HANDLE(s_FileChgObsvrData.worker.eventCancel)) {
-        BackgroundWorker_Init(&(s_FileChgObsvrData.worker), NULL, NULL);
+    if (resetFlags) { SetFileObservationData(true, install ? baseline : NULL); }
+    if (!install || Flags.bSettingsFileSoftLocked) {
+        UpdateToolbar();
+        return;
     }
 
-    bool const bTerminate = !bInstall || !bWatchFile || !bFileDirExists /*~||!bFileExists~*/;
-
-    // Terminate previous watching
-    if (bTerminate) {
-        KillTimer(Globals.hwndMain, ID_WATCHTIMER);
-        KillTimer(Globals.hwndMain, ID_ATOMICSAVETIMER);
-        BackgroundWorker_Cancel(&(s_FileChgObsvrData.worker));
-        ResetFileObservationData(false); // (!) false
-    }
-
-    if (bInstall && bFileExists) {
-
+    bool const bExclusiveLock = FileWatching.FileWatchingMode == FWM_EXCLUSIVELOCK;
+    bool const bWatchFile = FileWatching.FileWatchingMode != FWM_DONT_CARE && !bExclusiveLock;
+    if (Path_IsNotEmpty(Paths.CurrentFile)) {
         if (bWatchFile) {
-
-            bool const bUsePush = (Settings2.FileWatchingMethod != FWMTH_POLL);  // both or push
-            bool const bUsePoll = (Settings2.FileWatchingMethod != FWMTH_PUSH);  // both or poll
-
-            // Always cancel stale/running thread before starting fresh
-            // (handles self-stop scenario where thread exited but handle was not closed)
-            BackgroundWorker_Cancel(&(s_FileChgObsvrData.worker));
-
-            // Save data of current file
-            ResetFileObservationData(false); // (!) false
-
-            if (bUsePush) {
-                Path_Reset(s_FileChgObsvrData.worker.hFilePath, Path_Get(hdir_pth)); // directory monitoring
-                BackgroundWorker_Start(&(s_FileChgObsvrData.worker), FileChangeObserver, &s_FileChgObsvrData);
+            if (Settings2.FileWatchingMethod == FWMTH_POLL || !StartFileWatch()) {
+                s_fileWatch.uiPolling = SetTimer(Globals.hwndMain, ID_WATCHTIMER,
+                    (UINT)FileWatching.FileCheckInterval, WatchTimerProc) != 0;
             }
-
-            InterlockedExchange64(&(s_FileChgObsvrData.iFileChangeNotifyTime), GetTicks_ms());
-
-            if (bUsePoll && (Settings2.FileCheckInterval > 0)) {
-                SetTimer(Globals.hwndMain, ID_WATCHTIMER, (UINT)FileWatching.FileCheckInterval, WatchTimerProc);
-            }
-            else {
-                KillTimer(Globals.hwndMain, ID_WATCHTIMER);
-            }
-
         }
-        else if (bExclusiveLock) {
+        else if (bExclusiveLock && Path_IsExistingFile(Paths.CurrentFile)) {
 
             assert(!IS_VALID_HANDLE(_hCurrFileHandle) && "CurrFileHandle not properly closed!");
 
@@ -14403,12 +14440,15 @@ void InstallFileWatching(const bool bInstall) {
             }
         }
     }
-    Path_Release(hdir_pth);
-    
+
     UpdateSaveSettingsCmds(); // (!) reflection
     UpdateToolbar();
 }
 
+void InstallFileWatching(const bool bInstall)
+{
+    InstallFileWatchingImpl(bInstall, false, NULL);
+}
 
 
 //=============================================================================

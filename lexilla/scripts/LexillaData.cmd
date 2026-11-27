@@ -1,42 +1,36 @@
 @echo off
-setlocal EnableDelayedExpansion
-set _THISDIR_=%~dp0
-rem remove trailing back-slash
-set _THISDIR_=!_THISDIR_:~,-1!
-rem  transform to foward-slash
-::~set "_THISDIR_=%_THISDIR_:\=/%"
-pushd %_THISDIR_%
-::cls
+setlocal DisableDelayedExpansion
+pushd "%~dp0" || exit /b 1
 
+set "_VENV_=%~dp0..\..\.venv\Scripts"
+set "_ACTIVATED_="
+if not exist "%~dp0..\..\.venv\." goto :system_python
+call "%_VENV_%\activate.bat" || goto :activation_failed
+set "_ACTIVATED_=1"
+set "_PYTHON_=%_VENV_%\python.exe"
+goto :run
 
-set _EXITCODE_=0
-::set _PYTHON_EXE=python.exe
-set _PYTHON_EXE=c:\PortablePrograms\Python3_12_5_x64_emb\python.exe
-rem call :RESOLVE_PATH _PYTHON_EXE "%_THISDIR_%..\..\..\..\_python_emb\python.exe"
+:system_python
+set "_PYTHON_=python.exe"
+where python.exe >nul 2>&1
+if not errorlevel 1 goto :run
+if not defined PYTHONHOME goto :no_python
+set "_PYTHON_=%PYTHONHOME%\python.exe"
+if exist "%_PYTHON_%" goto :run
 
-set _CMD_="%_PYTHON_EXE%" "%~dpn0.py"
-echo.Calling: %_CMD_%
-%_CMD_%
-if not [%ERRORLEVEL%] == [0] (
-    set _EXITCODE_=%ERRORLEVEL%
-)
-
-
-goto :END
-rem ----------------------------------------------------------------------------
-
-
-rem   call :RESOLVE_PATH   WORKINGDIRPARENT   ".."
-:RESOLVE_PATH
-    set %1=%~dpfn2
-goto:eof
-rem ----------------------------------------------------------------------------
-
-
-:END
-::pause
+:no_python
+echo Python not found: no .venv or python.exe on PATH or in PYTHONHOME. >&2
 popd
-echo.ERRORLEVEL=%_EXITCODE_%
-endlocal & set _EXITCODE_=%_EXITCODE_%
-:: -call exit only in case of 
-if not [%_EXITCODE_%]==[0] exit /b %_EXITCODE_%
+exit /b 1
+
+:activation_failed
+echo Failed to activate .venv. >&2
+popd
+exit /b 1
+
+:run
+"%_PYTHON_%" "%~dpn0.py"
+set "_EXITCODE_=%ERRORLEVEL%"
+if defined _ACTIVATED_ call "%_VENV_%\deactivate.bat" || if "%_EXITCODE_%"=="0" set "_EXITCODE_=1"
+popd
+endlocal & exit /b %_EXITCODE_%

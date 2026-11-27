@@ -31,7 +31,157 @@ extern "C" {
 #include "PathLib.h"
 #include "Dlapi.h"
 
+struct ListIconEntry {
+    void* input;
+    LVITEMW result;
+};
 
+struct ListIconTask {
+    HWND list;
+    UINT_PTR id;
+    int count;
+    int applied;
+    volatile LONG refs;
+    volatile LONG cancelled;
+    volatile LONG ready;
+    volatile LONG posted;
+    bool noFadeHidden;
+    ListIconLookup lookup;
+    ListIconFree release;
+    ListIconEntry* entries;
+};
+
+static constexpr UINT WM_LISTICONSREADY = WM_APP + 1;
+static LRESULT CALLBACK ListIconSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR id, DWORD_PTR data);
+
+static ListIconTask* ListIconTask_Current(HWND list)
+{
+    DWORD_PTR data = 0;
+    return GetWindowSubclass(list, ListIconSubclass, 0, &data) ? reinterpret_cast<ListIconTask*>(data) : NULL;
+}
+
+static void ListIconTask_Release(ListIconTask* task)
+{
+    if (InterlockedDecrement(&task->refs) == 0) {
+        for (int i = 0; i < task->count; ++i) {
+            if (task->entries[i].input) {
+                task->release(task->entries[i].input);
+            }
+        }
+        GlobalFree(task->entries);
+        GlobalFree(task);
+    }
+}
+
+void ListIconTask_Cancel(HWND list)
+{
+    ListIconTask* const task = ListIconTask_Current(list);
+    if (task) {
+        RemoveWindowSubclass(list, ListIconSubclass, 0);
+        InterlockedExchange(&task->cancelled, TRUE);
+        ListIconTask_Release(task);
+    }
+}
+
+static LRESULT CALLBACK ListIconSubclass(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR, DWORD_PTR data)
+{
+    if (msg == WM_NCDESTROY) {
+        ListIconTask_Cancel(hwnd);
+    } else if (msg == WM_LISTICONSREADY) {
+        auto* const task = reinterpret_cast<ListIconTask*>(data);
+        if (wParam == task->id) {
+            // Setting a row can notify the parent synchronously, including during teardown.
+            InterlockedIncrement(&task->refs);
+            InterlockedExchange(&task->posted, FALSE);
+            LONG const ready = InterlockedCompareExchange(&task->ready, 0, 0);
+            while (task->applied < ready && ListIconTask_Current(hwnd) == task) {
+                LVITEMW& item = task->entries[task->applied++].result;
+                if (item.mask) {
+                    ListView_SetItem(hwnd, &item);
+                }
+            }
+            if (task->applied == task->count && ListIconTask_Current(hwnd) == task) {
+                ListIconTask_Cancel(hwnd);
+            }
+            ListIconTask_Release(task);
+        }
+        return 0;
+    }
+    return DefSubclassProc(hwnd, msg, wParam, lParam);
+}
+
+ListIconTask* ListIconTask_Create(HWND list, bool noFadeHidden, ListIconLookup lookup, ListIconFree release)
+{
+    int const count = ListView_GetItemCount(list);
+    if (count <= 0) { return NULL; }
+    auto* const task = static_cast<ListIconTask*>(GlobalAlloc(GPTR, sizeof(ListIconTask)));
+    if (!task) { return NULL; }
+    if (static_cast<size_t>(count) > SIZE_MAX / sizeof(ListIconEntry) ||
+        !(task->entries = static_cast<ListIconEntry*>(GlobalAlloc(GPTR, static_cast<size_t>(count) * sizeof(ListIconEntry))))) {
+        GlobalFree(task);
+        return NULL;
+    }
+    task->list = list;
+    task->count = count;
+    task->refs = 1;
+    task->noFadeHidden = noFadeHidden;
+    task->lookup = lookup;
+    task->release = release;
+    return task;
+}
+
+void ListIconTask_SetInput(ListIconTask* task, int index, void* input)
+{
+    task->entries[index].input = input;
+}
+
+static unsigned int WINAPI ListIconTask_Run(LPVOID parameter)
+{
+    auto* const task = static_cast<ListIconTask*>(parameter);
+    HRESULT const com = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
+    for (int i = 0; i < task->count && !InterlockedCompareExchange(&task->cancelled, 0, 0); ++i) {
+        ListIconEntry& entry = task->entries[i];
+        if (SUCCEEDED(com) && entry.input) {
+            task->lookup(entry.input, task->noFadeHidden, &entry.result);
+            entry.result.iItem = i;
+            task->release(entry.input);
+            entry.input = NULL;
+        }
+        if (InterlockedCompareExchange(&task->cancelled, 0, 0)) { break; }
+        InterlockedExchange(&task->ready, i + 1);
+        while (!InterlockedCompareExchange(&task->cancelled, 0, 0) &&
+               !InterlockedExchange(&task->posted, TRUE)) {
+            if (PostMessage(task->list, WM_LISTICONSREADY, task->id, 0)) { break; }
+            InterlockedExchange(&task->posted, FALSE);
+            if (i + 1 < task->count) { break; }
+            Sleep(100); // No later row can retry the final wakeup.
+        }
+    }
+    if (SUCCEEDED(com)) {
+        CoUninitialize();
+    }
+    ListIconTask_Release(task);
+    return 0;
+}
+
+void ListIconTask_Start(ListIconTask* task)
+{
+    static volatile LONG nextId;
+    ListIconTask_Cancel(task->list);
+    task->id = static_cast<ULONG>(InterlockedIncrement(&nextId));
+    if (!SetWindowSubclass(task->list, ListIconSubclass, 0, reinterpret_cast<DWORD_PTR>(task))) {
+        ListIconTask_Release(task);
+        return;
+    }
+    InterlockedIncrement(&task->refs);
+    HANDLE const thread = reinterpret_cast<HANDLE>(_beginthreadex(NULL, 0, ListIconTask_Run, task, 0, NULL));
+    if (thread) {
+        CloseHandle(thread);
+    } else {
+        ListIconTask_Cancel(task->list);
+        ListIconTask_Release(task);
+    }
+}
 
 //==== DirList ================================================================
 
@@ -39,7 +189,6 @@ extern "C" {
 
 typedef struct tagDLDATA { // dl
 
-	BackgroundWorker worker;   // where HWND is ListView Control
     UINT cbidl;                // Size of pidl
     LPITEMIDLIST  pidl;        // Directory Id
     LPSHELLFOLDER lpsf;        // IShellFolder Interface to pidl
@@ -71,7 +220,6 @@ bool DirList_Init(HWND hwnd,LPCWSTR pszHeader, const HPATHL hFilePath)
     if (lpdl) {
         SetProp(hwnd, pDirListProp, (HANDLE)lpdl);
         // Setup dl
-        BackgroundWorker_Init(&lpdl->worker, hwnd, NULL);
         lpdl->cbidl = 0;
         lpdl->pidl = NULL;
         lpdl->lpsf = NULL;
@@ -115,9 +263,10 @@ bool DirList_Init(HWND hwnd,LPCWSTR pszHeader, const HPATHL hFilePath)
 //
 bool DirList_Destroy(HWND hwnd)
 {
-    LPDLDATA lpdl = (LPDLDATA)GetProp(hwnd, pDirListProp);
+    LPDLDATA lpdl = (LPDLDATA)RemoveProp(hwnd, pDirListProp);
 
-    BackgroundWorker_Destroy(&lpdl->worker);
+    ListIconTask_Cancel(hwnd);
+    if (!lpdl) { return false; }
 
     if (lpdl->pidl) {
         CoTaskMemFree((LPVOID)lpdl->pidl);
@@ -125,8 +274,6 @@ bool DirList_Destroy(HWND hwnd)
     if (lpdl->lpsf) {
         lpdl->lpsf->lpVtbl->Release(lpdl->lpsf);
     }
-    // Free DirListData Property
-    RemoveProp(hwnd,pDirListProp);
     Path_Release(lpdl->hDirectoryPath);
     GlobalFree(lpdl);
 
@@ -140,12 +287,24 @@ bool DirList_Destroy(HWND hwnd)
 //
 //  Start thread to extract file icons in the background
 //
+static void DirList_LookupIcon(void* input, bool noFadeHidden, LVITEMW* result);
+static void DirList_FreeIconInput(void* input) { CoTaskMemFree(input); }
+
 void DirList_StartIconThread(HWND hwnd)
 {
     LPDLDATA lpdl = (LPDLDATA)GetProp(hwnd, pDirListProp);
 
-    BackgroundWorker_Cancel(&lpdl->worker);
-    BackgroundWorker_Start(&lpdl->worker, DirList_IconThread, lpdl);
+    if (!lpdl || !lpdl->pidl) { return; }
+    ListIconTask* const task = ListIconTask_Create(hwnd, lpdl->bNoFadeHidden, DirList_LookupIcon, DirList_FreeIconInput);
+    if (!task) { return; }
+    for (int i = 0; i < task->count; ++i) {
+        LVITEMW item = { LVIF_PARAM, i };
+        if (ListView_GetItem(hwnd, &item) && item.lParam) {
+            auto* const data = reinterpret_cast<LPLV_ITEMDATA>(item.lParam);
+            ListIconTask_SetInput(task, i, IL_Create(lpdl->pidl, lpdl->cbidl, data->pidl, 0));
+        }
+    }
+    ListIconTask_Start(task);
 }
 
 
@@ -160,6 +319,8 @@ int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,
                  int iSortFlags,bool fSortRev)
 {
     LPDLDATA lpdl = (LPDLDATA)GetProp(hwnd, pDirListProp);
+    ListIconTask_Cancel(hwnd);
+    if (!lpdl) { return -1; }
 
     // Initialize default icons
     SHFILEINFO shfi = { 0 };
@@ -170,9 +331,6 @@ int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,
     SHGetFileInfo(L"Icon",FILE_ATTRIBUTE_NORMAL,&shfi,sizeof(SHFILEINFO),
                   SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON | SHGFI_SYSICONINDEX);
     lpdl->iDefIconFile = shfi.iIcon;
-
-  	// First of all terminate running icon thread
-    BackgroundWorker_Cancel(&lpdl->worker);
 
     // A Directory is strongly required
     if (!lpszDir || !*lpszDir) {
@@ -209,11 +367,11 @@ int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,
     // Get Desktop Folder
     LPSHELLFOLDER lpsf = NULL;
     LPSHELLFOLDER lpsfDesktop = NULL;
+    LPITEMIDLIST pidl = NULL;
     if (NOERROR == SHGetDesktopFolder(&lpsfDesktop)) {
 
         // Convert wszDir into a pidl
         ULONG chParsed = 0;
-        LPITEMIDLIST pidl = NULL;
         ULONG dwAttributes = 0;
         if (NOERROR == lpsfDesktop->lpVtbl->ParseDisplayName(
                     lpsfDesktop,
@@ -315,7 +473,10 @@ int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,
     }
 
     // Set lpdl
-    LPITEMIDLIST pidl = NULL;
+    if (!lpsf && pidl) {
+        CoTaskMemFree(pidl);
+        pidl = NULL;
+    }
     lpdl->cbidl = IL_GetSize(pidl);
     lpdl->pidl = pidl;
     lpdl->lpsf = lpsf;
@@ -337,111 +498,49 @@ int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,
 
 //=============================================================================
 //
-//  DirList_IconThread()
+//  DirList_LookupIcon()
 //
-//  Thread to extract file icons in the background
-//
-unsigned int WINAPI DirList_IconThread(LPVOID lpParam)
+static void DirList_LookupIcon(void* input, bool noFadeHidden, LVITEMW* result)
 {
-    LPDLDATA lpdl = (LPDLDATA)lpParam;
-    BackgroundWorker *worker = &lpdl->worker;
-
-    // Exit immediately if DirList_Fill() hasn't been called
-    if (!(lpdl->lpsf)) {
-        return(0);
-    }
-
-    (void)CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
-
-    HWND hwnd = worker->hwnd;
-    int iMaxItem = ListView_GetItemCount(hwnd);
-
-    // Get IShellIcon
-    IShellIcon* lpshi = NULL;
-    lpdl->lpsf->lpVtbl->QueryInterface(lpdl->lpsf,IID_IShellIcon, (void**)&lpshi);
-
-    int iItem = 0;
-    while (iItem < iMaxItem && BackgroundWorker_Continue(worker)) {
-
-        LV_ITEM lvi = { 0 };
-
-        lvi.iItem = iItem;
-        lvi.mask  = LVIF_PARAM;
-        if (ListView_GetItem(hwnd,&lvi)) {
-
-            SHFILEINFO shfi = { 0 };
-
-            LPITEMIDLIST pidl;
-            DWORD dwAttributes = SFGAO_LINK | SFGAO_SHARE;
-
-            LPLV_ITEMDATA lplvid = (LPLV_ITEMDATA)lvi.lParam;
-
-            lvi.mask = LVIF_IMAGE;
-
-            if (!lpshi || NOERROR != lpshi->lpVtbl->GetIconOf(lpshi,lplvid->pidl,GIL_FORSHELL,&lvi.iImage)) {
-                //  get attributes of the shell object using its pidl.
-                lplvid->lpsf->lpVtbl->GetAttributesOf(lplvid->lpsf, 1, (LPCITEMIDLIST*)&lplvid->pidl, &dwAttributes);
-
-                DWORD attr = 0;
-                if ((dwAttributes & SFGAO_FOLDER) == SFGAO_FOLDER) {
-                    attr = FILE_ATTRIBUTE_DIRECTORY;
-                } else {
-                    attr = FILE_ATTRIBUTE_NORMAL;
-                }
-
-                pidl = IL_Create(lpdl->pidl, lpdl->cbidl, lplvid->pidl, 0);
-
-                SHGetFileInfo((LPCWSTR)pidl,attr,&shfi,sizeof(SHFILEINFO),
-                              SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
-                CoTaskMemFree((LPVOID)pidl);
-                lvi.iImage = shfi.iIcon;
+    auto const absolute = static_cast<LPCITEMIDLIST>(input);
+    LPCITEMIDLIST child = NULL;
+    IShellFolder* folder = NULL;
+    if (SUCCEEDED(SHBindToParent(absolute, IID_IShellFolder, reinterpret_cast<void**>(&folder), &child))) {
+        IShellIcon* icons = NULL;
+        if (SUCCEEDED(folder->lpVtbl->QueryInterface(folder, IID_IShellIcon, reinterpret_cast<void**>(&icons)))) {
+            if (icons->lpVtbl->GetIconOf(icons, child, GIL_FORSHELL, &result->iImage) == S_OK) {
+                result->mask |= LVIF_IMAGE;
             }
-
-            // It proved necessary to reset the state bits...
-            lvi.stateMask = 0;
-            lvi.state = 0;
-
-            // Link and Share Overlay
-            lplvid->lpsf->lpVtbl->GetAttributesOf(lplvid->lpsf,1, (LPCITEMIDLIST*)&lplvid->pidl,&dwAttributes);
-
-            if (dwAttributes & SFGAO_LINK) {
-                lvi.mask |= LVIF_STATE;
-                lvi.stateMask |= LVIS_OVERLAYMASK;
-                lvi.state |= INDEXTOOVERLAYMASK(2);
-            }
-
-            if (dwAttributes & SFGAO_SHARE) {
-                lvi.mask |= LVIF_STATE;
-                lvi.stateMask |= LVIS_OVERLAYMASK;
-                lvi.state |= INDEXTOOVERLAYMASK(1);
-            }
-
-            // Fade hidden/system files
-            if (!lpdl->bNoFadeHidden) {
-                WIN32_FIND_DATA fd;
-                if (NOERROR == SHGetDataFromIDList(lplvid->lpsf,lplvid->pidl,
-                                                   SHGDFIL_FINDDATA,&fd,sizeof(WIN32_FIND_DATA))) {
-                    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) ||
-                            (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)) {
-                        lvi.mask |= LVIF_STATE;
-                        lvi.stateMask |= LVIS_CUT;
-                        lvi.state |= LVIS_CUT;
-                    }
-                }
-            }
-            lvi.iSubItem = 0;
-            ListView_SetItem(hwnd,&lvi);
+            icons->lpVtbl->Release(icons);
         }
-        iItem++;
-    }
 
-    if (lpshi) {
-        lpshi->lpVtbl->Release(lpshi);
+        DWORD attributes = SFGAO_LINK | SFGAO_SHARE;
+        if (SUCCEEDED(folder->lpVtbl->GetAttributesOf(folder, 1, &child, &attributes))) {
+            if (attributes & SFGAO_LINK) {
+                result->state |= INDEXTOOVERLAYMASK(2);
+            } else if (attributes & SFGAO_SHARE) {
+                result->state |= INDEXTOOVERLAYMASK(1);
+            }
+        }
+        if (!noFadeHidden) {
+            WIN32_FIND_DATA fd;
+            if (SUCCEEDED(SHGetDataFromIDList(folder, child, SHGDFIL_FINDDATA, &fd, sizeof(fd))) &&
+                (fd.dwFileAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))) {
+                result->state |= LVIS_CUT;
+            }
+        }
+        folder->lpVtbl->Release(folder);
     }
-
-    CoUninitialize();
-    BackgroundWorker_End(worker, 0);
-    return 0;
+    if (!(result->mask & LVIF_IMAGE)) {
+        SHFILEINFO info = { 0 };
+        if (SHGetFileInfo(reinterpret_cast<LPCWSTR>(absolute), 0, &info, sizeof(info),
+                          SHGFI_PIDL | SHGFI_SYSICONINDEX | SHGFI_SMALLICON)) {
+            result->iImage = info.iIcon;
+            result->mask |= LVIF_IMAGE;
+        }
+    }
+    result->mask |= LVIF_STATE;
+    result->stateMask = LVIS_OVERLAYMASK | LVIS_CUT;
 }
 
 

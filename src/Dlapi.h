@@ -59,9 +59,14 @@ void DirList_StartIconThread(HWND hwnd);
 int DirList_Fill(HWND hwnd,LPCWSTR lpszDir,DWORD grfFlags,LPCWSTR lpszFileSpec,bool,bool,int iSortFlags,bool);
 
 
-//==== DlIconThread() =========================================================
+typedef struct ListIconTask ListIconTask;
+typedef void (*ListIconLookup)(void* input, bool noFadeHidden, LVITEMW* result);
+typedef void (*ListIconFree)(void* input);
 
-unsigned int WINAPI DirList_IconThread(LPVOID lpParam);
+ListIconTask* ListIconTask_Create(HWND list, bool noFadeHidden, ListIconLookup lookup, ListIconFree release);
+void ListIconTask_SetInput(ListIconTask* task, int index, void* input);
+void ListIconTask_Start(ListIconTask* task);
+void ListIconTask_Cancel(HWND list);
 
 
 //==== DlGetDispInfo() ========================================================

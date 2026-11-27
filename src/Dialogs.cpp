@@ -2395,83 +2395,43 @@ bool AddToFavDlg(HWND hwnd, const HPATHL hTargetPth)
 //  FileMRUDlgProc()
 //
 //
-unsigned int WINAPI FileMRUIconThread(LPVOID lpParam)
+static void FileMRULookupIcon(void* input, bool noFadeHidden, LVITEMW* result)
 {
-    BackgroundWorker *worker = (BackgroundWorker *)lpParam;
-
-    (void)CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_SPEED_OVER_MEMORY);
-
-    DWORD dwFlags = SHGFI_SMALLICON | SHGFI_SYSICONINDEX | SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED;
-
-    HWND hwnd = worker->hwnd;
-    int iMaxItem = ListView_GetItemCount(hwnd);
-
-    int iItem = 0;
-    while (iItem < iMaxItem && BackgroundWorker_Continue(worker)) {
-
-        LV_ITEM lvi = { 0 };
-        lvi.mask = LVIF_TEXT;
-        lvi.pszText = Path_WriteAccessBuf(worker->hFilePath, 0);
-        lvi.cchTextMax = (int)Path_GetBufCount(worker->hFilePath);
-        lvi.iItem = iItem;
-
-        SHFILEINFO shfi = { 0 };
-
-        if (ListView_GetItem(hwnd,&lvi)) {
-            Path_Sanitize(worker->hFilePath);
-            DWORD dwAttr = 0;
-            if (Path_IsValidUNC(worker->hFilePath) || !Path_IsExistingFile(worker->hFilePath)) {
-                dwFlags |= SHGFI_USEFILEATTRIBUTES;
-                dwAttr = FILE_ATTRIBUTE_NORMAL;
-                shfi.dwAttributes = 0;
-                SHGetFileInfoW(Path_FindFileName(worker->hFilePath), dwAttr, &shfi, sizeof(SHFILEINFO), dwFlags);
-            } else {
-                shfi.dwAttributes = SFGAO_LINK | SFGAO_SHARE;
-                SHGetFileInfoW(Path_Get(worker->hFilePath), dwAttr, &shfi, sizeof(SHFILEINFO), dwFlags);
-            }
-
-            lvi.mask = LVIF_IMAGE;
-            lvi.iImage = shfi.iIcon;
-            lvi.stateMask = 0;
-            lvi.state = 0;
-
-            if (shfi.dwAttributes & SFGAO_LINK) {
-                lvi.mask |= LVIF_STATE;
-                lvi.stateMask |= LVIS_OVERLAYMASK;
-                lvi.state |= INDEXTOOVERLAYMASK(2);
-            }
-
-            if (shfi.dwAttributes & SFGAO_SHARE) {
-                lvi.mask |= LVIF_STATE;
-                lvi.stateMask |= LVIS_OVERLAYMASK;
-                lvi.state |= INDEXTOOVERLAYMASK(1);
-            }
-
-            if (Path_IsValidUNC(worker->hFilePath)) {
-                dwAttr = FILE_ATTRIBUTE_NORMAL;
-            } else {
-                dwAttr = Path_GetFileAttributes(worker->hFilePath);
-            }
-
-            if (!Flags.NoFadeHidden &&
-                    dwAttr != INVALID_FILE_ATTRIBUTES &&
-                    dwAttr & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) {
-                lvi.mask |= LVIF_STATE;
-                lvi.stateMask |= LVIS_CUT;
-                lvi.state |= LVIS_CUT;
-            }
-
-            lvi.iSubItem = 0;
-            ListView_SetItem(hwnd,&lvi);
-        }
-        iItem++;
+    HPATHL const path = static_cast<HPATHL>(input);
+    bool const unc = Path_IsValidUNC(path);
+    SHFILEINFO info = { 0 };
+    UINT flags = SHGFI_SMALLICON | SHGFI_SYSICONINDEX;
+    DWORD_PTR imageList;
+    if (unc || !Path_IsExistingFile(path)) {
+        flags |= SHGFI_USEFILEATTRIBUTES;
+        imageList = SHGetFileInfoW(Path_FindFileName(path), FILE_ATTRIBUTE_NORMAL, &info, sizeof(info), flags);
+    } else {
+        flags |= SHGFI_ATTRIBUTES | SHGFI_ATTR_SPECIFIED;
+        info.dwAttributes = SFGAO_LINK | SFGAO_SHARE;
+        imageList = SHGetFileInfoW(Path_Get(path), 0, &info, sizeof(info), flags);
     }
-
-    CoUninitialize();
-    BackgroundWorker_End(worker, 0);
-    return 0;
+    result->mask = LVIF_STATE;
+    result->stateMask = LVIS_OVERLAYMASK | LVIS_CUT;
+    if (imageList) {
+        result->mask |= LVIF_IMAGE;
+        result->iImage = info.iIcon;
+        if (!(flags & SHGFI_USEFILEATTRIBUTES)) {
+            if (info.dwAttributes & SFGAO_LINK) {
+                result->state |= INDEXTOOVERLAYMASK(2);
+            } else if (info.dwAttributes & SFGAO_SHARE) {
+                result->state |= INDEXTOOVERLAYMASK(1);
+            }
+        }
+    }
+    if (!noFadeHidden && !unc) {
+        DWORD const attr = Path_GetFileAttributes(path);
+        if (attr != INVALID_FILE_ATTRIBUTES && (attr & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))) {
+            result->state |= LVIS_CUT;
+        }
+    }
 }
 
+static void FileMRUFreeIconInput(void* input) { Path_Release(static_cast<HPATHL>(input)); }
 
 //=============================================================================
 //
@@ -2730,10 +2690,6 @@ static INT_PTR CALLBACK FileMRUDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPAR
         InitWindowCommon(hwndLV, true);
         InitListView(hwndLV); // DarkMode
 
-        BackgroundWorker *worker = (BackgroundWorker *)GlobalAlloc(GPTR, sizeof(BackgroundWorker));
-        SetProp(hwnd, L"it", (HANDLE)worker);
-        BackgroundWorker_Init(worker, hwndLV, hFilePath);
-
         ResizeDlg_Init(hwnd, Settings.FileMRUDlgSizeX, Settings.FileMRUDlgSizeY, IDC_RESIZEGRIP);
 
         SHFILEINFO shfi = { 0 };
@@ -2772,10 +2728,7 @@ static INT_PTR CALLBACK FileMRUDlgProc(HWND hwnd, UINT umsg, WPARAM wParam, LPAR
         break;
 
     case WM_DESTROY: {
-        BackgroundWorker *worker = (BackgroundWorker *)GetProp(hwnd, L"it");
-        BackgroundWorker_Destroy(worker);
-        RemoveProp(hwnd, L"it");
-        GlobalFree(worker);
+        ListIconTask_Cancel(hwndLV);
 
         if (Settings.SaveRecentFiles) {
             MRU_Save(Globals.pFileMRU); // last instance on save wins
@@ -2930,8 +2883,7 @@ CASE_WM_CTLCOLOR_SET:
         switch (LOWORD(wParam)) {
         case IDC_FILEMRU_UPDATE_VIEW: {
 
-            BackgroundWorker* worker = (BackgroundWorker*)GetProp(hwnd, L"it");
-            BackgroundWorker_Cancel(worker);
+            ListIconTask_Cancel(hwndLV);
 
             ListView_DeleteAllItems(hwndLV);
 
@@ -2946,7 +2898,7 @@ CASE_WM_CTLCOLOR_SET:
             LPWSTR const szFileBuf = Path_WriteAccessBuf(hFilePath, 0);
             int const    cchFileBuf = (int)Path_GetBufCount(hFilePath);
 
-            for (int i = 0; i < MRU_Count(Globals.pFileMRU); i++) {
+            for (int i = 0; szFileBuf && cchFileBuf > 0 && i < MRU_Count(Globals.pFileMRU); i++) {
                 MRU_Enum(Globals.pFileMRU, i, szFileBuf, cchFileBuf);
                 Path_Sanitize(hFilePath);
                 //  SendDlgItemMessage(hwnd,IDC_FILEMRU,LB_ADDSTRING,0,(LPARAM)tch); }
@@ -2972,7 +2924,19 @@ CASE_WM_CTLCOLOR_SET:
             DialogEnableControl(hwnd, IDOK, (cnt > 0));
             DialogEnableControl(hwnd, IDC_REMOVE, (cnt > 0));
 
-            BackgroundWorker_Start(worker, FileMRUIconThread, worker);
+            ListIconTask* const task = ListIconTask_Create(hwndLV, Flags.NoFadeHidden, FileMRULookupIcon, FileMRUFreeIconInput);
+            if (task) {
+                for (int i = 0; i < static_cast<int>(cnt); ++i) {
+                    LVITEMW item = { LVIF_TEXT, i };
+                    item.pszText = szFileBuf;
+                    item.cchTextMax = cchFileBuf;
+                    if (ListView_GetItem(hwndLV, &item)) {
+                        Path_Sanitize(hFilePath);
+                        ListIconTask_SetInput(task, i, Path_Copy(hFilePath));
+                    }
+                }
+                ListIconTask_Start(task);
+            }
         }
         break;
 
