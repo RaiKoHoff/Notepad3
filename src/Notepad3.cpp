@@ -13705,6 +13705,41 @@ bool ActivatePrevInst(const bool bSetForground)
 //  LaunchNewInstance()
 //
 //
+static bool _PrepareNewInstanceArguments(LPCWSTR parameters, LPCWSTR position, LPCWSTR filePath, std::wstring& result)
+{
+    size_t const parameterLength = parameters ? wcslen(parameters) : 0;
+    size_t const positionLength = position ? wcslen(position) : 0;
+    size_t const fileLength = position ? wcslen(filePath) : 0;
+    if (parameterLength > CMDLN_LENGTH_LIMIT ||
+        (position && (positionLength > CMDLN_LENGTH_LIMIT - parameterLength ||
+            CMDLN_LENGTH_LIMIT - parameterLength - positionLength < 4 ||
+            fileLength > CMDLN_LENGTH_LIMIT - parameterLength - positionLength - 4))) {
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_INSUFFICIENT_BUFFER);
+        return false;
+    }
+
+    try {
+        std::wstring arguments = parameters ? parameters : L"";
+        if (position) {
+            arguments += L" ";
+            arguments += position;
+            arguments += L" \"";
+            arguments += filePath;
+            arguments += L"\"";
+        }
+        result.swap(arguments);
+        return true;
+    }
+    catch (const std::bad_alloc&) {
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_OUTOFMEMORY);
+        return false;
+    }
+    catch (const std::length_error&) {
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_OUTOFMEMORY);
+        return false;
+    }
+}
+
 bool LaunchNewInstance(HWND hwnd, LPCWSTR lpszParameter, LPCWSTR lpszFilePath)
 {
     if (hwnd && !IsWindow(hwnd)) {
@@ -13713,10 +13748,9 @@ bool LaunchNewInstance(HWND hwnd, LPCWSTR lpszParameter, LPCWSTR lpszFilePath)
     HPATHL hexe_pth = Path_Allocate(NULL);
     Path_GetModuleFilePath(hexe_pth);
 
-    HSTRINGW     hstrParams = StrgCreate(lpszParameter);
-    LPWSTR const params_buf = StrgWriteAccessBuf(hstrParams, CMDLN_LENGTH_LIMIT);
-
     HPATHL hdir_pth = Path_Allocate(lpszFilePath);
+    WCHAR wchPos[80] = { L'\0' };
+    bool const hasFilePath = Path_IsNotEmpty(hdir_pth);
     if (Path_IsEmpty(hdir_pth)) {
         Path_Reset(hdir_pth, Path_Get(Paths.WorkingDirectory));
     }
@@ -13725,26 +13759,26 @@ bool LaunchNewInstance(HWND hwnd, LPCWSTR lpszParameter, LPCWSTR lpszFilePath)
         int const bFullVisible = Settings2.LaunchInstanceFullVisible;
         int const instCnt = CountRunningInstances();
         WININFO wi = GetMyWindowPlacement(hwnd, NULL, offset * instCnt, bFullVisible);
-        WCHAR wchPos[80] = { L'\0' };
         StringCchPrintf(wchPos, COUNTOF(wchPos), L"-pos " WINDOWPOS_STRGFORMAT, wi.x, wi.y, wi.cx, wi.cy, wi.dpi, (int)wi.max);
 
-        StringCchPrintf(params_buf, StrgGetAllocLength(hstrParams),
-            L"%s %s \"%s\"", lpszParameter, wchPos, lpszFilePath);
         Path_RemoveFileSpec(hdir_pth);
     }
 
-    SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
-    sei.fMask = SEE_MASK_DEFAULT;
-    sei.hwnd = hwnd;
-    sei.lpVerb = NULL;
-    sei.lpFile = Path_Get(hexe_pth);
-    sei.lpParameters = StrgGet(hstrParams);
-    sei.lpDirectory = Path_Get(hdir_pth);
-    sei.nShow = SW_NORMAL;
-    bool const res = ShellExecuteExW(&sei);
+    std::wstring parameters;
+    bool res = false;
+    if (_PrepareNewInstanceArguments(lpszParameter, hasFilePath ? wchPos : NULL, lpszFilePath, parameters)) {
+        SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+        sei.fMask = SEE_MASK_DEFAULT;
+        sei.hwnd = hwnd;
+        sei.lpVerb = NULL;
+        sei.lpFile = Path_Get(hexe_pth);
+        sei.lpParameters = parameters.c_str();
+        sei.lpDirectory = Path_Get(hdir_pth);
+        sei.nShow = SW_NORMAL;
+        res = ShellExecuteExW(&sei);
+    }
 
     Path_Release(hdir_pth);
-    StrgDestroy(hstrParams);
     Path_Release(hexe_pth);
     return res;
 }

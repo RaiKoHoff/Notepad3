@@ -52,6 +52,16 @@ try {
     $end = $source.IndexOf('                } else {', $browser, [StringComparison]::Ordinal)
     if ($end -lt 0) { throw 'Missing explicit hyperlink browser branch end' }
     Set-Content (Join-Path $temp 'HyperlinkBrowser.inc') ($source.Substring($browser, $end - $browser) + '                }') -Encoding utf8
+    $launchFunctions = foreach ($signature in @('static bool _PrepareNewInstanceArguments(', 'bool LaunchNewInstance(')) {
+        $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
+        if ($start -lt 0) { continue }
+        $body = $source.IndexOf('{', $start)
+        $end = [regex]::Match($source.Substring($body), '(?m)^}')
+        if (!$end.Success) { throw "Missing end of $signature" }
+        $source.Substring($start, $body + $end.Index + 1 - $start)
+    }
+    if (!$source.Contains('bool LaunchNewInstance(')) { throw 'Missing new-instance launch function' }
+    Set-Content (Join-Path $temp 'LaunchNewInstance.inc') ($launchFunctions -join "`n") -Encoding utf8
     $config = Get-Content (Join-Path $root 'src\Config\Config.cpp') -Raw
     $start = $config.IndexOf('    IniSectionGetStringNoQuotes(IniSecSettings2, L"WebTemplate1"', [StringComparison]::Ordinal)
     if ($start -lt 0) { throw 'Missing WebTemplate settings block' }

@@ -93,6 +93,10 @@ int saves = 0;
 DWORD reportedError = 0;
 int reportedErrors = 0;
 LPCWSTR reportedContext = nullptr;
+int pathsAllocated = 0;
+int pathsReleased = 0;
+bool failNewInstanceAllocation = false;
+bool failNewInstanceWithoutFileAllocation = false;
 bool enabled[CMD_WEBACTION3 + 1]{};
 std::map<std::wstring, std::wstring> iniValues;
 struct Launch {
@@ -151,12 +155,28 @@ bool Path_IsExistingFile(HPATHL) {
     return fileExists;
 }
 HPATHL Path_Copy(HPATHL value) { return reinterpret_cast<HPATHL>(new TestPath{ PathValue(value) }); }
-void Path_Release(HPATHL value) { delete reinterpret_cast<TestPath*>(value); }
+void Path_Release(HPATHL value) { ++pathsReleased; delete reinterpret_cast<TestPath*>(value); }
 void Path_RemoveFileSpec(HPATHL value) {
     std::wstring& path = PathValue(value);
     const size_t at = path.find_last_of(L'\\');
     path.resize(at == 2 ? 3 : at);
 }
+HPATHL Path_Allocate(LPCWSTR value) {
+    ++pathsAllocated;
+    return reinterpret_cast<HPATHL>(new TestPath{ value ? value : L"" });
+}
+void Path_GetModuleFilePath(HPATHL value) { PathValue(value) = L"C:\\Program Files\\Notepad3.exe"; }
+int Path_Reset(HPATHL value, LPCWSTR text) {
+    PathValue(value) = text ? text : L"";
+    if (failNewInstanceWithoutFileAllocation) { failNextNew = true; }
+    return 1;
+}
+int CountRunningInstances() { return 2; }
+WININFO GetMyWindowPlacement(HWND, MONITORINFO*, int, bool) {
+    if (failNewInstanceAllocation) { failNextNew = true; }
+    return { 10, 20, 800, 600, false, 100, 96 };
+}
+BOOL TestIsWindow(HWND) { return FALSE; }
 size_t EditGetSelectedText(LPWSTR buffer, size_t count) {
     if (selection.size() >= count) { buffer[0] = L'\0'; return 0; }
     wcscpy_s(buffer, count, selection.c_str());
@@ -262,6 +282,10 @@ void LoadWebTemplateSettings() {
 
 #include "WebTemplateHelpers.inc"
 
+#define IsWindow TestIsWindow
+#include "LaunchNewInstance.inc"
+#undef IsWindow
+
 #if WEB_TEMPLATE_SHARED_ARGS
 #define PrepareTestBrowserArguments(url, arguments) _PrepareBrowserArguments(url, arguments, L"WebTemplate")
 #else
@@ -307,9 +331,11 @@ std::wstring MenuText(HMENU menu, UINT id) {
 
 int wmain() {
     TestPath current{};
+    TestPath working{ L"C:\\Work" };
     HSTRINGW first = StrgCreate(nullptr), second = StrgCreate(nullptr), third = StrgCreate(nullptr);
     HSTRINGW app = StrgCreate(nullptr), arguments = StrgCreate(nullptr);
     Paths.CurrentFile = reinterpret_cast<HPATHL>(&current);
+    Paths.WorkingDirectory = reinterpret_cast<HPATHL>(&working);
     Settings2.WebTemplate1 = first;
     Settings2.WebTemplate2 = second;
     Settings2.WebTemplate3 = third;
@@ -365,6 +391,9 @@ int wmain() {
         reportedError = 0;
         reportedErrors = 0;
         reportedContext = nullptr;
+        pathsAllocated = pathsReleased = 0;
+        failNewInstanceAllocation = false;
+        failNewInstanceWithoutFileAllocation = false;
         launches.clear();
     };
     int failures = 0;
@@ -373,6 +402,62 @@ int wmain() {
         ++checks;
         if (!result) { std::cerr << "FAIL: " << name << '\n'; ++failures; }
     };
+    reset();
+    check("new instance quotes file and passes window position",
+        LaunchNewInstance(nullptr, L"/n", L"C:\\Notes\\some file.txt")
+        && launches.size() == 1 && launches[0].file == L"C:\\Program Files\\Notepad3.exe"
+        && launches[0].arguments == L"/n -pos 10,20,800,600,96,0 \"C:\\Notes\\some file.txt\""
+        && launches[0].directory == L"C:\\Notes" && launches[0].show == SW_NORMAL);
+    reset();
+    check("new instance without file uses working directory and original parameters",
+        LaunchNewInstance(nullptr, L"/n", nullptr) && launches.size() == 1
+        && launches[0].arguments == L"/n" && launches[0].directory == L"C:\\Work");
+    reset();
+    launchResult = false;
+    check("new instance propagates shell launch failure",
+        !LaunchNewInstance(nullptr, L"/n", L"C:\\Notes\\a.txt") && launches.size() == 1);
+    reset();
+    check("new instance rejects invalid owner",
+        !LaunchNewInstance(reinterpret_cast<HWND>(1), L"/n", L"C:\\Notes\\a.txt") && launches.empty());
+    reset();
+    const std::wstring prefix = L"/n -pos 10,20,800,600,96,0 \"";
+    std::wstring longFile = L"C:\\Notes\\";
+    longFile.append(CMDLN_LENGTH_LIMIT - prefix.size() - 1 - longFile.size(), L'x');
+    check("new instance accepts a command at the length limit",
+        LaunchNewInstance(nullptr, L"/n", longFile.c_str()) && launches.size() == 1
+        && launches[0].arguments == prefix + longFile + L"\"");
+    reset();
+    longFile += L'x';
+    check("new instance rejects an oversized command instead of launching a truncated one",
+        !LaunchNewInstance(nullptr, L"/n", longFile.c_str()) && launches.empty()
+        && reportedErrors == 1 && reportedError == ERROR_INSUFFICIENT_BUFFER);
+    reset();
+    const std::wstring longParameters(CMDLN_LENGTH_LIMIT + 1, L'x');
+    check("new instance rejects oversized parameters without a file",
+        !LaunchNewInstance(nullptr, longParameters.c_str(), nullptr) && launches.empty()
+        && reportedErrors == 1 && reportedError == ERROR_INSUFFICIENT_BUFFER);
+    reset();
+    failNewInstanceAllocation = true;
+    check("new instance reports argument copy allocation failure and releases paths",
+        !LaunchNewInstance(nullptr, L"/a-long-parameter-that-requires-allocation", L"C:\\Notes\\a.txt")
+        && launches.empty() && !failNextNew && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY
+        && pathsAllocated == 2 && pathsReleased == 2);
+    reset();
+    failNewInstanceAllocation = true;
+    check("new instance reports command construction allocation failure and releases paths",
+        !LaunchNewInstance(nullptr, L"/n", L"C:\\Notes\\a.txt")
+        && launches.empty() && !failNextNew && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY
+        && pathsAllocated == 2 && pathsReleased == 2);
+    reset();
+    failNewInstanceWithoutFileAllocation = true;
+    check("new instance reports allocation failure without a file and releases paths",
+        !LaunchNewInstance(nullptr, L"/a-long-parameter-that-requires-allocation", nullptr)
+        && launches.empty() && !failNextNew && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY
+        && pathsAllocated == 2 && pathsReleased == 2);
+    reset();
+    check("new instance treats absent parameters as empty",
+        LaunchNewInstance(nullptr, nullptr, nullptr) && launches.size() == 1
+        && launches[0].arguments.empty() && launches[0].directory == L"C:\\Work");
     reset();
     RunAction();
     check("legacy selection URL and shell fallback", launches.size() == 1
