@@ -7,10 +7,24 @@
 extern "C" {
 #include "..\src\DynStrg.h"
 }
+#include <cstdlib>
 #include <iostream>
 #include <map>
+#include <new>
 #include <string>
 #include <vector>
+
+static bool failNextNew = false;
+void* operator new(size_t size) {
+    if (failNextNew) {
+        failNextNew = false;
+        throw std::bad_alloc();
+    }
+    if (void* memory = std::malloc(size ? size : 1)) { return memory; }
+    throw std::bad_alloc();
+}
+void operator delete(void* memory) noexcept { std::free(memory); }
+void operator delete(void* memory, size_t) noexcept { std::free(memory); }
 
 // Production DynStrg and extracted settings/commands; INI, editor, paths, saves and launches are stubbed.
 struct TestPath {
@@ -70,7 +84,10 @@ LPCWSTR Path_Get(HPATHL value) { return PathValue(value).c_str(); }
 bool Path_IsEmpty(HPATHL value) { return PathValue(value).empty(); }
 bool Path_IsNotEmpty(HPATHL value) { return !Path_IsEmpty(value); }
 size_t Path_GetLength(HPATHL value) { return PathValue(value).size(); }
-bool Path_IsExistingFile(HPATHL) { return fileExists; }
+bool Path_IsExistingFile(HPATHL) {
+    if (bufferGrowthFails) { failNextNew = true; }
+    return fileExists;
+}
 HPATHL Path_Copy(HPATHL value) { return reinterpret_cast<HPATHL>(new TestPath{ PathValue(value) }); }
 void Path_Release(HPATHL value) { delete reinterpret_cast<TestPath*>(value); }
 void Path_RemoveFileSpec(HPATHL value) {
@@ -103,7 +120,8 @@ BOOL TestShellExecuteExW(SHELLEXECUTEINFOW* info) {
 #define ShellExecuteExW TestShellExecuteExW
 HRESULT TestUrlCreateFromPathW(PCWSTR path, PWSTR url, DWORD* count, DWORD flags) {
     ++conversionCalls;
-    if (*count > writableCapacity) { ++oversizedBufferCalls; return E_OUTOFMEMORY; }
+    const DWORD expected = static_cast<DWORD>(wcslen(path) * 3 + COUNTOF(L"file:///"));
+    if (*count != expected) { ++oversizedBufferCalls; return E_OUTOFMEMORY; }
     return FAILED(conversionError) ? conversionError : UrlCreateFromPathW(path, url, count, flags);
 }
 #define UrlCreateFromPathW TestUrlCreateFromPathW
@@ -202,6 +220,7 @@ int wmain() {
         browserQueriesOnly = true;
         associationQueries = 0;
         bufferGrowthFails = false;
+        failNextNew = false;
         writableCapacity = 0;
         oversizedBufferCalls = 0;
         conversionCalls = 0;
@@ -432,7 +451,7 @@ int wmain() {
     bufferGrowthFails = true;
     RunAction(CMD_WEBACTION3);
     check("failed URL buffer growth never passes its requested size to Windows",
-        launches.empty() && conversionCalls == 0 && oversizedBufferCalls == 0
+        launches.empty() && !failNextNew && conversionCalls == 0 && oversizedBufferCalls == 0
         && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
 
     for (const auto* path : { L"C:\\Notes\\a b#100%.md", L"C:\\Notes\\\u00E4\u4E2D.md",

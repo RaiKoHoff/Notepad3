@@ -1,5 +1,7 @@
 param(
-    [string]$Notepad3Source
+    [string]$Notepad3Source,
+    [ValidateSet('x64', 'x86')]
+    [string]$Architecture = 'x64'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,7 +49,7 @@ try {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     $vs = & $vswhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
     if (!$vs) { throw 'Visual C++ build tools not found' }
-    $vcvars = Join-Path $vs 'VC\Auxiliary\Build\vcvars64.bat'
+    $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars$($Architecture.Replace('x86', '32').Replace('x64', '64')).bat"
     $test = Join-Path $PSScriptRoot 'TestWebTemplates.cpp'
     & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && rc /nologo /I`"$root\src`" /fo WebTemplateResources.res WebTemplateResources.rc && cl /nologo /c /std:c++20 /EHa /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$root\scintilla\include`" `"$root\src\DynStrg.cpp`" /Fo:DynStrg.obj && cl /nologo /EHsc /std:c++20 /utf-8 /W4 /WX /DUNICODE /D_UNICODE /I`"$temp`" /I`"$root\scintilla\include`" `"$test`" DynStrg.obj WebTemplateResources.res /Fe:TestWebTemplates.exe /link shlwapi.lib user32.lib"
     if ($LASTEXITCODE -ne 0) { throw 'WebTemplate test build failed' }
