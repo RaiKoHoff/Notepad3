@@ -1697,36 +1697,51 @@ bool ResolveSelectionToPath(LPCWSTR token, HPATHL hpthOut, bool* isDir)
     // Defensive: callers may pass un-trimmed input. '<' '>' are shell-quote /
     // mail-style URL wrappers, never legitimate at a path-token boundary —
     // safe to strip even though they are valid filename chars mid-name.
-    HSTRINGW htmp = StrgCreate(token);
-    _StripCommonQuoting(htmp);
+    try {
+        std::wstring text(token);
+        for (LPCWSTR trim = L" \t\"'`<>"; *trim; ++trim) {
+            while (!text.empty() && (isspace(text.back()) || text.back() == *trim)) {
+                text.pop_back();
+            }
+            size_t start = 0;
+            while (start < text.size() && (isspace(text[start]) || text[start] == *trim)) {
+                ++start;
+            }
+            text.erase(0, start);
+        }
+        if (text.empty()) {
+            return false;
+        }
 
-    if (StrgIsEmpty(htmp)) {
-        StrgDestroy(htmp);
+        // file:// / file:/// -> Windows path. Try Shell's PathCreateFromUrlW first;
+        // on failure (malformed URL), retain the manual prefix-strip fallback.
+        if (StrCmpNIW(text.c_str(), L"file://", 7) == 0) {
+            WCHAR szPath[INTERNET_MAX_URL_LENGTH + 1] = { L'\0' };
+            DWORD cch = COUNTOF(szPath);
+            if (SUCCEEDED(PathCreateFromUrlW(text.c_str(), szPath, &cch, 0))) {
+                text.assign(szPath);
+            }
+            else {
+                size_t const skip = (StrCmpNIW(text.c_str(), L"file:///", 8) == 0) ? 8 : 7;
+                text.erase(0, skip);
+            }
+        }
+
+        // Path_CanonicalizeEx expands environment variables and strips quotes.
+        if (Path_Reset(hpthOut, text.c_str()) <= 0 || Path_GetLength(hpthOut) != text.size()) {
+            Path_Empty(hpthOut, false);
+            InfoBoxLastError(L"ResolveSelectionToPath", ERROR_OUTOFMEMORY);
+            return false;
+        }
+    }
+    catch (const std::bad_alloc&) {
+        InfoBoxLastError(L"ResolveSelectionToPath", ERROR_OUTOFMEMORY);
         return false;
     }
-
-    // file:// / file:/// -> Windows path. Try Shell's PathCreateFromUrlW first;
-    // on failure (malformed URL), fall back to a manual prefix strip so the
-    // canonicalization step below still has a usable best-effort path.
-    LPCWSTR const raw = StrgGet(htmp);
-    if (StrCmpNIW(raw, L"file://", 7) == 0) {
-        WCHAR szPath[INTERNET_MAX_URL_LENGTH + 1] = { L'\0' };
-        DWORD cch = COUNTOF(szPath);
-        if (SUCCEEDED(PathCreateFromUrlW(raw, szPath, &cch, 0))) {
-            StrgReset(htmp, szPath);
-        }
-        else {
-            size_t const skip = (StrCmpNIW(raw, L"file:///", 8) == 0) ? 8 : 7;
-            HSTRINGW hStripped = StrgCreate(raw + skip);
-            StrgSwap(htmp, hStripped);
-            StrgDestroy(hStripped);
-        }
+    catch (const std::length_error&) {
+        InfoBoxLastError(L"ResolveSelectionToPath", ERROR_OUTOFMEMORY);
+        return false;
     }
-
-    // Path_CanonicalizeEx already runs ExpandEnvironmentStrgs(hstr, true) and
-    // strips quotes — no need to expand env vars manually here.
-    Path_Reset(hpthOut, StrgGet(htmp));
-    StrgDestroy(htmp);
 
     Path_CanonicalizeWithDocAnchor(hpthOut);
 

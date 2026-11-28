@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <wchar.h>
+#include <shlwapi.h>
+#include <wininet.h>
 #include "Helpers.h"
 #include "PathLib.h"
 
@@ -9,12 +11,41 @@ GLOBALS_T Globals;
 SETTINGS_T Settings;
 PATHS_T Paths;
 HANDLE g_hndlScintilla;
+void TestFailNextNew(void);
 
 #define UNEXPECTED() do { fprintf(stderr, "Unexpected application stub: %s\n", __func__); abort(); } while (0)
 int timsort(void* base, size_t count, size_t width, int (*compare)(const void*, const void*))
 { (void)base; (void)count; (void)width; (void)compare; UNEXPECTED(); }
+static int reportedErrors;
+static DWORD reportedError;
+static SIZE_T failHeapSize;
+LPVOID WINAPI TestHeapAlloc(HANDLE heap, DWORD flags, SIZE_T bytes)
+{
+    if (failHeapSize && bytes >= failHeapSize) {
+        failHeapSize = 0;
+        return NULL;
+    }
+    return HeapAlloc(heap, flags, bytes);
+}
+LPVOID WINAPI TestHeapReAlloc(HANDLE heap, DWORD flags, LPVOID memory, SIZE_T bytes)
+{
+    if (failHeapSize && bytes >= failHeapSize) {
+        failHeapSize = 0;
+        return NULL;
+    }
+    return HeapReAlloc(heap, flags, memory, bytes);
+}
+BOOL WINAPI TestHeapFree(HANDLE heap, DWORD flags, LPVOID memory)
+{
+    return HeapFree(heap, flags, memory);
+}
 DWORD InfoBoxLastError(LPCWSTR message, DWORD error)
-{ (void)message; (void)error; UNEXPECTED(); }
+{
+    if (!message || wcscmp(message, L"ResolveSelectionToPath") != 0) UNEXPECTED();
+    ++reportedErrors;
+    reportedError = error;
+    return error;
+}
 DWORD GetWindowsBuildNumber(LPDWORD major, LPDWORD minor)
 { (void)major; (void)minor; UNEXPECTED(); }
 LRESULT WINAPI Scintilla_DirectFunction(HANDLE handle, UINT message, WPARAM wparam, LPARAM lparam)
@@ -102,6 +133,77 @@ int main(void)
     CHECK(replaced && wcscmp(replaced, L"unchanged") == 0);
     FreeMem(replaced);
     CHECK(StrReplaceAll(L"unchanged", L"", L"x") == NULL);
+
+    WCHAR exePath[MAX_PATH];
+    CHECK(GetModuleFileNameW(NULL, exePath, ARRAYSIZE(exePath)) > 0);
+    Paths.CurrentFile = Path_Allocate(exePath);
+    Paths.WorkingDirectory = Path_Copy(Paths.CurrentFile);
+    Path_RemoveFileSpec(Paths.WorkingDirectory);
+    HPATHL resolved = Path_Allocate(NULL);
+    bool isDir = true;
+    CHECK(ResolveSelectionToPath(exePath, resolved, &isDir));
+    CHECK(!isDir && Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    isDir = true;
+    CHECK(ResolveSelectionToPath(Path_FindFileName(Paths.CurrentFile), resolved, &isDir));
+    CHECK(!isDir && Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    WCHAR wrapped[MAX_PATH + 16];
+    CHECK(SUCCEEDED(StringCchPrintfW(wrapped, ARRAYSIZE(wrapped), L" \t\"%s\"\t ", exePath)));
+    CHECK(ResolveSelectionToPath(wrapped, resolved, NULL));
+    CHECK(Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    CHECK(SUCCEEDED(StringCchPrintfW(wrapped, ARRAYSIZE(wrapped), L"\v'<%s>'\f", exePath)));
+    CHECK(ResolveSelectionToPath(wrapped, resolved, NULL));
+    CHECK(Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    WCHAR url[INTERNET_MAX_URL_LENGTH + 1];
+    DWORD urlLength = ARRAYSIZE(url);
+    CHECK(SUCCEEDED(UrlCreateFromPathW(exePath, url, &urlLength, 0)));
+    isDir = true;
+    CHECK(ResolveSelectionToPath(url, resolved, &isDir));
+    CHECK(!isDir && Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    WCHAR longUrl[INTERNET_MAX_URL_LENGTH + 32];
+    CHECK(SUCCEEDED(StringCchCopyW(longUrl, ARRAYSIZE(longUrl), L"file:///")));
+    for (size_t i = 8; i < ARRAYSIZE(longUrl) - 1; ++i) longUrl[i] = L'a';
+    longUrl[ARRAYSIZE(longUrl) - 1] = L'\0';
+    WCHAR urlPath[INTERNET_MAX_URL_LENGTH + 1];
+    DWORD urlPathLength = ARRAYSIZE(urlPath);
+    CHECK(FAILED(PathCreateFromUrlW(longUrl, urlPath, &urlPathLength, 0)));
+    HPATHL fallback = Path_Allocate(NULL);
+    CHECK(!ResolveSelectionToPath(longUrl + 8, fallback, NULL));
+    CHECK(!ResolveSelectionToPath(longUrl, resolved, NULL));
+    CHECK(Path_StrgComparePath(resolved, fallback, Paths.WorkingDirectory, true) == 0);
+    Path_Release(fallback);
+    CHECK(SetEnvironmentVariableW(L"NP3_HELPERS_TEST_EXE_PATH", exePath));
+    CHECK(ResolveSelectionToPath(L"%NP3_HELPERS_TEST_EXE_PATH%", resolved, NULL));
+    CHECK(Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    CHECK(SetEnvironmentVariableW(L"NP3_HELPERS_TEST_EXE_PATH", NULL));
+    HPATHL currentFile = Paths.CurrentFile;
+    Paths.CurrentFile = NULL;
+    CHECK(ResolveSelectionToPath(Path_FindFileName(currentFile), resolved, NULL));
+    CHECK(Path_StrgComparePath(resolved, currentFile, Paths.WorkingDirectory, true) == 0);
+    Paths.CurrentFile = currentFile;
+    isDir = false;
+    CHECK(ResolveSelectionToPath(Path_Get(Paths.WorkingDirectory), resolved, &isDir) && isDir);
+    isDir = true;
+    CHECK(!ResolveSelectionToPath(L"np3-test-file-that-does-not-exist", resolved, &isDir));
+    CHECK(!isDir && Path_IsNotEmpty(resolved));
+    isDir = true;
+    CHECK(!ResolveSelectionToPath(L"", resolved, &isDir) && !isDir && Path_IsEmpty(resolved));
+    isDir = true;
+    CHECK(!ResolveSelectionToPath(exePath, NULL, &isDir) && !isDir);
+    Path_Reset(resolved, L"previous output");
+    isDir = true;
+    TestFailNextNew();
+    CHECK(!ResolveSelectionToPath(exePath, resolved, &isDir));
+    CHECK(!isDir && Path_IsEmpty(resolved));
+    CHECK(reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY);
+    failHeapSize = (wcslen(exePath) + 1) * sizeof(WCHAR);
+    CHECK(!ResolveSelectionToPath(exePath, resolved, &isDir));
+    CHECK(!failHeapSize && !isDir && Path_IsEmpty(resolved));
+    CHECK(reportedErrors == 2 && reportedError == ERROR_OUTOFMEMORY);
+    Path_Release(resolved);
+    Path_Release(Paths.WorkingDirectory);
+    Path_Release(Paths.CurrentFile);
+    Paths.WorkingDirectory = NULL;
+    Paths.CurrentFile = NULL;
 
     HPATHL input = Path_Allocate(L"C:\\worker\\file.txt");
     BackgroundWorker worker = { 0 };
