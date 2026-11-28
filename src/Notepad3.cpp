@@ -5370,11 +5370,11 @@ static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)
     }
 }
 
-static bool _PrepareWebTemplateArguments(LPCWSTR url, std::wstring& arguments)
+static bool _PrepareBrowserArguments(LPCWSTR url, std::wstring& arguments, LPCWSTR errorContext)
 {
     HSTRINGW const source = Settings2.HyperlinkShellExURLCmdLnArgs;
     if (!source) {
-        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        InfoBoxLastError(errorContext, ERROR_OUTOFMEMORY);
         return false;
     }
     try {
@@ -5390,11 +5390,11 @@ static bool _PrepareWebTemplateArguments(LPCWSTR url, std::wstring& arguments)
         return true;
     }
     catch (const std::bad_alloc&) {
-        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        InfoBoxLastError(errorContext, ERROR_OUTOFMEMORY);
         return false;
     }
     catch (const std::length_error&) {
-        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        InfoBoxLastError(errorContext, ERROR_OUTOFMEMORY);
         return false;
     }
 }
@@ -5424,7 +5424,7 @@ static void _RunWebTemplateAction(int iLoWParam)
         return;
     }
     std::wstring arguments;
-    if (bExplicitBrowser && !_PrepareWebTemplateArguments(hyperlink.c_str(), arguments)) {
+    if (bExplicitBrowser && !_PrepareBrowserArguments(hyperlink.c_str(), arguments, L"WebTemplate")) {
         return;
     }
 
@@ -9863,20 +9863,18 @@ bool HandleHotSpotURLClicked(const DocPos position, const HYPERLINK_OPS operatio
 
                 if (StrgIsNotEmpty(Settings2.HyperlinkShellExURLWithApp)) {
 
-                    HSTRINGW hstr_params = StrgCopy(Settings2.HyperlinkShellExURLCmdLnArgs);
-                    StrgReplace(hstr_params, URLPLACEHLDR, szUnEscW);
-
-                    SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
-                    sei.fMask = SEE_MASK_DEFAULT;
-                    sei.hwnd = NULL;
-                    sei.lpVerb = NULL;
-                    sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
-                    sei.lpParameters = StrgIsNotEmpty(hstr_params) ? StrgGet(hstr_params) : szUnEscW;
-                    sei.lpDirectory = Path_Get(hDirectory);
-                    sei.nShow = nShowFlag;
-                    bHandled = ShellExecuteExW(&sei);
-
-                    StrgDestroy(hstr_params);
+                    std::wstring arguments;
+                    if (_PrepareBrowserArguments(szUnEscW, arguments, L"Hyperlink")) {
+                        SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+                        sei.fMask = SEE_MASK_DEFAULT;
+                        sei.hwnd = NULL;
+                        sei.lpVerb = NULL;
+                        sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
+                        sei.lpParameters = arguments.empty() ? szUnEscW : arguments.c_str();
+                        sei.lpDirectory = Path_Get(hDirectory);
+                        sei.nShow = nShowFlag;
+                        bHandled = ShellExecuteExW(&sei);
+                    }
 
                 } else {
 

@@ -482,6 +482,8 @@ Command-line arguments for the URL application. Use `${URL}` as placeholder:
 HyperlinkShellExURLCmdLnArgs="--incognito "${URL}""
 ```
 
+For clicked hyperlinks, empty arguments pass the URL directly. If preparing the arguments fails, Notepad3 reports the error and does not launch the application.
+
 #### `HyperlinkFileProtocolVerb=""`
 
 `ShellExecuteEx` verb: `""` (default), `"edit"`, `"explore"`, `"find"`, `"open"`, `"print"`, `"properties"`, `"runas"`.

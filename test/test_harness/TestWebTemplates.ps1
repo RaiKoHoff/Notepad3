@@ -15,9 +15,10 @@ try {
     $source = Get-Content $Notepad3Source -Raw
     $standardBrowser = $source.Contains('static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)')
     $standardTarget = $source.Contains('static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)')
-    $standardArgs = $source.Contains('static bool _PrepareWebTemplateArguments(')
-    Set-Content (Join-Path $temp 'WebTemplateMode.inc') @("#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)", "#define WEB_TEMPLATE_STD_TARGET $([int]$standardTarget)", "#define WEB_TEMPLATE_STD_ARGS $([int]$standardArgs)") -Encoding utf8
-    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static DWORD _ExpandWebTemplateEnvironment(', 'static DWORD _AppendEncodedWebTemplateSelection(', 'static bool _FormatSelectionWebTemplate(', 'static bool _PrepareMultiSelectionWebTemplate(', 'static bool _PrepareWebTemplateImpl(', 'static bool _PrepareWebTemplate(', 'static bool _PrepareWebTemplateArguments(', 'static void _RunWebTemplateAction(')) {
+    $sharedArgs = $source.Contains('static bool _PrepareBrowserArguments(')
+    $standardArgs = $sharedArgs -or $source.Contains('static bool _PrepareWebTemplateArguments(')
+    Set-Content (Join-Path $temp 'WebTemplateMode.inc') @("#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)", "#define WEB_TEMPLATE_STD_TARGET $([int]$standardTarget)", "#define WEB_TEMPLATE_STD_ARGS $([int]$standardArgs)", "#define WEB_TEMPLATE_SHARED_ARGS $([int]$sharedArgs)") -Encoding utf8
+    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static DWORD _ExpandWebTemplateEnvironment(', 'static DWORD _AppendEncodedWebTemplateSelection(', 'static bool _FormatSelectionWebTemplate(', 'static bool _PrepareMultiSelectionWebTemplate(', 'static bool _PrepareWebTemplateImpl(', 'static bool _PrepareWebTemplate(', 'static bool _PrepareWebTemplateArguments(', 'static bool _PrepareBrowserArguments(', 'static void _RunWebTemplateAction(')) {
         $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
         if ($start -lt 0) { continue }
         $body = $source.IndexOf('{', $start)
@@ -44,6 +45,13 @@ try {
     $menu = [regex]::Matches($source, '(?m)^    _UpdateWebTemplateMenu\(hmenu,[^\r\n]*')
     if ($menu.Count -ne 1) { throw 'Missing shared WebTemplate menu update' }
     Set-Content (Join-Path $temp 'WebTemplateMenu.inc') ($menu.Value -join "`n") -Encoding utf8
+    $hotspot = $source.IndexOf('bool HandleHotSpotURLClicked(', [StringComparison]::Ordinal)
+    if ($hotspot -lt 0) { throw 'Missing hyperlink handler' }
+    $browser = $source.IndexOf('                if (StrgIsNotEmpty(Settings2.HyperlinkShellExURLWithApp)) {', $hotspot, [StringComparison]::Ordinal)
+    if ($browser -lt 0) { throw 'Missing explicit hyperlink browser branch' }
+    $end = $source.IndexOf('                } else {', $browser, [StringComparison]::Ordinal)
+    if ($end -lt 0) { throw 'Missing explicit hyperlink browser branch end' }
+    Set-Content (Join-Path $temp 'HyperlinkBrowser.inc') ($source.Substring($browser, $end - $browser) + '                }') -Encoding utf8
     $config = Get-Content (Join-Path $root 'src\Config\Config.cpp') -Raw
     $start = $config.IndexOf('    IniSectionGetStringNoQuotes(IniSecSettings2, L"WebTemplate1"', [StringComparison]::Ordinal)
     if ($start -lt 0) { throw 'Missing WebTemplate settings block' }

@@ -92,6 +92,7 @@ std::wstring defaultBrowserClass;
 int saves = 0;
 DWORD reportedError = 0;
 int reportedErrors = 0;
+LPCWSTR reportedContext = nullptr;
 bool enabled[CMD_WEBACTION3 + 1]{};
 std::map<std::wstring, std::wstring> iniValues;
 struct Launch {
@@ -100,6 +101,7 @@ struct Launch {
     std::wstring directory;
     std::wstring className;
     ULONG mask;
+    int show;
 };
 std::vector<Launch> launches;
 
@@ -183,15 +185,16 @@ bool FileSave(int) {
     if (saveResult && !savedPath.empty()) { PathValue(Paths.CurrentFile) = savedPath; }
     return saveResult;
 }
-DWORD InfoBoxLastError(LPCWSTR, DWORD error) {
+DWORD InfoBoxLastError(LPCWSTR context, DWORD error) {
     ++reportedErrors;
+    reportedContext = context;
     reportedError = error ? error : GetLastError();
     return reportedError;
 }
 BOOL TestShellExecuteExW(SHELLEXECUTEINFOW* info) {
     launches.push_back({ info->lpFile, info->lpParameters ? info->lpParameters : L"",
                         info->lpDirectory ? info->lpDirectory : L"",
-                        info->lpClass ? info->lpClass : L"", info->fMask });
+                        info->lpClass ? info->lpClass : L"", info->fMask, info->nShow });
     if (!launchResult) { SetLastError(ERROR_FILE_NOT_FOUND); }
     return launchResult;
 }
@@ -259,6 +262,12 @@ void LoadWebTemplateSettings() {
 
 #include "WebTemplateHelpers.inc"
 
+#if WEB_TEMPLATE_SHARED_ARGS
+#define PrepareTestBrowserArguments(url, arguments) _PrepareBrowserArguments(url, arguments, L"WebTemplate")
+#else
+#define PrepareTestBrowserArguments(url, arguments) _PrepareWebTemplateArguments(url, arguments)
+#endif
+
 void RunAction(int iLoWParam = CMD_WEBACTION1) {
     switch (iLoWParam) {
 #include "WebTemplateCommands.inc"
@@ -269,6 +278,11 @@ void UpdateMenuOn(HMENU hmenu, bool se, bool mrs, bool bPosInSel, bool bIsHLink)
 }
 void UpdateMenu(bool se, bool mrs, bool bPosInSel, bool bIsHLink) {
     UpdateMenuOn(Globals.hMainMenu, se, mrs, bPosInSel, bIsHLink);
+}
+bool RunHyperlinkBrowser(LPCWSTR szUnEscW, HPATHL hDirectory, int nShowFlag) {
+    bool bHandled = false;
+#include "HyperlinkBrowser.inc"
+    return bHandled;
 }
 HMENU CreateActionMenu(bool mainMenu) {
     HMENU actions = CreatePopupMenu();
@@ -350,6 +364,7 @@ int wmain() {
         saves = 0;
         reportedError = 0;
         reportedErrors = 0;
+        reportedContext = nullptr;
         launches.clear();
     };
     int failures = 0;
@@ -619,19 +634,19 @@ int wmain() {
     std::wstring unchangedArguments = L"unchanged";
     failNextNew = true;
     check("browser argument replacement failure preserves the previous result",
-        !_PrepareWebTemplateArguments(L"https://example.test/long-url", unchangedArguments)
+        !PrepareTestBrowserArguments(L"https://example.test/long-url", unchangedArguments)
         && unchangedArguments == L"unchanged" && !failNextNew && reportedError == ERROR_OUTOFMEMORY);
     reset();
     Settings2.HyperlinkShellExURLCmdLnArgs = nullptr;
     unchangedArguments = L"unchanged";
     check("invalid argument handle reports failure rather than an empty value",
-        !_PrepareWebTemplateArguments(L"https://example.test/", unchangedArguments)
+        !PrepareTestBrowserArguments(L"https://example.test/", unchangedArguments)
         && unchangedArguments == L"unchanged" && reportedError == ERROR_OUTOFMEMORY);
     HSTRINGW lazyArguments = StrgCreate(nullptr);
     Settings2.HyperlinkShellExURLCmdLnArgs = lazyArguments;
     check("valid uninitialized argument text is treated as empty",
         lazyArguments && !StrgGet(lazyArguments)
-        && _PrepareWebTemplateArguments(L"https://example.test/", unchangedArguments) && unchangedArguments.empty());
+        && PrepareTestBrowserArguments(L"https://example.test/", unchangedArguments) && unchangedArguments.empty());
     Settings2.HyperlinkShellExURLCmdLnArgs = arguments;
     StrgDestroy(lazyArguments);
     reset();
@@ -642,6 +657,66 @@ int wmain() {
         launches.size() == 1 && launches[0].arguments == L"--open \"${URL}\"" && reportedErrors == 0);
     browserArgumentReplacementFails = false;
 #endif
+    reset();
+    StrgReset(app, L"C:\\Browser\\browser.exe");
+    StrgReset(arguments, L"--open \"${URL}\" \"${URL}\"");
+    check("hyperlink browser replaces all URL tokens without reprocessing the URL",
+        RunHyperlinkBrowser(L"https://example.test/${URL}", Paths.CurrentFile, SW_SHOWNOACTIVATE)
+        && launches.size() == 1 && launches[0].file == StrgGet(app)
+        && launches[0].arguments == L"--open \"https://example.test/${URL}\" \"https://example.test/${URL}\""
+        && launches[0].directory == Path_Get(Paths.CurrentFile)
+        && launches[0].mask == SEE_MASK_DEFAULT && launches[0].show == SW_SHOWNOACTIVATE);
+    StrgReset(arguments, L"");
+    launches.clear();
+    check("empty hyperlink browser arguments fall back to the URL",
+        RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.size() == 1 && launches[0].arguments == L"https://example.test/");
+    StrgReset(arguments, L"--new-window");
+    launches.clear();
+    check("hyperlink browser arguments without a URL token remain unchanged",
+        RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.size() == 1 && launches[0].arguments == L"--new-window");
+    launchResult = false;
+    launches.clear();
+    check("hyperlink browser launch failure remains unhandled",
+        !RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.size() == 1 && reportedErrors == 0);
+    launchResult = true;
+    Settings2.HyperlinkShellExURLCmdLnArgs = nullptr;
+    launches.clear();
+    check("invalid hyperlink browser arguments report failure without launching",
+        !RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.empty() && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1
+        && reportedContext && wcscmp(reportedContext, L"Hyperlink") == 0);
+    Settings2.HyperlinkShellExURLCmdLnArgs = arguments;
+#if WEB_TEMPLATE_SHARED_ARGS
+    reportedError = 0;
+    reportedErrors = 0;
+    StrgReset(arguments, L"${URL}");
+    failNextNew = true;
+    check("hyperlink URL replacement allocation failure reports without launching",
+        !RunHyperlinkBrowser(L"https://example.test/long-url", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    reportedError = 0;
+    reportedErrors = 0;
+    StrgReset(arguments, L"--long-argument-template-requiring-allocation");
+    failNextNew = true;
+    check("hyperlink argument copy allocation failure reports without launching",
+        !RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+#endif
+    HSTRINGW lazyHyperlinkArguments = StrgCreate(nullptr);
+    Settings2.HyperlinkShellExURLCmdLnArgs = lazyHyperlinkArguments;
+    reportedError = 0;
+    reportedErrors = 0;
+    check("uninitialized hyperlink arguments fall back to the URL",
+        lazyHyperlinkArguments && !StrgGet(lazyHyperlinkArguments)
+        && RunHyperlinkBrowser(L"https://example.test/", Paths.CurrentFile, SW_SHOWNORMAL)
+        && launches.size() == 1 && launches[0].arguments == L"https://example.test/"
+        && reportedErrors == 0);
+    Settings2.HyperlinkShellExURLCmdLnArgs = arguments;
+    StrgDestroy(lazyHyperlinkArguments);
+    reset();
     UpdateMenu(false, false, true, false);
     check("legacy menu selection available", enabled[CMD_WEBACTION1] && enabled[CMD_WEBACTION2]);
     UpdateMenu(true, false, false, false);
