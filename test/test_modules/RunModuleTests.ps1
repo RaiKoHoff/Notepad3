@@ -32,7 +32,7 @@ foreach ($test in $architectureTests) {
     }
 }
 
-foreach ($test in @('TestOpenDialogDirectory.ps1', 'TestCreateDirectory.ps1')) {
+foreach ($test in @('TestOpenDialogDirectory.ps1', 'TestCreateDirectory.ps1', 'TestLexerDialogSorting.ps1', 'TestZoomTooltipPosition.ps1')) {
     Write-Host "`n=== $test (x64) ==="
     try {
         & (Join-Path $PSScriptRoot $test)

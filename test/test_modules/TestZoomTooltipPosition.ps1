@@ -1,5 +1,5 @@
 $ErrorActionPreference = 'Stop'
-$root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-zoom-position-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
