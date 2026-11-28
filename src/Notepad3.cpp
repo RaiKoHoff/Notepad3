@@ -5035,7 +5035,7 @@ static void _UpdateWebTemplateMenu(HMENU hmenu, bool canUseSelection)
     }
 }
 
-static HRESULT _GetDefaultBrowserClass(HSTRINGW browserClass)
+static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)
 {
     DWORD length = 0;
     HRESULT hr = AssocQueryStringW(ASSOCF_IS_PROTOCOL, ASSOCSTR_PROGID, L"https", NULL, NULL, &length);
@@ -5045,17 +5045,29 @@ static HRESULT _GetDefaultBrowserClass(HSTRINGW browserClass)
     if (!length) {
         return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
     }
-    LPWSTR buffer = StrgWriteAccessBuf(browserClass, length);
-    // Failed growth can leave a non-null buffer with its old capacity.
-    if (!buffer || (StrgGetAllocLength(browserClass) < length)) {
+    std::wstring result;
+    if (length > result.max_size()) {
         return E_OUTOFMEMORY;
     }
-    hr = AssocQueryStringW((ASSOCF)(ASSOCF_IS_PROTOCOL | ASSOCF_NOTRUNCATE), ASSOCSTR_PROGID, L"https", NULL, buffer, &length);
+    try {
+        result.resize(length);
+    }
+    catch (const std::bad_alloc&) {
+        return E_OUTOFMEMORY;
+    }
+    hr = AssocQueryStringW((ASSOCF)(ASSOCF_IS_PROTOCOL | ASSOCF_NOTRUNCATE), ASSOCSTR_PROGID, L"https", NULL, result.data(), &length);
     if (FAILED(hr)) {
         return (hr == E_POINTER) ? HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER) : hr;
     }
-    StrgSanitize(browserClass);
-    return StrgIsNotEmpty(browserClass) ? S_OK : HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
+    size_t const end = result.find(L'\0');
+    if (end != std::wstring::npos) {
+        result.resize(end);
+    }
+    if (result.empty()) {
+        return HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION);
+    }
+    browserClass.swap(result);
+    return S_OK;
 }
 
 static bool _PrepareWebTemplate(LPCWSTR webTemplate, HSTRINGW target)
@@ -5125,6 +5137,62 @@ static bool _PrepareWebTemplate(LPCWSTR webTemplate, HSTRINGW target)
         return false;
     }
     return true;
+}
+
+static void _RunWebTemplateAction(int iLoWParam)
+{
+    HSTRINGW const hstr_webTemplate = (iLoWParam == CMD_WEBACTION1) ? Settings2.WebTemplate1
+        : ((iLoWParam == CMD_WEBACTION2) ? Settings2.WebTemplate2 : Settings2.WebTemplate3);
+    LPCWSTR const wchWebTemplate = StrgGet(hstr_webTemplate);
+
+    if (!_CanRunWebTemplate(wchWebTemplate, true)) {
+        return;
+    }
+    bool const bFileTemplate = _IsFileWebTemplate(wchWebTemplate);
+    bool const bExplicitBrowser = StrgIsNotEmpty(Settings2.HyperlinkShellExURLWithApp);
+    std::wstring browserClass;
+    if (bFileTemplate && !bExplicitBrowser) {
+        HRESULT const hr = _GetDefaultBrowserClass(browserClass);
+        if (FAILED(hr)) {
+            DWORD const error = (HRESULT_FACILITY(hr) == FACILITY_WIN32) ? HRESULT_CODE(hr) : (DWORD)hr;
+            InfoBoxLastError(L"https", error);
+            return;
+        }
+    }
+    HSTRINGW hstr_hyplnk = StrgCreate(NULL);
+    if (!_PrepareWebTemplate(wchWebTemplate, hstr_hyplnk)) {
+        StrgDestroy(hstr_hyplnk);
+        return;
+    }
+
+    HPATHL hdir = Path_Copy(Paths.CurrentFile);
+    Path_RemoveFileSpec(hdir);
+    HSTRINGW hstr_params = NULL;
+
+    SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+    sei.fMask = bFileTemplate ? SEE_MASK_FLAG_NO_UI : SEE_MASK_DEFAULT;
+    sei.lpFile = StrgGet(hstr_hyplnk);
+    sei.lpDirectory = Path_Get(hdir);
+    sei.nShow = SW_SHOWNORMAL;
+    if (bExplicitBrowser) {
+        hstr_params = StrgCopy(Settings2.HyperlinkShellExURLCmdLnArgs);
+        StrgReplace(hstr_params, URLPLACEHLDR, StrgGet(hstr_hyplnk));
+        sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
+        sei.lpParameters = (bFileTemplate && !StrgIsNotEmpty(hstr_params)) ? StrgGet(hstr_hyplnk) : StrgGet(hstr_params);
+    } else if (bFileTemplate) {
+        // Force the browser, never the document's file-extension association.
+        sei.fMask |= SEE_MASK_CLASSNAME;
+        sei.lpClass = browserClass.c_str();
+    } else {
+        sei.fMask = SEE_MASK_NOZONECHECKS;
+    }
+    if (!ShellExecuteExW(&sei) && bFileTemplate) {
+        DWORD const error = GetLastError();
+        InfoBoxLastError(sei.lpFile, error);
+    }
+    StrgDestroy(hstr_params);
+    Path_Release(hdir);
+    StrgDestroy(hstr_hyplnk);
 }
 
 
@@ -8474,66 +8542,9 @@ static bool _HandleCmdCommands(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lPara
 
     case CMD_WEBACTION1:
     case CMD_WEBACTION2:
-    case CMD_WEBACTION3: {
-
-        HSTRINGW const hstr_webTemplate = (iLoWParam == CMD_WEBACTION1) ? Settings2.WebTemplate1
-            : ((iLoWParam == CMD_WEBACTION2) ? Settings2.WebTemplate2 : Settings2.WebTemplate3);
-        LPCWSTR const wchWebTemplate = StrgGet(hstr_webTemplate);
-
-        if (!_CanRunWebTemplate(wchWebTemplate, true)) {
-            break;
-        }
-        bool const bFileTemplate = _IsFileWebTemplate(wchWebTemplate);
-        bool const bExplicitBrowser = StrgIsNotEmpty(Settings2.HyperlinkShellExURLWithApp);
-        HSTRINGW hstr_browserClass = NULL;
-        if (bFileTemplate && !bExplicitBrowser) {
-            hstr_browserClass = StrgCreate(NULL);
-            HRESULT const hr = _GetDefaultBrowserClass(hstr_browserClass);
-            if (FAILED(hr)) {
-                DWORD const error = (HRESULT_FACILITY(hr) == FACILITY_WIN32) ? HRESULT_CODE(hr) : (DWORD)hr;
-                InfoBoxLastError(L"https", error);
-                StrgDestroy(hstr_browserClass);
-                break;
-            }
-        }
-        HSTRINGW hstr_hyplnk = StrgCreate(NULL);
-        if (!_PrepareWebTemplate(wchWebTemplate, hstr_hyplnk)) {
-            StrgDestroy(hstr_hyplnk);
-            StrgDestroy(hstr_browserClass);
-            break;
-        }
-
-        HPATHL hdir = Path_Copy(Paths.CurrentFile);
-        Path_RemoveFileSpec(hdir);
-        HSTRINGW hstr_params = NULL;
-
-        SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
-        sei.fMask = bFileTemplate ? SEE_MASK_FLAG_NO_UI : SEE_MASK_DEFAULT;
-        sei.lpFile = StrgGet(hstr_hyplnk);
-        sei.lpDirectory = Path_Get(hdir);
-        sei.nShow = SW_SHOWNORMAL;
-        if (bExplicitBrowser) {
-            hstr_params = StrgCopy(Settings2.HyperlinkShellExURLCmdLnArgs);
-            StrgReplace(hstr_params, URLPLACEHLDR, StrgGet(hstr_hyplnk));
-            sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
-            sei.lpParameters = (bFileTemplate && !StrgIsNotEmpty(hstr_params)) ? StrgGet(hstr_hyplnk) : StrgGet(hstr_params);
-        } else if (bFileTemplate) {
-            // Force the browser, never the document's file-extension association.
-            sei.fMask |= SEE_MASK_CLASSNAME;
-            sei.lpClass = StrgGet(hstr_browserClass);
-        } else {
-            sei.fMask = SEE_MASK_NOZONECHECKS;
-        }
-        if (!ShellExecuteExW(&sei) && bFileTemplate) {
-            DWORD const error = GetLastError();
-            InfoBoxLastError(sei.lpFile, error);
-        }
-        StrgDestroy(hstr_params);
-        Path_Release(hdir);
-        StrgDestroy(hstr_hyplnk);
-        StrgDestroy(hstr_browserClass);
-    }
-    break;
+    case CMD_WEBACTION3:
+        _RunWebTemplateAction(iLoWParam);
+        break;
 
     /* ~~~
         case CMD_INCLINELIMIT:

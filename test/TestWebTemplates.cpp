@@ -13,14 +13,26 @@ extern "C" {
 #include <new>
 #include <string>
 #include <vector>
+#include "WebTemplateMode.inc"
 
 static bool failNextNew = false;
+static bool trackBrowserAllocation = false;
+static void* browserAllocation = nullptr;
+static size_t browserAllocationSize = 0;
 void* operator new(size_t size) {
     if (failNextNew) {
         failNextNew = false;
+        trackBrowserAllocation = false;
         throw std::bad_alloc();
     }
-    if (void* memory = std::malloc(size ? size : 1)) { return memory; }
+    if (void* memory = std::malloc(size ? size : 1)) {
+        if (trackBrowserAllocation) {
+            browserAllocation = memory;
+            browserAllocationSize = size;
+            trackBrowserAllocation = false;
+        }
+        return memory;
+    }
     throw std::bad_alloc();
 }
 void operator delete(void* memory) noexcept { std::free(memory); }
@@ -45,11 +57,15 @@ bool launchResult = true;
 HRESULT conversionError = S_OK;
 HRESULT associationError = S_OK;
 bool associationFailureOnRead = false;
+bool zeroAssociationLength = false;
 bool browserQueriesOnly = true;
 int associationQueries = 0;
 bool bufferGrowthFails = false;
+bool browserBufferGrowthFails = false;
 bool replacementFails = false;
+#if !WEB_TEMPLATE_STD_BROWSER
 size_t writableCapacity = 0;
+#endif
 int oversizedBufferCalls = 0;
 int conversionCalls = 0;
 std::wstring defaultBrowserClass;
@@ -68,12 +84,14 @@ struct Launch {
 std::vector<Launch> launches;
 
 bool StrIsNotEmpty(LPCWSTR value) { return value && *value; }
+#if !WEB_TEMPLATE_STD_BROWSER
 LPWSTR TestStrgWriteAccessBuf(HSTRINGW value, size_t count) {
-    LPWSTR buffer = bufferGrowthFails ? nullptr : StrgWriteAccessBuf(value, count);
+    LPWSTR buffer = browserBufferGrowthFails ? nullptr : StrgWriteAccessBuf(value, count);
     writableCapacity = buffer ? StrgGetAllocLength(value) : 0;
     return buffer;
 }
 #define StrgWriteAccessBuf TestStrgWriteAccessBuf
+#endif
 size_t TestStrgReplace(HSTRINGW value, LPCWSTR oldText, LPCWSTR newText) {
     if (replacementFails && wcscmp(oldText, L"${FILE_URL}") == 0) { return 0; }
     return StrgReplace(value, oldText, newText);
@@ -135,14 +153,35 @@ HRESULT TestAssocQueryStringW(ASSOCF flags, ASSOCSTR kind, LPCWSTR association,
                              LPCWSTR extra, LPWSTR output, DWORD* count) {
     ++associationQueries;
     browserQueriesOnly = browserQueriesOnly && (flags & ASSOCF_IS_PROTOCOL) != 0
-        && kind == ASSOCSTR_PROGID && std::wstring(association) == L"https" && !extra;
+        && kind == ASSOCSTR_PROGID && wcscmp(association, L"https") == 0 && !extra;
     if (FAILED(associationError) && (!associationFailureOnRead || output)) {
+        if (output && *count >= 2) { output[0] = L'X'; output[1] = L'\0'; }
         return associationError;
     }
     const DWORD required = static_cast<DWORD>(defaultBrowserClass.size() + 1);
-    if (!output) { *count = required; return S_FALSE; }
+    if (!output) {
+        *count = zeroAssociationLength ? 0 : required;
+        browserAllocation = nullptr;
+        browserAllocationSize = 0;
+        trackBrowserAllocation = WEB_TEMPLATE_STD_BROWSER && *count > 16;
+        if (WEB_TEMPLATE_STD_BROWSER && browserBufferGrowthFails) { failNextNew = true; }
+        return S_FALSE;
+    }
+#if WEB_TEMPLATE_STD_BROWSER
+    if (required > 16) {
+        const uintptr_t start = reinterpret_cast<uintptr_t>(browserAllocation);
+        const uintptr_t buffer = reinterpret_cast<uintptr_t>(output);
+        if (!browserAllocation || buffer < start || buffer - start > browserAllocationSize ||
+            *count > (browserAllocationSize - (buffer - start)) / sizeof(WCHAR)) {
+            ++oversizedBufferCalls;
+            return E_OUTOFMEMORY;
+        }
+    }
+#else
     if (*count > writableCapacity) { ++oversizedBufferCalls; return E_OUTOFMEMORY; }
+#endif
     if (*count < required) { *count = required; return E_POINTER; }
+    if (*count != required) { ++oversizedBufferCalls; return E_OUTOFMEMORY; }
     wcscpy_s(output, *count, defaultBrowserClass.c_str());
     *count = required;
     return S_OK;
@@ -223,12 +262,19 @@ int wmain() {
         conversionError = S_OK;
         associationError = S_OK;
         associationFailureOnRead = false;
+        zeroAssociationLength = false;
         browserQueriesOnly = true;
         associationQueries = 0;
         bufferGrowthFails = false;
+        browserBufferGrowthFails = false;
         replacementFails = false;
         failNextNew = false;
+        trackBrowserAllocation = false;
+        browserAllocation = nullptr;
+        browserAllocationSize = 0;
+#if !WEB_TEMPLATE_STD_BROWSER
         writableCapacity = 0;
+#endif
         oversizedBufferCalls = 0;
         conversionCalls = 0;
         defaultBrowserClass = L"NP3.TestHttpsBrowser";
@@ -348,6 +394,21 @@ int wmain() {
         && (launches[0].mask & SEE_MASK_CLASSNAME) != 0);
     preview();
     StrgReset(app, L"");
+    defaultBrowserClass.assign(2048, L'x');
+    RunAction();
+    check("long default browser class remains intact",
+        launches.size() == 1 && launches[0].className == defaultBrowserClass
+        && associationQueries == 2 && reportedErrors == 0);
+    preview();
+    StrgReset(app, L"");
+    zeroAssociationLength = true;
+    Settings.SaveBeforeRunningTools = true;
+    RunAction();
+    check("zero browser buffer length reports no association before saving",
+        launches.empty() && saves == 0 && associationQueries == 1
+        && reportedError == ERROR_NO_ASSOCIATION && reportedErrors == 1);
+    preview();
+    StrgReset(app, L"");
     StrgReset(arguments, L"--ignored-explicit-browser-arguments");
     StrgReset(first, L"https://example.test/?q=%s");
     StrgReset(second, L"${FILE_URL}");
@@ -386,12 +447,21 @@ int wmain() {
     check("undersized browser-query buffer reports a buffer error, not invalid pointer",
         launches.empty() && saves == 0 && reportedError == ERROR_INSUFFICIENT_BUFFER
         && associationQueries == 2);
+#if WEB_TEMPLATE_STD_BROWSER
+    preview();
+    associationError = E_FAIL;
+    associationFailureOnRead = true;
+    std::wstring unchangedBrowserClass = L"unchanged";
+    check("failed browser read does not publish a partial result",
+        _GetDefaultBrowserClass(unchangedBrowserClass) == E_FAIL
+        && unchangedBrowserClass == L"unchanged" && associationQueries == 2);
+#endif
     reset();
-    bufferGrowthFails = true;
+    browserBufferGrowthFails = true;
     Settings.SaveBeforeRunningTools = true;
     RunAction(CMD_WEBACTION3);
     check("failed browser buffer allocation aborts before saving or calling Windows",
-        launches.empty() && saves == 0 && associationQueries == 1 && oversizedBufferCalls == 0
+        launches.empty() && saves == 0 && associationQueries == 1 && !failNextNew && oversizedBufferCalls == 0
         && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
     preview();
     Settings.SaveBeforeRunningTools = true;

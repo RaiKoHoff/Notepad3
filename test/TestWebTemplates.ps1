@@ -11,7 +11,9 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-webtemplates-' + [guid]::NewG
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content $Notepad3Source -Raw
-    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static bool _PrepareWebTemplate(')) {
+    $standardBrowser = $source.Contains('static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)')
+    Set-Content (Join-Path $temp 'WebTemplateMode.inc') "#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)" -Encoding utf8
+    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static bool _PrepareWebTemplate(', 'static void _RunWebTemplateAction(')) {
         $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
         if ($start -lt 0) { continue }
         $body = $source.IndexOf('{', $start)
@@ -24,7 +26,7 @@ try {
     $start = $source.IndexOf('    case CMD_WEBACTION1:', [StringComparison]::Ordinal)
     if ($start -lt 0) { throw 'Missing WebTemplate command cases' }
     $commands = $source.Substring($start)
-    $end = [regex]::Match($commands, '(?m)^    break;')
+    $end = [regex]::Match($commands, '(?m)^(?: {4}| {8})break;')
     if (!$end.Success) { throw 'Missing WebTemplate command end' }
     Set-Content (Join-Path $temp 'WebTemplateCommands.inc') $commands.Substring(0, $end.Index + $end.Length) -Encoding utf8
     $menu = [regex]::Matches($source, '(?m)^    _UpdateWebTemplateMenu\(hmenu,[^\r\n]*')
