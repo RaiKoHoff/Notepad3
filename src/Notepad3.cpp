@@ -5002,7 +5002,7 @@ static bool _CanRunWebTemplate(LPCWSTR webTemplate, bool canUseSelection)
         : canUseSelection;
 }
 
-static void _UpdateWebTemplateMenu(HMENU hmenu, bool canUseSelection)
+static void _UpdateWebTemplateMenu(HMENU hmenu, bool canUseSelection, bool isMultiOrRectangle)
 {
     const struct {
         UINT command;
@@ -5035,7 +5035,10 @@ static void _UpdateWebTemplateMenu(HMENU hmenu, bool canUseSelection)
         item.fMask = MIIM_STRING;
         item.dwTypeData = label;
         SetMenuItemInfoW(hmenu, actions[i].command, FALSE, &item);
-        EnableCmd(hmenu, actions[i].command, _CanRunWebTemplate(StrgGet(actions[i].webTemplate), canUseSelection));
+        LPCWSTR const webTemplate = StrgGet(actions[i].webTemplate);
+        bool const canUseTemplateSelection = canUseSelection && (!isMultiOrRectangle
+            || (StrIsNotEmpty(webTemplate) && wcsstr(webTemplate, L"${SEL}") && !wcsstr(webTemplate, L"%s")));
+        EnableCmd(hmenu, actions[i].command, _CanRunWebTemplate(webTemplate, canUseTemplateSelection));
     }
 }
 
@@ -5954,7 +5957,7 @@ LRESULT MsgInitMenu(HWND hwnd, WPARAM wParam, LPARAM lParam)
     bool const bIsHLink = (SciCall_IndicatorValueAt(INDIC_NP3_HYPERLINK, iCurPos) > 0);
     EnableCmd(hmenu, CMD_OPEN_HYPERLINK, !mrs && bIsHLink);
     EnableCmd(hmenu, CMD_COPY_HYPERLINK, !mrs && bIsHLink);
-    _UpdateWebTemplateMenu(hmenu, !se && !mrs && bPosInSel && !bIsHLink);
+    _UpdateWebTemplateMenu(hmenu, !se && bPosInSel && !bIsHLink, mrs);
 
     i = (int)Path_IsNotEmpty(Settings2.AdministrationTool);
     EnableCmd(hmenu, IDM_HELP_ADMINEXE, i);

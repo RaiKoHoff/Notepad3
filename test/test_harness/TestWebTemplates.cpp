@@ -649,6 +649,40 @@ int wmain() {
     UpdateMenu(false, false, true, true);
     check("legacy hyperlink context unavailable", !enabled[CMD_WEBACTION1] && !enabled[CMD_WEBACTION2]);
 
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "one\ntwo";
+    selectionRanges = { { 0, 3 }, { 4, 7 } };
+    UpdateMenu(false, true, true, false);
+    check("multi-selection enables selection token but not legacy format",
+        enabled[CMD_WEBACTION1] && !enabled[CMD_WEBACTION2] && enabled[CMD_WEBACTION3]);
+    HMENU multiContext = CreateActionMenu(false);
+    UpdateMenuOn(multiContext, false, true, true, false);
+    check("multi-selection token is enabled in the context menu",
+        (GetMenuState(multiContext, CMD_WEBACTION1, MF_BYCOMMAND) & MF_GRAYED) == 0
+        && (GetMenuState(multiContext, CMD_WEBACTION2, MF_BYCOMMAND) & MF_GRAYED) != 0);
+    DestroyMenu(multiContext);
+    RunAction();
+    check("enabled multi-selection action launches joined selections",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=one%20two");
+    rectangularSelection = true;
+    selectionRanges = { { 4, 7 }, { 0, 3 } };
+    launches.clear();
+    UpdateMenu(false, true, true, false);
+    RunAction();
+    check("rectangular selection enables action and launches in row order",
+        enabled[CMD_WEBACTION1] && launches.size() == 1
+        && launches[0].file == L"https://example.test/?q=one%20two");
+    UpdateMenu(true, true, true, false);
+    check("empty multi-selection disables selection token", !enabled[CMD_WEBACTION1]);
+    UpdateMenu(false, true, false, false);
+    check("selection token is disabled outside the selection", !enabled[CMD_WEBACTION1]);
+    UpdateMenu(false, true, true, true);
+    check("selection token is disabled over a hyperlink", !enabled[CMD_WEBACTION1]);
+    StrgReset(first, L"https://example.test/?q=${SEL}&legacy=%s");
+    UpdateMenu(false, true, true, false);
+    check("mixed selection formats remain disabled for multi-selection", !enabled[CMD_WEBACTION1]);
+
     const auto preview = [&] {
         reset();
         StrgReset(first, L"${FILE_URL}");
