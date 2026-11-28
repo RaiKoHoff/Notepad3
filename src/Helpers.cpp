@@ -24,6 +24,10 @@
 #include <intrin.h>
 #include <wchar.h>
 
+#include <new>
+#include <stdexcept>
+#include <string>
+
 extern "C" {
 
 #include "Helpers.h"
@@ -245,16 +249,37 @@ HRESULT SetWindowAppUserModelID(HWND hwnd, PCWSTR AppID, PCWSTR DisplayName)
     if (SUCCEEDED(hr)) {
         // without relaunch info, the taskbar cannot start a new instance (Shift+Click) for an explicit AppID
         HPATHL hexe_pth = Path_Allocate(NULL);
-        Path_GetModuleFilePath(hexe_pth);
-        HSTRINGW hcmd_str = StrgCreate(NULL);
-        StrgFormat(hcmd_str, L"\"%s\"", Path_Get(hexe_pth));
-        _SetPropertyString(pps, PKEY_AppUserModel_RelaunchCommand, StrgGet(hcmd_str));
+        bool argumentFailure = !hexe_pth;
+        if (hexe_pth) {
+            Path_GetModuleFilePath(hexe_pth);
+            LPCWSTR const executable = Path_Get(hexe_pth);
+            if (executable) {
+                try {
+                    std::wstring command = L"\"";
+                    command += executable;
+                    command += L"\"";
+                    HRESULT const commandResult = _SetPropertyString(pps, PKEY_AppUserModel_RelaunchCommand, command.c_str());
+                    argumentFailure = (commandResult == E_OUTOFMEMORY || commandResult == HRESULT_FROM_WIN32(ERROR_NOT_ENOUGH_MEMORY));
+                }
+                catch (const std::bad_alloc&) {
+                    argumentFailure = true;
+                }
+                catch (const std::length_error&) {
+                    argumentFailure = true;
+                }
+            }
+            else {
+                argumentFailure = true;
+            }
+        }
         _SetPropertyString(pps, PKEY_AppUserModel_RelaunchDisplayNameResource, DisplayName);
-        StrgDestroy(hcmd_str);
         Path_Release(hexe_pth);
 
         hr = _SetPropertyString(pps, PKEY_AppUserModel_ID, AppID);
         pps->lpVtbl->Release(pps);
+        if (argumentFailure) {
+            InfoBoxLastError(L"AppUserModelID", ERROR_OUTOFMEMORY);
+        }
     }
     return hr;
 }

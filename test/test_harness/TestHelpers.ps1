@@ -24,6 +24,18 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Helpers test build failed' }
     & (Join-Path $temp 'TestHelpers.exe')
     if ($LASTEXITCODE -ne 0) { throw 'Helpers tests failed' }
+
+    $source = Get-Content -LiteralPath $HelpersSource -Raw
+    $start = $source.IndexOf('HRESULT SetWindowAppUserModelID(', [StringComparison]::Ordinal)
+    if ($start -lt 0) { throw 'Missing SetWindowAppUserModelID' }
+    $body = $source.IndexOf('{', $start)
+    $end = [regex]::Match($source.Substring($body), '(?m)^}')
+    if (!$end.Success) { throw 'Missing SetWindowAppUserModelID end' }
+    Set-Content -LiteralPath (Join-Path $temp 'AppUserModel.inc') -Encoding utf8 -Value $source.Substring($start, $body + $end.Index + 1 - $start)
+    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && cl $flags /std:c++20 /EHsc /I`"$temp`" `"$PSScriptRoot\TestAppUserModel.cpp`" /Fe:TestAppUserModel.exe /link /OPT:REF ole32.lib uuid.lib user32.lib"
+    if ($LASTEXITCODE -ne 0) { throw 'AppUserModel test build failed' }
+    & (Join-Path $temp 'TestAppUserModel.exe')
+    if ($LASTEXITCODE -ne 0) { throw 'AppUserModel tests failed' }
 } finally {
     Get-ChildItem $temp -File | Remove-Item
     Remove-Item $temp
