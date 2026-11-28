@@ -17,6 +17,7 @@
 #include "tinyexprcpp/np3tinyexpr.h"
 
 #include <new>
+#include <stdexcept>
 #include <string>
 
 #ifdef _WIN64
@@ -5070,29 +5071,74 @@ static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)
     return S_OK;
 }
 
-static bool _PrepareWebTemplate(LPCWSTR webTemplate, HSTRINGW target)
+static DWORD _ExpandWebTemplateEnvironment(std::wstring& text)
 {
+    DWORD length = ExpandEnvironmentStringsW(text.c_str(), NULL, 0);
+    if (!length) {
+        DWORD const error = GetLastError();
+        return error ? error : ERROR_INVALID_DATA;
+    }
+    std::wstring expanded;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        if (length > expanded.max_size()) {
+            return ERROR_OUTOFMEMORY;
+        }
+        expanded.resize(length);
+        DWORD const written = ExpandEnvironmentStringsW(text.c_str(), expanded.data(), length);
+        if (!written) {
+            DWORD const error = GetLastError();
+            return error ? error : ERROR_INVALID_DATA;
+        }
+        if (written <= length) {
+            expanded.resize(written - 1);
+            text.swap(expanded);
+            return ERROR_SUCCESS;
+        }
+        length = written;
+    }
+    return ERROR_INSUFFICIENT_BUFFER;
+}
+
+static bool _PrepareWebTemplateImpl(LPCWSTR webTemplate, std::wstring& target)
+{
+    std::wstring result;
     if (!_IsFileWebTemplate(webTemplate)) {
         WCHAR selectedText[STRINGW_MAX_URL_LENGTH + 1] = { L'\0' };
         if (EditGetSelectedText(selectedText, COUNTOF(selectedText)) <= 1) {
             return false;
         }
         selectedText[wcscspn(selectedText, L"\r\n\t")] = L'\0';
-        StrgFormat(target, webTemplate, selectedText);
-        ExpandEnvironmentStrgs(target, false);
+        int const length = _scwprintf(webTemplate, selectedText);
+        if (length < 0) {
+            InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
+            return false;
+        }
+        result.resize((size_t)length + 1);
+        if (FAILED(StringCchPrintfW(result.data(), result.size(), webTemplate, selectedText))) {
+            InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
+            return false;
+        }
+        result.resize((size_t)length);
+        DWORD const error = _ExpandWebTemplateEnvironment(result);
+        if (error != ERROR_SUCCESS) {
+            InfoBoxLastError(webTemplate, error);
+            return false;
+        }
+        target.swap(result);
         return true;
     }
 
     if (Path_IsEmpty(Paths.CurrentFile)) {
         return false;
     }
-    if (StrgReset(target, webTemplate) <= 0) {
-        InfoBoxLastError(webTemplate, ERROR_OUTOFMEMORY);
+    result.assign(webTemplate);
+    DWORD const expansionError = _ExpandWebTemplateEnvironment(result);
+    if (expansionError != ERROR_SUCCESS) {
+        InfoBoxLastError(webTemplate, expansionError);
         return false;
     }
 
-    ExpandEnvironmentStrgs(target, false);
-    if (wcsstr(StrgGet(target), L"%s")) {
+    if (wcsstr(result.c_str(), L"%s")) {
         InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
         return false;
     }
@@ -5116,27 +5162,39 @@ static bool _PrepareWebTemplate(LPCWSTR webTemplate, HSTRINGW target)
     }
 
     DWORD urlLength = (DWORD)(pathLength * 3 + COUNTOF(L"file:///"));
-    HRESULT hr = E_OUTOFMEMORY;
-    try {
-        std::wstring fileUrl(urlLength, L'\0');
-        hr = UrlCreateFromPathW(Path_Get(Paths.CurrentFile), fileUrl.data(), &urlLength, 0);
-        if (SUCCEEDED(hr)) {
-            // Keep percent escapes and environment-looking filenames out of format/expansion passes.
-            if (wcsstr(StrgGet(target), L"${FILE_URL}") &&
-                !StrgReplace(target, L"${FILE_URL}", fileUrl.c_str())) {
-                hr = E_OUTOFMEMORY;
-            }
+    std::wstring fileUrl(urlLength, L'\0');
+    HRESULT const hr = UrlCreateFromPathW(Path_Get(Paths.CurrentFile), fileUrl.data(), &urlLength, 0);
+    if (SUCCEEDED(hr)) {
+        // Keep percent escapes and environment-looking filenames out of format/expansion passes.
+        size_t const urlTextLength = wcslen(fileUrl.c_str());
+        size_t pos = 0;
+        while ((pos = result.find(L"${FILE_URL}", pos)) != std::wstring::npos) {
+            result.replace(pos, COUNTOF(L"${FILE_URL}") - 1, fileUrl.c_str());
+            pos += urlTextLength;
         }
-    }
-    catch (const std::bad_alloc&) {
-        hr = E_OUTOFMEMORY;
     }
     if (FAILED(hr)) {
         DWORD const error = (HRESULT_FACILITY(hr) == FACILITY_WIN32) ? HRESULT_CODE(hr) : (DWORD)hr;
         InfoBoxLastError(Path_Get(Paths.CurrentFile), (hr == E_POINTER) ? ERROR_INSUFFICIENT_BUFFER : error);
         return false;
     }
+    target.swap(result);
     return true;
+}
+
+static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)
+{
+    try {
+        return _PrepareWebTemplateImpl(webTemplate, target);
+    }
+    catch (const std::bad_alloc&) {
+        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        return false;
+    }
+    catch (const std::length_error&) {
+        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        return false;
+    }
 }
 
 static void _RunWebTemplateAction(int iLoWParam)
@@ -5159,9 +5217,8 @@ static void _RunWebTemplateAction(int iLoWParam)
             return;
         }
     }
-    HSTRINGW hstr_hyplnk = StrgCreate(NULL);
-    if (!_PrepareWebTemplate(wchWebTemplate, hstr_hyplnk)) {
-        StrgDestroy(hstr_hyplnk);
+    std::wstring hyperlink;
+    if (!_PrepareWebTemplate(wchWebTemplate, hyperlink)) {
         return;
     }
 
@@ -5171,14 +5228,14 @@ static void _RunWebTemplateAction(int iLoWParam)
 
     SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
     sei.fMask = bFileTemplate ? SEE_MASK_FLAG_NO_UI : SEE_MASK_DEFAULT;
-    sei.lpFile = StrgGet(hstr_hyplnk);
+    sei.lpFile = hyperlink.c_str();
     sei.lpDirectory = Path_Get(hdir);
     sei.nShow = SW_SHOWNORMAL;
     if (bExplicitBrowser) {
         hstr_params = StrgCopy(Settings2.HyperlinkShellExURLCmdLnArgs);
-        StrgReplace(hstr_params, URLPLACEHLDR, StrgGet(hstr_hyplnk));
+        StrgReplace(hstr_params, URLPLACEHLDR, hyperlink.c_str());
         sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
-        sei.lpParameters = (bFileTemplate && !StrgIsNotEmpty(hstr_params)) ? StrgGet(hstr_hyplnk) : StrgGet(hstr_params);
+        sei.lpParameters = (bFileTemplate && !StrgIsNotEmpty(hstr_params)) ? hyperlink.c_str() : StrgGet(hstr_params);
     } else if (bFileTemplate) {
         // Force the browser, never the document's file-extension association.
         sei.fMask |= SEE_MASK_CLASSNAME;
@@ -5192,7 +5249,6 @@ static void _RunWebTemplateAction(int iLoWParam)
     }
     StrgDestroy(hstr_params);
     Path_Release(hdir);
-    StrgDestroy(hstr_hyplnk);
 }
 
 

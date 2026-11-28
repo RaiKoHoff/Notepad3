@@ -11,6 +11,7 @@ extern "C" {
 #include <iostream>
 #include <map>
 #include <new>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include "WebTemplateMode.inc"
@@ -38,7 +39,7 @@ void* operator new(size_t size) {
 void operator delete(void* memory) noexcept { std::free(memory); }
 void operator delete(void* memory, size_t) noexcept { std::free(memory); }
 
-// Production DynStrg and extracted settings/commands; INI, editor, paths, saves and launches are stubbed.
+// Production DynStrg and extracted settings/commands/environment expansion; INI, editor, paths, saves and launches are stubbed.
 struct TestPath {
     std::wstring value;
 };
@@ -63,6 +64,12 @@ int associationQueries = 0;
 bool bufferGrowthFails = false;
 bool browserBufferGrowthFails = false;
 bool replacementFails = false;
+bool environmentExpansionFails = false;
+bool environmentFailureOnRead = false;
+bool environmentBufferGrowthFails = false;
+bool selectionBufferGrowthFails = false;
+int environmentRetriesRemaining = 0;
+int environmentReadCalls = 0;
 #if !WEB_TEMPLATE_STD_BROWSER
 size_t writableCapacity = 0;
 #endif
@@ -97,12 +104,25 @@ size_t TestStrgReplace(HSTRINGW value, LPCWSTR oldText, LPCWSTR newText) {
     return StrgReplace(value, oldText, newText);
 }
 #define StrgReplace TestStrgReplace
-void ExpandEnvironmentStrgs(HSTRINGW value, bool) {
-    const DWORD count = ExpandEnvironmentStringsW(StrgGet(value), nullptr, 0);
-    std::vector<WCHAR> buffer(count);
-    ExpandEnvironmentStringsW(StrgGet(value), buffer.data(), count);
-    StrgReset(value, buffer.data());
+DWORD TestExpandEnvironmentStringsW(LPCWSTR input, LPWSTR output, DWORD size) {
+    if (environmentExpansionFails && (!environmentFailureOnRead || output)) {
+        SetLastError(ERROR_ACCESS_DENIED);
+        return 0;
+    }
+    if (output) {
+        ++environmentReadCalls;
+        if (environmentRetriesRemaining > 0) {
+            --environmentRetriesRemaining;
+            return size + 8;
+        }
+    }
+    DWORD const result = ExpandEnvironmentStringsW(input, output, size);
+    if (WEB_TEMPLATE_STD_TARGET && !output && environmentBufferGrowthFails && result) { failNextNew = true; }
+    return result;
 }
+#define ExpandEnvironmentStringsW TestExpandEnvironmentStringsW
+#define PTHAPI __stdcall
+#include "WebTemplateEnvironment.inc"
 std::wstring& PathValue(HPATHL value) { return reinterpret_cast<TestPath*>(value)->value; }
 LPCWSTR Path_Get(HPATHL value) { return PathValue(value).c_str(); }
 bool Path_IsEmpty(HPATHL value) { return PathValue(value).empty(); }
@@ -122,6 +142,7 @@ void Path_RemoveFileSpec(HPATHL value) {
 size_t EditGetSelectedText(LPWSTR buffer, size_t count) {
     if (selection.size() >= count) { buffer[0] = L'\0'; return 0; }
     wcscpy_s(buffer, count, selection.c_str());
+    if (WEB_TEMPLATE_STD_TARGET && selectionBufferGrowthFails) { failNextNew = true; }
     return selection.size() + 1;
 }
 bool FileSave(int) {
@@ -146,7 +167,9 @@ HRESULT TestUrlCreateFromPathW(PCWSTR path, PWSTR url, DWORD* count, DWORD flags
     ++conversionCalls;
     const DWORD expected = static_cast<DWORD>(wcslen(path) * 3 + COUNTOF(L"file:///"));
     if (*count != expected) { ++oversizedBufferCalls; return E_OUTOFMEMORY; }
-    return FAILED(conversionError) ? conversionError : UrlCreateFromPathW(path, url, count, flags);
+    HRESULT const result = FAILED(conversionError) ? conversionError : UrlCreateFromPathW(path, url, count, flags);
+    if (WEB_TEMPLATE_STD_TARGET && replacementFails && SUCCEEDED(result)) { failNextNew = true; }
+    return result;
 }
 #define UrlCreateFromPathW TestUrlCreateFromPathW
 HRESULT TestAssocQueryStringW(ASSOCF flags, ASSOCSTR kind, LPCWSTR association,
@@ -268,6 +291,12 @@ int wmain() {
         bufferGrowthFails = false;
         browserBufferGrowthFails = false;
         replacementFails = false;
+        environmentExpansionFails = false;
+        environmentFailureOnRead = false;
+        environmentBufferGrowthFails = false;
+        selectionBufferGrowthFails = false;
+        environmentRetriesRemaining = 0;
+        environmentReadCalls = 0;
         failNextNew = false;
         trackBrowserAllocation = false;
         browserAllocation = nullptr;
@@ -296,6 +325,23 @@ int wmain() {
         && launches[0].directory == L"C:\\Notes" && launches[0].arguments.empty()
         && launches[0].className.empty() && associationQueries == 0
         && launches[0].mask == SEE_MASK_NOZONECHECKS);
+    reset();
+    StrgReset(first, L"https://example.test/%%25?q=%8.3s");
+    RunAction();
+    check("legacy format preserves escapes, width and precision", launches.size() == 1
+        && launches[0].file == L"https://example.test/%25?q=     sel");
+    reset();
+    selection = L"\nignored";
+    RunAction();
+    check("legacy selection truncation can yield an empty argument", launches.size() == 1
+        && launches[0].file == L"https://example.test/?q=");
+#if WEB_TEMPLATE_STD_TARGET
+    reset();
+    selectionBufferGrowthFails = true;
+    RunAction();
+    check("selection target allocation failure reports without launching",
+        launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+#endif
     reset();
     selection = L"x";
     RunAction();
@@ -465,6 +511,7 @@ int wmain() {
         && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
     preview();
     Settings.SaveBeforeRunningTools = true;
+#if !WEB_TEMPLATE_STD_TARGET
     check("unallocated file-preview target reports failure before saving or conversion",
         !_PrepareWebTemplate(StrgGet(first), nullptr) && saves == 0 && conversionCalls == 0
         && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
@@ -477,6 +524,17 @@ int wmain() {
         lazyTarget && preparedTarget && std::wstring(StrgGet(freshTarget)) == L"file:///C:/Notes/readme.md"
         && saves == 1 && conversionCalls == 1 && reportedErrors == 0);
     StrgDestroy(freshTarget);
+#else
+    std::wstring target = L"old";
+    failNextNew = true;
+    check("target allocation failure preserves the previous value",
+        !_PrepareWebTemplate(StrgGet(first), target) && target == L"old" && !failNextNew
+        && saves == 0 && conversionCalls == 0 && reportedError == ERROR_OUTOFMEMORY);
+    preview();
+    std::wstring alias = L"${FILE_URL}";
+    check("target may alias the source template",
+        _PrepareWebTemplate(alias.c_str(), alias) && alias == L"file:///C:/Notes/readme.md");
+#endif
     preview();
     StrgReset(app, L"");
     defaultBrowserClass.clear();
@@ -566,11 +624,54 @@ int wmain() {
         && launches[0].arguments == L"\"file:///C:/Notes/readme.md#again=file:///C:/Notes/readme.md\"");
     preview();
     SetEnvironmentVariableW(L"NP3_WEBTEMPLATE_TEST", L"prefix%20/");
+    reset();
+    selection = L"%NP3_WEBTEMPLATE_TEST%";
+    RunAction();
+    check("legacy selection expands environment variables after formatting",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=prefix%20/");
+    preview();
     StrgReset(first, L"%NP3_WEBTEMPLATE_TEST%${FILE_URL}");
     current.value = L"C:\\Notes\\%NP3_WEBTEMPLATE_TEST%.md";
     RunAction();
     check("environment expansion precedes literal URL insertion", launches.size() == 1
         && launches[0].arguments == L"\"prefix%20/file:///C:/Notes/%25NP3_WEBTEMPLATE_TEST%25.md\"");
+    preview();
+    StrgReset(first, L"%NP3_WEBTEMPLATE_TEST%${FILE_URL}");
+    environmentExpansionFails = true;
+    RunAction();
+#if WEB_TEMPLATE_STD_TARGET
+    check("environment expansion failure reports an error without launch",
+        launches.empty() && reportedErrors == 1 && reportedError == ERROR_ACCESS_DENIED);
+    preview();
+    StrgReset(first, L"%NP3_WEBTEMPLATE_TEST%${FILE_URL}");
+    environmentExpansionFails = true;
+    environmentFailureOnRead = true;
+    RunAction();
+    check("failed environment expansion read reports an error without launch",
+        launches.empty() && reportedErrors == 1 && reportedError == ERROR_ACCESS_DENIED);
+    preview();
+    environmentBufferGrowthFails = true;
+    RunAction();
+    check("environment buffer allocation failure reports without launching",
+        launches.empty() && !failNextNew && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY);
+    preview();
+    StrgReset(first, L"%NP3_WEBTEMPLATE_TEST%${FILE_URL}");
+    environmentRetriesRemaining = 1;
+    RunAction();
+    check("environment expansion retries a changed required size",
+        launches.size() == 1 && launches[0].arguments == L"\"prefix%20/file:///C:/Notes/readme.md\""
+        && environmentReadCalls == 2 && reportedErrors == 0);
+    preview();
+    environmentRetriesRemaining = 3;
+    RunAction();
+    check("repeated environment growth stops without launching",
+        launches.empty() && environmentReadCalls == 3 && reportedErrors == 1
+        && reportedError == ERROR_INSUFFICIENT_BUFFER);
+#else
+    check("baseline environment expansion failure leaves the variable unexpanded",
+        launches.size() == 1 && launches[0].arguments == L"\"%NP3_WEBTEMPLATE_TEST%file:///C:/Notes/readme.md\""
+        && reportedErrors == 0);
+#endif
     SetEnvironmentVariableW(L"NP3_WEBTEMPLATE_TEST", nullptr);
     preview();
     StrgReset(first, L"${FILE_URL}?selection=%s");

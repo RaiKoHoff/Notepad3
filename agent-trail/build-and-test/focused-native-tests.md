@@ -9,8 +9,8 @@ pwsh -NoProfile -File test\test_files\encoding\TestEncodingDetection.ps1
 $tests = 'test\test_modules'
 pwsh -NoProfile -File "$tests\TestOpenDialogDirectory.ps1"
 pwsh -NoProfile -File "$tests\TestCreateDirectory.ps1"
-pwsh -NoProfile -File test\TestLexerDialogSorting.ps1
-pwsh -NoProfile -File test\TestZoomTooltipPosition.ps1
+pwsh -NoProfile -File "$tests\TestLexerDialogSorting.ps1"
+pwsh -NoProfile -File "$tests\TestZoomTooltipPosition.ps1"
 pwsh -NoProfile -File test\TestWebTemplates.ps1
 # Run all local module tests, or choose an individual runner and architecture.
 pwsh -NoProfile -File "$tests\RunModuleTests.ps1"
@@ -19,7 +19,7 @@ pwsh -NoProfile -File "$tests\TestExceptionPolicy.ps1" -Architecture x64
 pwsh -NoProfile -File Build\scripts\Test-Docs.ps1
 ```
 
-The lexer-sorting (`src\Styles.cpp`), zoom call-tip (`src\Notepad3.cpp`) and WebTemplate (`src\Notepad3.cpp`, linking `src\DynStrg.cpp`) runners extract functions into temporary harnesses and remove them afterwards. Native CI runs neither these nor the `test\test_modules` runners.
+The lexer-sorting (`src\Styles.cpp`), zoom call-tip (`src\Notepad3.cpp`) and WebTemplate (`src\Notepad3.cpp`, linking `src\DynStrg.cpp`) runners extract functions into temporary harnesses and remove them afterwards. The lexer-sorting and zoom call-tip runners create hidden Win32 windows; obtain approval before running either or the aggregate module runner on a shared desktop. Native CI runs neither these nor the other `test\test_modules` runners.
 
 When renaming source files, update filename-based extraction runners and, for tests in CI, `.github\workflows\native-tests.yml` path filters so tests and CI triggers follow the new paths.
 

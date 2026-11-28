@@ -12,8 +12,9 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-webtemplates-' + [guid]::NewG
 try {
     $source = Get-Content $Notepad3Source -Raw
     $standardBrowser = $source.Contains('static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)')
-    Set-Content (Join-Path $temp 'WebTemplateMode.inc') "#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)" -Encoding utf8
-    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static bool _PrepareWebTemplate(', 'static void _RunWebTemplateAction(')) {
+    $standardTarget = $source.Contains('static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)')
+    Set-Content (Join-Path $temp 'WebTemplateMode.inc') @("#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)", "#define WEB_TEMPLATE_STD_TARGET $([int]$standardTarget)") -Encoding utf8
+    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static DWORD _ExpandWebTemplateEnvironment(', 'static bool _PrepareWebTemplateImpl(', 'static bool _PrepareWebTemplate(', 'static void _RunWebTemplateAction(')) {
         $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
         if ($start -lt 0) { continue }
         $body = $source.IndexOf('{', $start)
@@ -22,6 +23,14 @@ try {
         $source.Substring($start, $body + $end.Index + 1 - $start)
     }
     Set-Content (Join-Path $temp 'WebTemplateHelpers.inc') ($helpers -join "`n") -Encoding utf8
+
+    $pathSource = Get-Content (Join-Path $root 'src\PathLib.cpp') -Raw
+    $start = $pathSource.IndexOf('void PTHAPI ExpandEnvironmentStrgs(', [StringComparison]::Ordinal)
+    if ($start -lt 0) { throw 'Missing environment expansion helper' }
+    $body = $pathSource.IndexOf('{', $start)
+    $end = [regex]::Match($pathSource.Substring($body), '(?m)^}')
+    if (!$end.Success) { throw 'Missing environment expansion helper end' }
+    Set-Content (Join-Path $temp 'WebTemplateEnvironment.inc') $pathSource.Substring($start, $body + $end.Index + 1 - $start) -Encoding utf8
 
     $start = $source.IndexOf('    case CMD_WEBACTION1:', [StringComparison]::Ordinal)
     if ($start -lt 0) { throw 'Missing WebTemplate command cases' }
