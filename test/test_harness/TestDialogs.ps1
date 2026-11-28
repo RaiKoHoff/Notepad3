@@ -59,6 +59,28 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'MRU icon test build failed' }
     & (Join-Path $temp 'TestMRUIcon.exe')
     if ($LASTEXITCODE -ne 0) { throw 'MRU icon tests failed' }
+
+    $newWindowFunctions = foreach ($signature in @('static bool _PrepareNewWindowArguments(', 'bool DialogNewWindow(')) {
+        $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
+        if ($start -lt 0) { continue }
+        $body = $source.IndexOf('{', $start)
+        $end = [regex]::Match($source.Substring($body), '(?m)^}')
+        if (!$end.Success) { throw "Missing end of $signature" }
+        $source.Substring($start, $body + $end.Index + 1 - $start)
+    }
+    if (!$source.Contains('bool DialogNewWindow(')) { throw 'Missing DialogNewWindow' }
+    Set-Content -LiteralPath (Join-Path $temp 'NewWindow.inc') -Encoding utf8 -Value ($newWindowFunctions -join "`n")
+    $notepadSource = Get-Content -LiteralPath (Join-Path $root 'src\Notepad3.cpp') -Raw
+    $reload = [regex]::Match($notepadSource, '(?m)^\s*if \(DialogNewWindow\(Globals\.hwndMain, true, Paths\.CurrentFile, NULL\)\) \{\s*CloseApplication\(\);\s*\}')
+    if (!$reload.Success) { throw 'Missing conditional new-window reload' }
+    Set-Content -LiteralPath (Join-Path $temp 'NewWindowReload.inc') -Encoding utf8 -Value $reload.Value
+    $drop = [regex]::Match($notepadSource, '(?m)^\s*if \(DialogNewWindow\(hwnd, sameFile, e->eff, &wi\)\) \{[\s\S]*?^\s*\} else \{\s*_RegisterDropSnapshot\(e->eff\);\s*\}')
+    if (!$drop.Success) { throw 'Missing conditional dropped-file launch' }
+    Set-Content -LiteralPath (Join-Path $temp 'NewWindowDrop.inc') -Encoding utf8 -Value $drop.Value
+    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && cl $workerFlags /std:c++20 /EHsc /I`"$temp`" `"$PSScriptRoot\TestNewWindow.cpp`" /Fe:TestNewWindow.exe /link /OPT:REF user32.lib"
+    if ($LASTEXITCODE -ne 0) { throw 'New window test build failed' }
+    & (Join-Path $temp 'TestNewWindow.exe')
+    if ($LASTEXITCODE -ne 0) { throw 'New window tests failed' }
 } finally {
     Get-ChildItem $temp -File | Remove-Item
     Remove-Item $temp

@@ -4534,10 +4534,12 @@ LRESULT MsgDropFiles(HWND hwnd, WPARAM wParam, LPARAM lParam)
                     } else {
                         WININFO wi = GetMyWindowPlacement(hwnd, NULL,
                                                           offset * (spawned + 1), fullVis);
-                        // NB: don't register — the spawned child registers
-                        // its CLI-arg snapshot at startup and owns cleanup.
-                        DialogNewWindow(hwnd, sameFile, e->eff, &wi);
-                        spawned++;
+                        if (DialogNewWindow(hwnd, sameFile, e->eff, &wi)) {
+                            // The child registers its CLI-arg snapshot and owns cleanup.
+                            spawned++;
+                        } else {
+                            _RegisterDropSnapshot(e->eff);
+                        }
                     }
                 } else {
                     // In-process load — register before _OnDropOneFile so the
@@ -13431,8 +13433,9 @@ bool FileSave(FileSaveFlags fSaveFlags)
             LONG const answer = InfoBoxLng(typ, Constants.SuppressKey.ReloadExSavedCfg, IDS_MUI_RELOADSETTINGS, tch);
             if (IsYesOkay(answer)) {
                 ///~SaveAllSettings(true); ~ already saved (CurrentFile)
-                DialogNewWindow(Globals.hwndMain, true, Paths.CurrentFile, NULL);
-                CloseApplication();
+                if (DialogNewWindow(Globals.hwndMain, true, Paths.CurrentFile, NULL)) {
+                    CloseApplication();
+                }
             }
         }
 

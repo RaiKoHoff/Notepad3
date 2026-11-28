@@ -27,6 +27,10 @@ extern "C" {
 
 #include <string.h>
 
+#include <new>
+#include <stdexcept>
+#include <string>
+
 #include "tinyexprcpp/np3tinyexpr.h"
 
 #pragma warning( push )
@@ -5240,57 +5244,81 @@ void RestorePrevScreenPos(HWND hwnd)
 //
 //  DialogNewWindow()
 //
-void DialogNewWindow(HWND hwnd, bool bSaveBeforeOpen, const HPATHL hFilePath, WININFO* wi)
+static bool _PrepareNewWindowArguments(HWND hwnd, const HPATHL hFilePath, WININFO* wi, std::wstring& result)
+{
+    try {
+        WCHAR wch[SMALL_BUFFER + 32] = { L'\0' }; // fits -appid="<AppUserModelID>"
+        StringCchPrintf(wch, COUNTOF(wch), L"-appid=\"%s\"", Settings2.AppUserModelID);
+        std::wstring parameters = wch;
+        auto const appendQuotedPath = [&parameters](HPATHL path) {
+            LPCWSTR const text = Path_Get(path);
+            bool const needsQuotes = text[0] != L'"';
+            if (needsQuotes) { parameters += L'"'; }
+            parameters += text;
+            if (needsQuotes) { parameters += L'"'; }
+        };
+
+        StringCchPrintf(wch, COUNTOF(wch), L" -sysmru=\"%i\"", (Flags.ShellUseSystemMRU ? 1 : 0));
+        parameters += wch;
+        if (Path_IsNotEmpty(Paths.IniFile)) {
+            parameters += L" -f ";
+            appendQuotedPath(Paths.IniFile);
+        } else {
+            parameters += L" -f0";
+        }
+        parameters += Flags.bSingleFileInstance ? L" -ns" : L" -n";
+
+        if (!Flags.bStickyWindowPosition) { // sticky: new instance takes the frozen INI placement
+            WININFO const _wi = wi ? *wi : GetMyWindowPlacement(hwnd, NULL, Settings2.LaunchInstanceWndPosOffset, Settings2.LaunchInstanceFullVisible);
+            StringCchPrintf(wch, COUNTOF(wch), L" -pos " WINDOWPOS_STRGFORMAT L",%i", _wi.x, _wi.y, _wi.cx, _wi.cy, _wi.dpi, (int)_wi.max, _wi.zoom);
+            parameters += wch;
+        }
+
+        if (Path_IsNotEmpty(hFilePath)) {
+            parameters += L" ";
+            appendQuotedPath(hFilePath);
+        }
+        result.swap(parameters);
+        return true;
+    }
+    catch (const std::bad_alloc&) {
+        InfoBoxLastError(L"DialogNewWindow", ERROR_OUTOFMEMORY);
+        return false;
+    }
+    catch (const std::length_error&) {
+        InfoBoxLastError(L"DialogNewWindow", ERROR_OUTOFMEMORY);
+        return false;
+    }
+}
+
+bool DialogNewWindow(HWND hwnd, bool bSaveBeforeOpen, const HPATHL hFilePath, WININFO* wi)
 {
     if (bSaveBeforeOpen && !FileSave(FSF_Ask)) {
-        return;
+        return false;
     }
-    WCHAR wch[SMALL_BUFFER + 32] = { L'\0' }; // fits -appid="<AppUserModelID>"
-
     HPATHL hmod_pth = Path_Allocate(NULL);
+    if (!hmod_pth) {
+        InfoBoxLastError(L"DialogNewWindow", ERROR_OUTOFMEMORY);
+        return false;
+    }
     Path_GetModuleFilePath(hmod_pth);
 
-    StringCchPrintf(wch, COUNTOF(wch), L"-appid=\"%s\"", Settings2.AppUserModelID);
-    HSTRINGW hparam_str = StrgCreate(wch);
-    StringCchPrintf(wch, COUNTOF(wch), L" -sysmru=\"%i\"", (Flags.ShellUseSystemMRU ? 1 : 0));
-    StrgCat(hparam_str, wch);
-    if (Path_IsNotEmpty(Paths.IniFile)) {
-        HPATHL hini_path = Path_Copy(Paths.IniFile);
-        Path_QuoteSpaces(hini_path, true);
-        StrgCat(hparam_str, L" -f ");
-        StrgCat(hparam_str, Path_Get(hini_path));
-        Path_Release(hini_path);
-    } else {
-        StrgCat(hparam_str, L" -f0");
-    }
-    StrgCat(hparam_str, Flags.bSingleFileInstance ? L" -ns" : L" -n");
-
-    if (!Flags.bStickyWindowPosition) { // sticky: new instance takes the frozen INI placement
-        WININFO const _wi = wi ? *wi : GetMyWindowPlacement(hwnd, NULL, Settings2.LaunchInstanceWndPosOffset, Settings2.LaunchInstanceFullVisible);
-        StringCchPrintf(wch, COUNTOF(wch), L" -pos " WINDOWPOS_STRGFORMAT L",%i", _wi.x, _wi.y, _wi.cx, _wi.cy, _wi.dpi, (int)_wi.max, _wi.zoom);
-        StrgCat(hparam_str, wch);
+    std::wstring parameters;
+    bool launched = false;
+    if (_PrepareNewWindowArguments(hwnd, hFilePath, wi, parameters)) {
+        SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+        sei.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOZONECHECKS;
+        sei.hwnd = hwnd;
+        sei.lpVerb = NULL;
+        sei.lpFile = Path_Get(hmod_pth);
+        sei.lpParameters = parameters.c_str();
+        sei.lpDirectory = Path_Get(Paths.WorkingDirectory);
+        sei.nShow = SW_SHOWNORMAL;
+        launched = ShellExecuteExW(&sei);
     }
 
-    if (Path_IsNotEmpty(hFilePath)) {
-        HPATHL hfile_pth = Path_Copy(hFilePath);
-        Path_QuoteSpaces(hfile_pth, true);
-        StrgCat(hparam_str, L" ");
-        StrgCat(hparam_str, Path_Get(hfile_pth));
-        Path_Release(hfile_pth);
-    }
-
-    SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
-    sei.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOZONECHECKS;
-    sei.hwnd = hwnd;
-    sei.lpVerb = NULL;
-    sei.lpFile = Path_Get(hmod_pth);
-    sei.lpParameters = StrgGet(hparam_str);
-    sei.lpDirectory = Path_Get(Paths.WorkingDirectory);
-    sei.nShow = SW_SHOWNORMAL;
-    ShellExecuteExW(&sei);
-
-    StrgDestroy(hparam_str);
     Path_Release(hmod_pth);
+    return launched;
 }
 
 
