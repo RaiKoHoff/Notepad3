@@ -65,7 +65,7 @@ External actions that operate on the current document or its location.
 | **Execute Document** | `Ctrl+L` | Run the current document through its shell association (e.g. open a `.html` file in the browser). |
 | **Open with…** | `Alt+L` | Show the Windows *"Open with"* picker for the current file. |
 | **Command…** | `Ctrl+R` | Open a free-form command-line dialog pre-populated with the current file's directory. |
-| **Web Template 1 / 2** | `Ctrl+Shift+1` / `Ctrl+Shift+2` | Run a user-configurable web action. `[Settings2] WebTemplate1/2` and `WebTmpl1MenuName/WebTmpl2MenuName` configure templates and labels. Legacy `%s` templates use selected text; opt-in `${FILE_URL}` templates preview the current saved file without a selection, using the configured browser or the Windows default browser, never the file-extension association. See [Web Actions](config/Configuration.md#web-actions). |
+| **Web Template 1 / 2** | `Ctrl+Shift+1` / `Ctrl+Shift+2` | Run a user-configurable web action. `[Settings2] WebTemplate1/2` and `WebTmpl1MenuName/WebTmpl2MenuName` configure templates and labels. `%s` or `${SEL}` templates use selected text; opt-in `${FILE_URL}` templates preview the current saved file without a selection, using the configured browser or the Windows default browser, never the file-extension association. See [Web Actions](config/Configuration.md#web-actions). |
 | **Preview current file (Web Template 3)** | `Ctrl+Shift+3` | Preview the current saved file in the configured or default browser without a selection. `[Settings2] WebTemplate3` defaults to `${FILE_URL}` and accepts the same template modes as slots 1/2; `WebTmpl3MenuName` customizes its label. |
 | **Open File Explorer** | — | Open Windows Explorer with the current file pre-selected. |
 

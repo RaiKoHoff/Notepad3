@@ -6,7 +6,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$PathLibSource) { $PathLibSource = Join-Path $root 'src\PathLib.cpp' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-create-directory-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-create-directory-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 
 function Get-Function([string]$path, [string]$signature) {

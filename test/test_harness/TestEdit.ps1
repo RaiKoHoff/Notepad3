@@ -9,7 +9,9 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$EditSource) { $EditSource = Join-Path $root 'src\Edit.cpp' }
 $EditSource = (Resolve-Path -LiteralPath $EditSource).Path
 $options = if ([IO.Path]::GetExtension($EditSource) -eq '.cpp') { '/std:c++20 /EHs' } else { '/std:c17' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-edit-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-edit-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content -LiteralPath $EditSource -Raw

@@ -9,7 +9,9 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$Notepad3Source) { $Notepad3Source = Join-Path $root 'src\Notepad3.cpp' }
 $Notepad3Source = (Resolve-Path -LiteralPath $Notepad3Source).Path
 $options = if ([IO.Path]::GetExtension($Notepad3Source) -eq '.cpp') { '/std:c++20 /EHs' } else { '/std:c17' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-main-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-main-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content -LiteralPath $Notepad3Source -Raw

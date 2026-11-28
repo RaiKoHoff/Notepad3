@@ -2,13 +2,15 @@
 
 These tests are for local maintenance and refactoring; native CI does not run them.
 They require Windows, PowerShell and Visual C++ build tools.
+Generated harness build files use unique directories under the ignored
+`test\test_tmp` directory and are removed after each run.
 
 From the repository root, run all tests sequentially (requires approval to use
-the shared desktop: the lexer-sorting and zoom-tooltip tests create hidden
-Win32 windows):
+the shared desktop: the lexer-sorting, zoom-tooltip and Dlapi tests create
+hidden Win32 windows):
 
 ```powershell
-pwsh -NoProfile -File test\test_modules\RunModuleTests.ps1
+pwsh -NoProfile -File test\test_harness\RunModuleTests.ps1
 ```
 
 The runner stops at the first failure. It runs the architecture-aware tests on

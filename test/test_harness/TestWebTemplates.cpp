@@ -2,17 +2,19 @@
 #include <shlwapi.h>
 #include <wininet.h>
 #include <strsafe.h>
-#include "..\language\common_res.h"
-#include "..\src\TypeDefs.h"
+#include "..\..\language\common_res.h"
+#include "..\..\src\TypeDefs.h"
 extern "C" {
-#include "..\src\DynStrg.h"
+#include "..\..\src\DynStrg.h"
 }
 #include <cstdlib>
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 #include "WebTemplateMode.inc"
 
@@ -51,6 +53,14 @@ SETTINGS_T Settings{};
 SETTINGS2_T Settings2{};
 GLOBALS_T Globals{};
 std::wstring selection;
+struct TestSelectionRange {
+    DocPos start;
+    DocPos end;
+};
+std::string selectionDocument;
+std::vector<TestSelectionRange> selectionRanges;
+bool rectangularSelection = false;
+bool multiSelectionAllocationFails = false;
 std::wstring savedPath;
 bool saveResult = true;
 bool fileExists = true;
@@ -64,9 +74,12 @@ int associationQueries = 0;
 bool bufferGrowthFails = false;
 bool browserBufferGrowthFails = false;
 bool replacementFails = false;
+bool browserArgumentReplacementFails = false;
+bool browserArgumentsGrowthFails = false;
 bool environmentExpansionFails = false;
 bool environmentFailureOnRead = false;
 bool environmentBufferGrowthFails = false;
+bool encodingBufferGrowthFails = false;
 bool selectionBufferGrowthFails = false;
 int environmentRetriesRemaining = 0;
 int environmentReadCalls = 0;
@@ -101,6 +114,7 @@ LPWSTR TestStrgWriteAccessBuf(HSTRINGW value, size_t count) {
 #endif
 size_t TestStrgReplace(HSTRINGW value, LPCWSTR oldText, LPCWSTR newText) {
     if (replacementFails && wcscmp(oldText, L"${FILE_URL}") == 0) { return 0; }
+    if (browserArgumentReplacementFails && wcscmp(oldText, URLPLACEHLDR) == 0) { return 0; }
     return StrgReplace(value, oldText, newText);
 }
 #define StrgReplace TestStrgReplace
@@ -118,6 +132,8 @@ DWORD TestExpandEnvironmentStringsW(LPCWSTR input, LPWSTR output, DWORD size) {
     }
     DWORD const result = ExpandEnvironmentStringsW(input, output, size);
     if (WEB_TEMPLATE_STD_TARGET && !output && environmentBufferGrowthFails && result) { failNextNew = true; }
+    if (output && encodingBufferGrowthFails && result && result <= size) { failNextNew = true; }
+    if (WEB_TEMPLATE_STD_ARGS && output && browserArgumentsGrowthFails && result && result <= size) { failNextNew = true; }
     return result;
 }
 #define ExpandEnvironmentStringsW TestExpandEnvironmentStringsW
@@ -144,6 +160,23 @@ size_t EditGetSelectedText(LPWSTR buffer, size_t count) {
     wcscpy_s(buffer, count, selection.c_str());
     if (WEB_TEMPLATE_STD_TARGET && selectionBufferGrowthFails) { failNextNew = true; }
     return selection.size() + 1;
+}
+#define Encoding_SciCP CP_UTF8
+DocPosU SciCall_GetSelections() { return selectionRanges.empty() ? 1 : selectionRanges.size(); }
+bool SciCall_IsSelectionRectangle() { return rectangularSelection; }
+bool SciCall_IsSelectionEmpty() {
+    return std::all_of(selectionRanges.begin(), selectionRanges.end(),
+        [](const TestSelectionRange& range) { return range.start == range.end; });
+}
+DocPos SciCall_GetSelectionNStart(DocPosU n) { return selectionRanges[n].start; }
+DocPos SciCall_GetSelectionNEnd(DocPosU n) { return selectionRanges[n].end; }
+DocPos SciCall_GetSelectionNCaret(DocPosU n) { return selectionRanges[n].end; }
+DocPos SciCall_GetSelectionNAnchor(DocPosU n) { return selectionRanges[n].start; }
+DocPos SciCall_GetSelectionNCaretVirtualSpace(DocPosU) { return 0; }
+DocPos SciCall_GetSelectionNAnchorVirtualSpace(DocPosU) { return 0; }
+char* SciCall_GetRangePointer(DocPos start, DocPos) {
+    if (multiSelectionAllocationFails) { failNextNew = true; }
+    return selectionDocument.data() + start;
 }
 bool FileSave(int) {
     ++saves;
@@ -280,6 +313,10 @@ int wmain() {
         iniValues.clear();
         Settings.SaveBeforeRunningTools = false;
         selection = L"selected text";
+        selectionDocument.clear();
+        selectionRanges.clear();
+        rectangularSelection = false;
+        multiSelectionAllocationFails = false;
         savedPath.clear();
         saveResult = fileExists = launchResult = true;
         conversionError = S_OK;
@@ -291,9 +328,12 @@ int wmain() {
         bufferGrowthFails = false;
         browserBufferGrowthFails = false;
         replacementFails = false;
+        browserArgumentReplacementFails = false;
+        browserArgumentsGrowthFails = false;
         environmentExpansionFails = false;
         environmentFailureOnRead = false;
         environmentBufferGrowthFails = false;
+        encodingBufferGrowthFails = false;
         selectionBufferGrowthFails = false;
         environmentRetriesRemaining = 0;
         environmentReadCalls = 0;
@@ -359,6 +399,179 @@ int wmain() {
             && launches[0].file == L"https://example.test/?q=first");
     }
     reset();
+    StrgReset(first, L"https://example.test/%20?q=${SEL}&again=${SEL}");
+    selection = L"text${SEL}%s";
+    RunAction();
+    check("selection token encodes and replaces all occurrences without reprocessing selection",
+        launches.size() == 1 && launches[0].file
+        == L"https://example.test/%20?q=text%24%7BSEL%7D%25s&again=text%24%7BSEL%7D%25s");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection = L"a b&=?/#%+~_.-\U0001F600";
+    RunAction();
+    check("selection token encodes reserved characters and UTF-8 bytes",
+        launches.size() == 1 && launches[0].file
+        == L"https://example.test/?q=a%20b%26%3D%3F%2F%23%25%2B~_.-%F0%9F%98%80");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection = L"%20";
+    RunAction();
+    check("selection percent escapes are encoded as literal input",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=%2520");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection = L"first\tignored";
+    RunAction();
+    check("selection token truncates at the first delimiter",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=first");
+    reset();
+    StrgReset(first, L"https://example.test/${SEL}${SEL}/${sel}");
+    selection = L"\nignored";
+    RunAction();
+    check("truncated empty selection removes adjacent case-sensitive tokens",
+        launches.size() == 1 && launches[0].file == L"https://example.test//${sel}");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection.clear();
+    RunAction();
+    check("selection token requires a selection", launches.empty());
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}&legacy=%s");
+    RunAction();
+    check("mixed selection token and legacy format are rejected",
+        launches.empty() && reportedErrors == 1 && reportedError == ERROR_INVALID_PARAMETER);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", L"expanded &\u00e9");
+    selection = L"%NP3_SEL_TEST%";
+    RunAction();
+    check("selection token expands environment variables before encoding",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=expanded%20%26%C3%A9");
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", nullptr);
+    reset();
+    StrgReset(first, L"https://example.test/%${SEL}%");
+    selection = L"NP3_CROSS_TEST";
+    SetEnvironmentVariableW(L"NP3_CROSS_TEST", L"unexpected");
+    RunAction();
+    check("environment variables cannot span a selection-token boundary",
+        launches.size() == 1 && launches[0].file == L"https://example.test/%NP3_CROSS_TEST%");
+    SetEnvironmentVariableW(L"NP3_CROSS_TEST", nullptr);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection.assign(1, static_cast<WCHAR>(0xD800));
+    RunAction();
+    check("invalid UTF-16 selection is reported instead of launched",
+        launches.empty() && reportedErrors == 1 && reportedError == ERROR_NO_UNICODE_TRANSLATION);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionBufferGrowthFails = true;
+    RunAction();
+    check("selection token allocation failure reports without launching",
+        launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection = L"a long selection requiring UTF-8 allocation";
+    encodingBufferGrowthFails = true;
+    RunAction();
+    check("selection UTF-8 allocation failure reports without launching",
+        launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "one\ntwo\nthree";
+    selectionRanges = { { 4, 7 }, { 0, 3 }, { 8, 13 } };
+    RunAction();
+    check("multi-selection token follows clipboard stream order",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=two%20one%20three");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "one\ntwo\nthree";
+    selectionRanges = { { 8, 13 }, { 0, 3 }, { 4, 7 } };
+    rectangularSelection = true;
+    RunAction();
+    check("rectangular selection token follows clipboard row order",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=one%20two%20three");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "a\r\nb\tc";
+    selectionRanges = { { 0, 4 }, { 4, 6 } };
+    RunAction();
+    check("multi-selection token replaces CRLF and tabs without dropping content",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=a%20b%20%20c");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}&q2=${SEL}");
+    selectionDocument = "%NP3_SEL_TEST%xy";
+    selectionRanges = { { 0, 14 }, { 14, 14 }, { 14, 16 } };
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", L"expanded");
+    SetEnvironmentVariableW(L"20", L"wrong");
+    RunAction();
+    check("multi-selection expands fragments without treating separators as environment variables",
+        launches.size() == 1 && launches[0].file
+        == L"https://example.test/?q=expanded%20%20xy&q2=expanded%20%20xy");
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", nullptr);
+    SetEnvironmentVariableW(L"20", nullptr);
+    reset();
+    StrgReset(first, L"https://example.test/%NP3_SEL_TEST%/${SEL}");
+    selectionDocument = "\xCE\xB1\n\xE4\xB8\xAD";
+    selectionRanges = { { 0, 2 }, { 3, 6 } };
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", L"prefix");
+    RunAction();
+    check("multi-selection expands template fragments and percent-encodes UTF-8 text",
+        launches.size() == 1 && launches[0].file == L"https://example.test/prefix/%CE%B1%20%E4%B8%AD");
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", nullptr);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "a&b\n%20";
+    selectionRanges = { { 0, 3 }, { 4, 7 } };
+    RunAction();
+    check("multi-selection encodes each value but not the generated separator",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=a%26b%20%2520");
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "%NP3_SEL_TEST%x";
+    selectionRanges = { { 0, 14 }, { 14, 15 } };
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", L"a\r\nb\tc");
+    RunAction();
+    check("multi-selection also replaces line breaks introduced by environment expansion",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=a%20b%20c%20x");
+    SetEnvironmentVariableW(L"NP3_SEL_TEST", nullptr);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "abc";
+    selectionRanges = { { 0, 0 }, { 2, 2 } };
+    RunAction();
+    check("empty multi-selection does not launch", launches.empty() && reportedErrors == 0);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument.assign("a\0b", 3);
+    selectionRanges = { { 0, 3 }, { 3, 3 } };
+    RunAction();
+    check("multi-selection containing NUL is rejected rather than launched partially",
+        launches.empty() && reportedError == ERROR_INVALID_DATA && reportedErrors == 1);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "one\ntwo";
+    selectionRanges = { { 0, 3 }, { 4, 7 } };
+    environmentExpansionFails = true;
+    RunAction();
+    check("multi-selection environment expansion failure reports without launching",
+        launches.empty() && reportedError == ERROR_ACCESS_DENIED && reportedErrors == 1);
+    reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selectionDocument = "long selectionabcdefgh";
+    selectionRanges = { { 0, 14 }, { 14, 22 } };
+    multiSelectionAllocationFails = true;
+    RunAction();
+    check("multi-selection allocation failure reports without launching",
+        launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    reset();
+    StrgReset(first, L"https://example.test/?q=%s");
+    selectionDocument = "one\ntwo";
+    selectionRanges = { { 4, 7 }, { 0, 3 } };
+    selection = L"two\none";
+    RunAction();
+    check("legacy percent selection retains its first-line behavior for multiple selections",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=two");
+    reset();
     StrgReset(app, L"C:\\Browser\\browser.exe");
     StrgReset(arguments, L"--new-window \"${URL}\"");
     Settings.SaveBeforeRunningTools = true;
@@ -378,6 +591,57 @@ int wmain() {
     RunAction();
     check("legacy arguments without URL token remain unchanged", launches.size() == 1
         && launches[0].arguments == L"--new-window" && reportedError == 0 && saves == 0);
+    StrgReset(arguments, L"${URL}|${URL}");
+    selection = L"${URL}";
+    launches.clear();
+    RunAction();
+    check("browser arguments replace each token without reprocessing inserted URL",
+        launches.size() == 1
+        && launches[0].arguments == L"https://example.test/?q=${URL}|https://example.test/?q=${URL}");
+    StrgReset(first, L"%s");
+    StrgReset(arguments, L"--${URL}${URL}end");
+    selection = L"\nignored";
+    launches.clear();
+    RunAction();
+    check("empty URL removes adjacent browser argument tokens",
+        launches.size() == 1 && launches[0].arguments == L"--end");
+    StrgReset(first, L"https://example.test/?q=%s");
+    StrgReset(arguments, L"--open \"${URL}\"");
+    selection = L"selected text";
+    launches.clear();
+#if WEB_TEMPLATE_STD_ARGS
+    browserArgumentsGrowthFails = true;
+    RunAction();
+    check("browser argument allocation failure reports without launch",
+        launches.empty() && !failNextNew && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    reset();
+    StrgReset(arguments, L"${URL}");
+    std::wstring unchangedArguments = L"unchanged";
+    failNextNew = true;
+    check("browser argument replacement failure preserves the previous result",
+        !_PrepareWebTemplateArguments(L"https://example.test/long-url", unchangedArguments)
+        && unchangedArguments == L"unchanged" && !failNextNew && reportedError == ERROR_OUTOFMEMORY);
+    reset();
+    Settings2.HyperlinkShellExURLCmdLnArgs = nullptr;
+    unchangedArguments = L"unchanged";
+    check("invalid argument handle reports failure rather than an empty value",
+        !_PrepareWebTemplateArguments(L"https://example.test/", unchangedArguments)
+        && unchangedArguments == L"unchanged" && reportedError == ERROR_OUTOFMEMORY);
+    HSTRINGW lazyArguments = StrgCreate(nullptr);
+    Settings2.HyperlinkShellExURLCmdLnArgs = lazyArguments;
+    check("valid uninitialized argument text is treated as empty",
+        lazyArguments && !StrgGet(lazyArguments)
+        && _PrepareWebTemplateArguments(L"https://example.test/", unchangedArguments) && unchangedArguments.empty());
+    Settings2.HyperlinkShellExURLCmdLnArgs = arguments;
+    StrgDestroy(lazyArguments);
+    reset();
+#else
+    browserArgumentReplacementFails = true;
+    RunAction();
+    check("failed browser argument replacement currently launches unexpanded token",
+        launches.size() == 1 && launches[0].arguments == L"--open \"${URL}\"" && reportedErrors == 0);
+    browserArgumentReplacementFails = false;
+#endif
     UpdateMenu(false, false, true, false);
     check("legacy menu selection available", enabled[CMD_WEBACTION1] && enabled[CMD_WEBACTION2]);
     UpdateMenu(true, false, false, false);
@@ -679,6 +943,20 @@ int wmain() {
     RunAction();
     check("mixed file and selection templates rejected before save",
         launches.empty() && saves == 0 && reportedError == ERROR_INVALID_PARAMETER);
+    preview();
+    StrgReset(first, L"${FILE_URL}?selection=${SEL}");
+    Settings.SaveBeforeRunningTools = true;
+    RunAction();
+    check("mixed file and selection tokens rejected before save",
+        launches.empty() && saves == 0 && reportedError == ERROR_INVALID_PARAMETER);
+    preview();
+    StrgReset(first, L"${FILE_URL}?selection=%NP3_SEL_TOKEN_TEST%");
+    SetEnvironmentVariableW(L"NP3_SEL_TOKEN_TEST", L"${SEL}");
+    Settings.SaveBeforeRunningTools = true;
+    RunAction();
+    check("file template rejects selection token introduced by environment expansion",
+        launches.empty() && saves == 0 && reportedError == ERROR_INVALID_PARAMETER);
+    SetEnvironmentVariableW(L"NP3_SEL_TOKEN_TEST", nullptr);
     for (const auto& path : { std::wstring(L"\\\\?\\C:\\Notes\\readme.md"),
                              std::wstring(L"\\\\?\\UNC\\server\\share\\readme.md"),
                              std::wstring(L"C:\\") + std::wstring(INTERNET_MAX_URL_LENGTH, L'x') }) {

@@ -30,4 +30,4 @@ The typed core returns evaluation value, 1-based error and logical classificatio
 
 ## Test
 
-The local `test\test_modules\TestTinyExpr.ps1` runner links the real interface and library to C++ tests on x86 or x64. It covers preprocessing, error offsets, logical classification, compiled-variable bindings, move ownership and comma-decimal separators; it reports a skip if a comma-decimal locale is unavailable. It also exercises extracted line-numbering code with a stub document and undo callbacks, including a raised structured exception; it does not exercise actual Scintilla or GUI behavior.
+The local `test\test_harness\TestTinyExpr.ps1` runner links the real interface and library to C++ tests on x86 or x64. It covers preprocessing, error offsets, logical classification, compiled-variable bindings, move ownership and comma-decimal separators; it reports a skip if a comma-decimal locale is unavailable. It also exercises extracted line-numbering code with a stub document and undo callbacks, including a raised structured exception; it does not exercise actual Scintilla or GUI behavior.

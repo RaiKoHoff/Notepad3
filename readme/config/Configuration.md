@@ -397,8 +397,8 @@ Dark-mode text color. Same `0xBBGGRR` byte order as above.
 
 All three WebTemplates support two separate modes:
 
-- **Selection:** without `${FILE_URL}`, `%s` receives the selected text, truncated at the first CR, LF, or tab. Existing selection actions and their defaults are unchanged.
-- **Current file:** the exact, case-sensitive `${FILE_URL}` token receives the current document's complete escaped file URL. No selection is required, even for an empty saved file. Every occurrence is replaced literally; do not combine this token with `%s`.
+- **Selection:** without `${FILE_URL}`, use either `%s` or the case-sensitive `${SEL}` for selected text. With a single selection, text is truncated at the first CR, LF, or tab. With multiple or rectangular selections, `${SEL}` joins all selections in clipboard order using `%20`; it also replaces CRLF, CR, LF, and tabs within each selection with `%20`. `${SEL}` percent-encodes the UTF-8 selection as a URL component; the surrounding template is neither encoded nor printf-formatted. Each occurrence receives the same encoded text, including any literal `%` encoded as `%25`. Do not mix `${SEL}` and `%s`. Existing `%s` formatting, first-line behavior, and defaults are unchanged. For `${SEL}`, environment variables are expanded separately in each selected text fragment (split at line breaks and tabs) and each template fragment before encoding and substitution; a variable cannot span a `${SEL}` boundary.
+- **Current file:** the exact, case-sensitive `${FILE_URL}` token receives the current document's complete escaped file URL. No selection is required, even for an empty saved file. Every occurrence is replaced literally; do not combine this token with `%s` or `${SEL}`.
 
 Current-file templates require a saved document. They use the browser in `HyperlinkShellExURLWithApp`, or the Windows default browser (the HTTPS handler) when that setting is empty. The browser receives the file URL and decides how to handle its extension; Windows file-extension associations are never used. A missing or broken default browser reports an error rather than falling back to the document's associated application.
 
@@ -414,11 +414,11 @@ WebTmpl3MenuName=Preview current file
 
 Press **Ctrl+Shift+3** to preview with the default third template; no configuration or selection is needed for a saved document. Untitled documents are disabled. For current-file templates, **Save before running tools** uses the usual save prompt: **Yes** saves before previewing, **No** previews the disk version, and **Cancel** or a failed save aborts. With the option off, preview uses the existing disk version. Selection templates do not acquire this save behavior.
 
-Environment variables in the configured file template are expanded before inserting the file URL; percent escapes and environment-looking text in filenames are not expanded afterward. Missing files, mixed `%s`/`${FILE_URL}` templates, conversion errors, and browser launch failures are reported rather than silently launching another application. Windows URL conversion limits apply: extended-length (`\\?\`) paths and over-limit inputs are rejected rather than truncated.
+Environment variables in the configured file template are expanded before inserting the file URL; percent escapes and environment-looking text in filenames are not expanded afterward. Missing files, mixed selection/file templates, conversion errors, and browser launch failures are reported rather than silently launching another application. Windows URL conversion limits apply: extended-length (`\\?\`) paths and over-limit inputs are rejected rather than truncated.
 
 Markdown rendering and refresh are browser-extension features, not Notepad3 features. Enable the extension's local-file access and autoreload as required; only changes saved to disk can refresh the preview. Notepad3 does not manage existing browser tabs.
 
-Behavior is covered by the [focused WebTemplate checks](../../test/TestWebTemplates.cpp), which exercise the WebTemplate settings-loading block and production menus/accelerators, stub INI/editor/save/browser-lookup/launch interaction, and use Windows file-URL conversion.
+Behavior is covered by the [focused WebTemplate checks](../../test/test_harness/TestWebTemplates.cpp), which exercise the WebTemplate settings-loading block and production menus/accelerators, stub INI/editor/save/browser-lookup/launch interaction, and use Windows file-URL conversion.
 
 #### `WebTmpl1MenuName=Open Web Action 1`
 
@@ -430,7 +430,7 @@ Customizes the action's label in both **File → Launch** and the text context m
 
 #### `WebTemplate3=${FILE_URL}`
 
-Defaults to browser preview of the current saved file via **Ctrl+Shift+3**. Like slots 1/2, it also accepts selection-based `%s` templates. An explicitly empty value disables the action.
+Defaults to browser preview of the current saved file via **Ctrl+Shift+3**. Like slots 1/2, it also accepts selection-based `%s` or `${SEL}` templates. An explicitly empty value disables the action.
 
 #### `WebTmpl3MenuName=`
 

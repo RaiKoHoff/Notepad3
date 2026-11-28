@@ -16,9 +16,12 @@
 
 #include "tinyexprcpp/np3tinyexpr.h"
 
+#include <algorithm>
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <utility>
+#include <vector>
 
 #ifdef _WIN64
 #define TE_INT_FMT "%lli"
@@ -5099,15 +5102,182 @@ static DWORD _ExpandWebTemplateEnvironment(std::wstring& text)
     return ERROR_INSUFFICIENT_BUFFER;
 }
 
+static DWORD _AppendEncodedWebTemplateSelection(std::wstring& result, std::wstring part, bool replaceBreaks)
+{
+    DWORD const error = _ExpandWebTemplateEnvironment(part);
+    if (error != ERROR_SUCCESS) {
+        return error;
+    }
+    if (replaceBreaks) {
+        size_t output = 0;
+        for (size_t i = 0; i < part.size(); ++i) {
+            if (part[i] == L'\r' || part[i] == L'\n' || part[i] == L'\t') {
+                if (part[i] == L'\r' && i + 1 < part.size() && part[i + 1] == L'\n') {
+                    ++i;
+                }
+                part[output++] = L' ';
+            } else {
+                part[output++] = part[i];
+            }
+        }
+        part.resize(output);
+    }
+    if (part.empty()) {
+        return ERROR_SUCCESS;
+    }
+    if (part.size() > INT_MAX) {
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+    int const length = (int)part.size();
+    int const utf8Length = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, part.data(), length, NULL, 0, NULL, NULL);
+    if (!utf8Length) {
+        DWORD const utf8Error = GetLastError();
+        return utf8Error ? utf8Error : ERROR_NO_UNICODE_TRANSLATION;
+    }
+    std::string utf8(utf8Length, '\0');
+    if (!WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, part.data(), length, utf8.data(), utf8Length, NULL, NULL)) {
+        DWORD const utf8Error = GetLastError();
+        return utf8Error ? utf8Error : ERROR_NO_UNICODE_TRANSLATION;
+    }
+    WCHAR const hex[] = L"0123456789ABCDEF";
+    for (char const byte : utf8) {
+        unsigned char const ch = (unsigned char)byte;
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
+            || ch == '-' || ch == '.' || ch == '_' || ch == '~') {
+            result.push_back((WCHAR)ch);
+        } else {
+            result.push_back(L'%');
+            result.push_back(hex[ch >> 4]);
+            result.push_back(hex[ch & 0x0F]);
+        }
+    }
+    return ERROR_SUCCESS;
+}
+
+static bool _FormatSelectionWebTemplate(LPCWSTR webTemplate, const std::wstring& selected, std::wstring& target)
+{
+    std::wstring const format(webTemplate);
+    std::wstring result;
+    size_t begin = 0;
+    size_t token = 0;
+    while ((token = format.find(L"${SEL}", begin)) != std::wstring::npos) {
+        std::wstring part = format.substr(begin, token - begin);
+        DWORD const error = _ExpandWebTemplateEnvironment(part);
+        if (error != ERROR_SUCCESS) {
+            InfoBoxLastError(webTemplate, error);
+            return false;
+        }
+        result.append(part);
+        result.append(selected);
+        begin = token + COUNTOF(L"${SEL}") - 1;
+    }
+    std::wstring part = format.substr(begin);
+    DWORD const error = _ExpandWebTemplateEnvironment(part);
+    if (error != ERROR_SUCCESS) {
+        InfoBoxLastError(webTemplate, error);
+        return false;
+    }
+    result.append(part);
+    target.swap(result);
+    return true;
+}
+
+static bool _PrepareMultiSelectionWebTemplate(LPCWSTR webTemplate, std::wstring& target)
+{
+    if (SciCall_IsSelectionEmpty()) {
+        return false;
+    }
+    DocPosU const count = SciCall_GetSelections();
+    std::vector<DocPosU> order;
+    order.reserve(count);
+    for (DocPosU i = 0; i < count; ++i) {
+        order.push_back(i);
+    }
+    if (SciCall_IsSelectionRectangle()) {
+        std::sort(order.begin(), order.end(), [](DocPosU a, DocPosU b) {
+            auto const caretA = std::make_pair(SciCall_GetSelectionNCaret(a), SciCall_GetSelectionNCaretVirtualSpace(a));
+            auto const caretB = std::make_pair(SciCall_GetSelectionNCaret(b), SciCall_GetSelectionNCaretVirtualSpace(b));
+            if (caretA != caretB) {
+                return caretA < caretB;
+            }
+            return std::make_pair(SciCall_GetSelectionNAnchor(a), SciCall_GetSelectionNAnchorVirtualSpace(a))
+                < std::make_pair(SciCall_GetSelectionNAnchor(b), SciCall_GetSelectionNAnchorVirtualSpace(b));
+        });
+    }
+    std::wstring selected;
+    for (size_t i = 0; i < order.size(); ++i) {
+        if (i) {
+            selected.append(L"%20");
+        }
+        DocPos const start = SciCall_GetSelectionNStart(order[i]);
+        DocPos const end = SciCall_GetSelectionNEnd(order[i]);
+        if (start < 0 || end < start || end - start > INT_MAX) {
+            InfoBoxLastError(L"WebTemplate", ERROR_INSUFFICIENT_BUFFER);
+            return false;
+        }
+        if (start == end) {
+            continue;
+        }
+        int const length = (int)(end - start);
+        char const* const bytes = SciCall_GetRangePointer(start, length);
+        int const wideLength = bytes ? MultiByteToWideChar(Encoding_SciCP, 0, bytes, length, NULL, 0) : 0;
+        if (!wideLength) {
+            InfoBoxLastError(L"WebTemplate", bytes ? GetLastError() : ERROR_INVALID_DATA);
+            return false;
+        }
+        std::wstring text(wideLength, L'\0');
+        if (!MultiByteToWideChar(Encoding_SciCP, 0, bytes, length, text.data(), wideLength)
+            || text.find(L'\0') != std::wstring::npos) {
+            InfoBoxLastError(L"WebTemplate", ERROR_INVALID_DATA);
+            return false;
+        }
+        size_t begin = 0;
+        while (true) {
+            size_t const endPart = text.find_first_of(L"\r\n\t", begin);
+            DWORD const error = _AppendEncodedWebTemplateSelection(selected, text.substr(begin, endPart - begin), true);
+            if (error != ERROR_SUCCESS) {
+                InfoBoxLastError(L"WebTemplate", error);
+                return false;
+            }
+            if (endPart == std::wstring::npos) {
+                break;
+            }
+            selected.append(L"%20");
+            begin = endPart + 1;
+            if (text[endPart] == L'\r' && begin < text.size() && text[begin] == L'\n') {
+                ++begin;
+            }
+        }
+    }
+    return _FormatSelectionWebTemplate(webTemplate, selected, target);
+}
+
 static bool _PrepareWebTemplateImpl(LPCWSTR webTemplate, std::wstring& target)
 {
     std::wstring result;
     if (!_IsFileWebTemplate(webTemplate)) {
+        bool const selectionToken = wcsstr(webTemplate, L"${SEL}") != NULL;
+        if (selectionToken && wcsstr(webTemplate, L"%s")) {
+            InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
+            return false;
+        }
+        if (selectionToken && SciCall_GetSelections() > 1) {
+            return _PrepareMultiSelectionWebTemplate(webTemplate, target);
+        }
         WCHAR selectedText[STRINGW_MAX_URL_LENGTH + 1] = { L'\0' };
         if (EditGetSelectedText(selectedText, COUNTOF(selectedText)) <= 1) {
             return false;
         }
         selectedText[wcscspn(selectedText, L"\r\n\t")] = L'\0';
+        if (selectionToken) {
+            std::wstring selected;
+            DWORD const error = _AppendEncodedWebTemplateSelection(selected, selectedText, false);
+            if (error != ERROR_SUCCESS) {
+                InfoBoxLastError(webTemplate, error);
+                return false;
+            }
+            return _FormatSelectionWebTemplate(webTemplate, selected, target);
+        }
         int const length = _scwprintf(webTemplate, selectedText);
         if (length < 0) {
             InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
@@ -5138,7 +5308,7 @@ static bool _PrepareWebTemplateImpl(LPCWSTR webTemplate, std::wstring& target)
         return false;
     }
 
-    if (wcsstr(result.c_str(), L"%s")) {
+    if (wcsstr(result.c_str(), L"%s") || wcsstr(result.c_str(), L"${SEL}")) {
         InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
         return false;
     }
@@ -5197,6 +5367,35 @@ static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)
     }
 }
 
+static bool _PrepareWebTemplateArguments(LPCWSTR url, std::wstring& arguments)
+{
+    HSTRINGW const source = Settings2.HyperlinkShellExURLCmdLnArgs;
+    if (!source) {
+        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        return false;
+    }
+    try {
+        LPCWSTR const text = StrgGet(source);
+        std::wstring result = text ? text : L"";
+        size_t const urlLength = wcslen(url);
+        size_t pos = 0;
+        while ((pos = result.find(URLPLACEHLDR, pos)) != std::wstring::npos) {
+            result.replace(pos, COUNTOF(URLPLACEHLDR) - 1, url);
+            pos += urlLength;
+        }
+        arguments.swap(result);
+        return true;
+    }
+    catch (const std::bad_alloc&) {
+        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        return false;
+    }
+    catch (const std::length_error&) {
+        InfoBoxLastError(L"WebTemplate", ERROR_OUTOFMEMORY);
+        return false;
+    }
+}
+
 static void _RunWebTemplateAction(int iLoWParam)
 {
     HSTRINGW const hstr_webTemplate = (iLoWParam == CMD_WEBACTION1) ? Settings2.WebTemplate1
@@ -5221,10 +5420,13 @@ static void _RunWebTemplateAction(int iLoWParam)
     if (!_PrepareWebTemplate(wchWebTemplate, hyperlink)) {
         return;
     }
+    std::wstring arguments;
+    if (bExplicitBrowser && !_PrepareWebTemplateArguments(hyperlink.c_str(), arguments)) {
+        return;
+    }
 
     HPATHL hdir = Path_Copy(Paths.CurrentFile);
     Path_RemoveFileSpec(hdir);
-    HSTRINGW hstr_params = NULL;
 
     SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
     sei.fMask = bFileTemplate ? SEE_MASK_FLAG_NO_UI : SEE_MASK_DEFAULT;
@@ -5232,10 +5434,8 @@ static void _RunWebTemplateAction(int iLoWParam)
     sei.lpDirectory = Path_Get(hdir);
     sei.nShow = SW_SHOWNORMAL;
     if (bExplicitBrowser) {
-        hstr_params = StrgCopy(Settings2.HyperlinkShellExURLCmdLnArgs);
-        StrgReplace(hstr_params, URLPLACEHLDR, hyperlink.c_str());
         sei.lpFile = StrgGet(Settings2.HyperlinkShellExURLWithApp);
-        sei.lpParameters = (bFileTemplate && !StrgIsNotEmpty(hstr_params)) ? hyperlink.c_str() : StrgGet(hstr_params);
+        sei.lpParameters = (bFileTemplate && arguments.empty()) ? hyperlink.c_str() : arguments.c_str();
     } else if (bFileTemplate) {
         // Force the browser, never the document's file-extension association.
         sei.fMask |= SEE_MASK_CLASSNAME;
@@ -5247,7 +5447,6 @@ static void _RunWebTemplateAction(int iLoWParam)
         DWORD const error = GetLastError();
         InfoBoxLastError(sei.lpFile, error);
     }
-    StrgDestroy(hstr_params);
     Path_Release(hdir);
 }
 

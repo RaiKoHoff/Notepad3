@@ -5,16 +5,19 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$Notepad3Source) { $Notepad3Source = Join-Path $root 'src\Notepad3.cpp' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-webtemplates-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-webtemplates-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content $Notepad3Source -Raw
     $standardBrowser = $source.Contains('static HRESULT _GetDefaultBrowserClass(std::wstring& browserClass)')
     $standardTarget = $source.Contains('static bool _PrepareWebTemplate(LPCWSTR webTemplate, std::wstring& target)')
-    Set-Content (Join-Path $temp 'WebTemplateMode.inc') @("#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)", "#define WEB_TEMPLATE_STD_TARGET $([int]$standardTarget)") -Encoding utf8
-    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static DWORD _ExpandWebTemplateEnvironment(', 'static bool _PrepareWebTemplateImpl(', 'static bool _PrepareWebTemplate(', 'static void _RunWebTemplateAction(')) {
+    $standardArgs = $source.Contains('static bool _PrepareWebTemplateArguments(')
+    Set-Content (Join-Path $temp 'WebTemplateMode.inc') @("#define WEB_TEMPLATE_STD_BROWSER $([int]$standardBrowser)", "#define WEB_TEMPLATE_STD_TARGET $([int]$standardTarget)", "#define WEB_TEMPLATE_STD_ARGS $([int]$standardArgs)") -Encoding utf8
+    $helpers = foreach ($signature in @('static bool _IsFileWebTemplate(', 'static bool _CanRunWebTemplate(', 'static void _UpdateWebTemplateMenu(', 'static HRESULT _GetDefaultBrowserClass(', 'static DWORD _ExpandWebTemplateEnvironment(', 'static DWORD _AppendEncodedWebTemplateSelection(', 'static bool _FormatSelectionWebTemplate(', 'static bool _PrepareMultiSelectionWebTemplate(', 'static bool _PrepareWebTemplateImpl(', 'static bool _PrepareWebTemplate(', 'static bool _PrepareWebTemplateArguments(', 'static void _RunWebTemplateAction(')) {
         $start = $source.IndexOf($signature, [StringComparison]::Ordinal)
         if ($start -lt 0) { continue }
         $body = $source.IndexOf('{', $start)

@@ -6,20 +6,19 @@ Run commands from the repository root; discover Visual C++ build tools as descri
 
 ```powershell
 pwsh -NoProfile -File test\test_files\encoding\TestEncodingDetection.ps1
-$tests = 'test\test_modules'
+$tests = 'test\test_harness'
 pwsh -NoProfile -File "$tests\TestOpenDialogDirectory.ps1"
 pwsh -NoProfile -File "$tests\TestCreateDirectory.ps1"
 pwsh -NoProfile -File "$tests\TestLexerDialogSorting.ps1"
 pwsh -NoProfile -File "$tests\TestZoomTooltipPosition.ps1"
-pwsh -NoProfile -File test\TestWebTemplates.ps1
+pwsh -NoProfile -File "$tests\TestWebTemplates.ps1"
 # Run all local module tests, or choose an individual runner and architecture.
 pwsh -NoProfile -File "$tests\RunModuleTests.ps1"
 pwsh -NoProfile -File "$tests\TestTinyExpr.ps1" -Architecture x64
-pwsh -NoProfile -File "$tests\TestExceptionPolicy.ps1" -Architecture x64
 pwsh -NoProfile -File Build\scripts\Test-Docs.ps1
 ```
 
-The lexer-sorting (`src\Styles.cpp`), zoom call-tip (`src\Notepad3.cpp`) and WebTemplate (`src\Notepad3.cpp`, linking `src\DynStrg.cpp`) runners extract functions into temporary harnesses and remove them afterwards. The lexer-sorting and zoom call-tip runners create hidden Win32 windows; obtain approval before running either or the aggregate module runner on a shared desktop. Native CI runs neither these nor the other `test\test_modules` runners.
+The local module runners build in unique directories under ignored `test\test_tmp` and remove their generated files afterwards. The lexer-sorting (`src\Styles.cpp`), zoom call-tip (`src\Notepad3.cpp`) and WebTemplate (`src\Notepad3.cpp`, linking `src\DynStrg.cpp`) runners extract functions into those temporary harnesses. The lexer-sorting, zoom call-tip and Dlapi runners create hidden Win32 windows; obtain approval before running any of them or the aggregate module runner on a shared desktop. Native CI runs neither these nor the other `test\test_harness` runners.
 
 When renaming source files, update filename-based extraction runners and, for tests in CI, `.github\workflows\native-tests.yml` path filters so tests and CI triggers follow the new paths.
 
@@ -45,7 +44,7 @@ The PathLib runner links production PathLib and DynStrg to C and C++ callers. It
 
 The Helpers runner links production Helpers, PathLib and DynStrg to a C caller. It covers string/path parsing, escaping and a controlled worker cancellation; unrelated application callbacks are failure stubs, and AppID and GUI behavior are not exercised.
 
-The Dlapi runner links production Dlapi, PathLib and DynStrg to a C caller. It checks filters and display names using shell items, plus PIDL size and concatenation; worker calls are failure stubs, and list-view UI behavior is not exercised.
+The Dlapi runner links production Dlapi, PathLib and DynStrg to a C caller. It checks filters and display names using shell items, PIDL size and concatenation, and directory-list and icon-thread behavior with a hidden message-only parent and list-view control. It does not exercise visible UI.
 
 The Styles runner extracts the production lexer registry, selection functions and style-backup copy callbacks, then links them with lexer definitions and a C caller. It covers shebang, name, extension and wildcard matching and backup copying; editor integration and UI are not exercised.
 
@@ -58,5 +57,3 @@ The Edit runner extracts EOL detection, numeric helpers, selection/undo sequenci
 The Notepad3 runner extracts expression-result formatting and links it to a C caller with the TinyExpr bit-width query stubbed. It covers decimal, hexadecimal, binary, logical and bounded-buffer formatting, not expression parsing, startup or editor UI.
 
 The TinyExpr runner links the real interface and library to a C++ caller; see [TinyExpr++ and the Notepad3 interface](../domain/tinyexpr-wrapper.md#test) for coverage and locale limits.
-
-The exception-policy runner checks evaluated project settings and exercises C++ unwinding through an `extern "C"` function plus an explicit SEH `__finally` guard. The ARM64 check is MSBuild evaluation only, not a build or runtime test.

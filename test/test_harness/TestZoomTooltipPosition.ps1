@@ -1,6 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-zoom-position-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-zoom-position-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content (Join-Path $root 'src\Notepad3.cpp') -Raw

@@ -16,6 +16,7 @@ Notepad3 is a Windows-only Win32 C/C++ editor built on Scintilla/Lexilla. Start 
 - Before implementing a feature, inspect the closest existing implementation and its tests. Reuse the established pattern and implement at the common point where relevant call paths converge.
 - Make the smallest change that fixes the root cause. Keep unrelated refactoring, formatting, and cleanup out of the diff.
 - Add or update focused tests for changed behavior, then run the narrowest relevant test or build. Check existing test failures against current behavior before treating them as regressions.
+- Place maintained test harnesses and runners in `test\test_harness`; place temporary harnesses and their generated build files in ignored `test\test_tmp`. Preserve other work in both directories.
 - For C/C++ changes, read [Codebase and conventions](agent-trail/architecture/codebase-and-conventions.md) for wrapper, buffer-lifetime, undo, and dialog-result constraints.
 - Preserve user changes in the worktree. Do not revert unrelated edits.
 - If intended behavior is unclear or the change requires unrelated refactoring, dependency changes, or altering a vendored patch, stop and ask with a recommended approach.

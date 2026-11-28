@@ -67,7 +67,9 @@ $lexerSources = @(
     (Join-Path $root 'src\StyleLexers\styleLexXML.cpp'),
     (Join-Path $root 'src\StyleLexers\styleLexStandard.cpp')
 )
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-lexer-layout-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-lexer-layout-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content (Join-Path $root 'src\Styles.cpp') -Raw
@@ -91,7 +93,7 @@ try {
     $objects = (0..($lexerSources.Count - 1) | ForEach-Object { "Lexer$_.obj" }) -join ' '
     $buildScript = Join-Path $temp 'BuildLexerLayout.cmd'
     $buildCommands = @('@echo off') + @($compileCommands | ForEach-Object { "$_ || exit /b 1" })
-    $buildCommands += "cl /nologo /std:c17 /utf-8 /O2 /MT /W4 /WX /DNDEBUG /DD_NP3_WIN10_DARK_MODE /DUNICODE /D_UNICODE $includes /I`".`" `"%~2\test\test_modules\TestLexerLayout.c`" $objects /Fe:TestLexerLayout.exe"
+    $buildCommands += "cl /nologo /std:c17 /utf-8 /O2 /MT /W4 /WX /DNDEBUG /DD_NP3_WIN10_DARK_MODE /DUNICODE /D_UNICODE $includes /I`".`" `"%~2\test\test_harness\TestLexerLayout.c`" $objects /Fe:TestLexerLayout.exe"
     Set-Content -LiteralPath $buildScript -Value $buildCommands -Encoding utf8
     & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && call `"$buildScript`" `"$LexerSource`" `"$root`""
     if ($LASTEXITCODE -ne 0) { throw 'Lexer-layout test build failed' }

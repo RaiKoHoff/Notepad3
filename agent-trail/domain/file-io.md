@@ -22,7 +22,7 @@ Route persistent main-editor read-only changes through `UpdateDocumentReadOnlySt
 - `OpenFileDlg()` / `_ResolveOpenInitialDir()` in `src\Dialogs.cpp` prefer an explicit initial path, then the current file's directory, `Settings.DefaultDirectoryOverride`, and `Settings2.DefaultDirectory`.
 - With none of those available and `Settings.SaveRecentFiles` enabled, Open uses the newest MRU entry's parent directory if it exists (the file itself need not exist). Otherwise it uses `Paths.WorkingDirectory`. It does not search older MRU entries.
 - MRU paths must be sanitized, unquoted, and expanded with `Path_AbsoluteFromApp(..., true)` before taking the parent directory with the drive-root-safe `_GetParentDir()`. An unavailable parent clears the candidate so the shared resolver supplies the working directory. Save dialogs do not use history.
-- An invalid final directory still falls back to Documents; Save also requires a writable directory. Focused resolver coverage: `pwsh -NoProfile -File test\test_modules\TestOpenDialogDirectory.ps1`; see [focused native tests](../build-and-test/focused-native-tests.md) for its in-memory stub boundaries.
+- An invalid final directory still falls back to Documents; Save also requires a writable directory. Focused resolver coverage: `pwsh -NoProfile -File test\test_harness\TestOpenDialogDirectory.ps1`; see [focused native tests](../build-and-test/focused-native-tests.md) for its in-memory stub boundaries.
 
 ## File watching
 

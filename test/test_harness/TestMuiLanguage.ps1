@@ -9,7 +9,9 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$LanguageSource) { $LanguageSource = Join-Path $root 'src\MuiLanguage.cpp' }
 $LanguageSource = (Resolve-Path -LiteralPath $LanguageSource).Path
 $options = if ([IO.Path]::GetExtension($LanguageSource) -eq '.cpp') { '/std:c++20 /EHa' } else { '/std:c17' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-muilanguage-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-muilanguage-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"

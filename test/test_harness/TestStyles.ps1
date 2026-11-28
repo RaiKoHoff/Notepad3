@@ -9,7 +9,9 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$StylesSource) { $StylesSource = Join-Path $root 'src\Styles.cpp' }
 $StylesSource = (Resolve-Path -LiteralPath $StylesSource).Path
 $options = if ([IO.Path]::GetExtension($StylesSource) -eq '.cpp') { '/std:c++20 /EHa' } else { '/std:c17' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-styles-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-styles-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content -LiteralPath $StylesSource -Raw
@@ -48,7 +50,7 @@ try {
         $commands += "cl /c $flags /std:c++20 /EHa `"%~2$relative`" /Fo:$object || exit /b 1"
         $objects += $object
     }
-    $commands += "cl $flags /std:c17 `"%~2\test\test_modules\TestStyles.c`" $($objects -join ' ') /Fe:TestStyles.exe /link /OPT:REF /NODEFAULTLIB:user32-stub.lib /NODEFAULTLIB:uxtheme-stub.lib shlwapi.lib"
+    $commands += "cl $flags /std:c17 `"%~2\test\test_harness\TestStyles.c`" $($objects -join ' ') /Fe:TestStyles.exe /link /OPT:REF /NODEFAULTLIB:user32-stub.lib /NODEFAULTLIB:uxtheme-stub.lib shlwapi.lib"
     $buildScript = Join-Path $temp 'BuildStyles.cmd'
     Set-Content -LiteralPath $buildScript -Value $commands -Encoding utf8
     & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && call `"$buildScript`" `"$selection`" `"$root`""

@@ -9,7 +9,9 @@ $root = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 if (!$DialogsSource) { $DialogsSource = Join-Path $root 'src\Dialogs.cpp' }
 $DialogsSource = (Resolve-Path -LiteralPath $DialogsSource).Path
 $options = if ([IO.Path]::GetExtension($DialogsSource) -eq '.cpp') { '/std:c++20 /EHa' } else { '/std:c17' }
-$temp = Join-Path ([IO.Path]::GetTempPath()) ('np3-dialogs-' + [guid]::NewGuid())
+$tempRoot = Join-Path $root 'test\test_tmp'
+[void](New-Item -ItemType Directory -Force -Path $tempRoot)
+$temp = Join-Path $tempRoot ('np3-dialogs-' + [guid]::NewGuid())
 [void](New-Item -ItemType Directory $temp)
 try {
     $source = Get-Content -LiteralPath $DialogsSource -Raw

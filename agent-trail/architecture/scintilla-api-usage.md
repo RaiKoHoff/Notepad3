@@ -31,7 +31,7 @@ Evidence: source inspection of the working tree based on `d9cc3ac61c224ed7aebd19
 - Never cache the popup HWND across cancellation. `CallTip::CallTipCancel` destroys the native window; rediscover it after showing the next tip ([lifetime](../../scintilla/src/CallTip.cxx#L312-L317)).
 - Revalidate this contract when upgrading Scintilla: the class and instance-pointer storage are vendored Win32 internals, not a public popup-HWND API. `ScintillaWin::CTWndProc` stores the instance via `SetWindowPointer`, whose offset-zero storage must still agree with `SCI_GETDIRECTPOINTER` ([creation](../../scintilla/win32/ScintillaWin.cxx#L4134-L4147), [storage](../../scintilla/win32/PlatWin.cxx#L78-L84), [direct pointer](../../scintilla/win32/ScintillaWin.cxx#L2278-L2279)).
 
-Ownership isolation and popup recreation are exercised by `test\test_modules\TestZoomTooltipPosition.cpp` using hidden Win32 windows. Those checks do not establish visible rendering or physical monitor-DPI behavior.
+Ownership isolation and popup recreation are exercised by `test\test_harness\TestZoomTooltipPosition.cpp` using hidden Win32 windows. Those checks do not establish visible rendering or physical monitor-DPI behavior.
 
 ## Wrapped but unused
 

@@ -4,7 +4,7 @@ When to read: Bug fix, small feature, characterization test, focused check, or d
 
 Read only the procedure needed for the task. These are checklists, not permission to expand scope. Start at the repository root, consult the [topic index](../index.md), and verify relevant claims against code.
 
-For new local module tests, place the harness and runner in `test\test_modules` and register the runner as described in the [local test index](../../test/test_modules/README.md). These tests are not part of native CI.
+Follow the [test-location policy](../../AGENTS.md#working-in-this-repository) for new harnesses. Register maintained local module runners as described in the [local test index](../../test/test_harness/README.md). These tests are not part of native CI.
 
 ## Bug fix
 
@@ -38,7 +38,7 @@ Output: implemented behavior, extension points, evidence, and explicit exclusion
 4. Run against unchanged production source first; record stub/integration boundaries.
 5. Change the expectation only as part of the requested behavior change.
 
-Prefer linking self-contained production helpers where practical. Test doubles must preserve observable allocation/lifecycle and return-value contracts; a more permissive double can hide a regression. The [WebTemplate runner](../../test/TestWebTemplates.ps1) links production `DynStrg.cpp` to exercise the real [lazy-string initialization contract](../architecture/codebase-and-conventions.md#dynamic-stringpath-buffer-lifetime).
+Prefer linking self-contained production helpers where practical. Test doubles must preserve observable allocation/lifecycle and return-value contracts; a more permissive double can hide a regression. The [WebTemplate runner](../../test/test_harness/TestWebTemplates.ps1) links production `DynStrg.cpp` to exercise the real [lazy-string initialization contract](../architecture/codebase-and-conventions.md#dynamic-stringpath-buffer-lifetime).
 
 Stop if isolation requires product refactoring or desktop interaction could disturb another user. Recommend a manual reproduction record or separately approved test seam.
 
@@ -52,7 +52,7 @@ Discover prerequisites using [Windows build and test](../build-and-test/windows-
 # Encoding detector (Visual C++ build tools required).
 pwsh -NoProfile -File test\test_files\encoding\TestEncodingDetection.ps1
 # Open-directory resolver (in-memory path/MRU stubs, not dialog UI).
-pwsh -NoProfile -File test\test_modules\TestOpenDialogDirectory.ps1
+pwsh -NoProfile -File test\test_harness\TestOpenDialogDirectory.ps1
 # Documentation links and declared evidence.
 pwsh -NoProfile -File Build\scripts\Test-Docs.ps1
 ```
