@@ -1,5 +1,26 @@
 #include <cstdlib>
 #include <new>
+#include <string>
+
+extern "C" {
+#include "Helpers.h"
+#include "PathLib.h"
+DWORD InfoBoxLastError(LPCWSTR message, DWORD error);
+}
+
+#include "ResolveSelectionForOpen.inc"
+
+extern "C" HPATHL TestResolveSelectionForOpen(int* line, bool* isDir)
+{
+    return _ResolveSelectionForOpen(line, isDir);
+}
+
+extern "C" bool TestExtractSelection(WCHAR* output, size_t capacity)
+{
+    std::wstring token;
+    bool const ok = ExtractSelectionOrTokenAtCaret(token);
+    return SUCCEEDED(StringCchCopyW(output, capacity, token.c_str())) && ok;
+}
 
 static bool failNextNew;
 

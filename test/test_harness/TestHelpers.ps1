@@ -20,7 +20,15 @@ try {
     $vcvars = Join-Path $vs "VC\Auxiliary\Build\vcvars$($Architecture.Replace('x86', '32').Replace('x64', '64')).bat"
     $includes = "/I`"$root\src`" /I`"$root\scintilla\include`" /I`"$root\lexilla`" /I`"$root\lexilla\include`""
     $flags = "/nologo /utf-8 /O2 /Gy /MT /W4 /WX /DNDEBUG /DD_NP3_WIN10_DARK_MODE /DUNICODE /D_UNICODE $includes"
-    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && cl /c $flags $options /FI`"$PSScriptRoot\TestHelpersFaults.h`" `"$HelpersSource`" /Fo:Helpers.obj && cl /c $flags /std:c++20 /EHa `"$root\src\PathLib.cpp`" /Fo:PathLib.obj && cl /c $flags /std:c++20 /EHa /FI`"$PSScriptRoot\TestDynStrgFaults.h`" `"$root\src\DynStrg.cpp`" /Fo:DynStrg.obj && cl /c $flags /std:c++20 /EHsc `"$PSScriptRoot\TestHelpersAlloc.cpp`" /Fo:TestHelpersAlloc.obj && cl $flags /std:c17 `"$PSScriptRoot\TestHelpers.c`" TestHelpersAlloc.obj Helpers.obj PathLib.obj DynStrg.obj /Fe:TestHelpers.exe /link /OPT:REF /NODEFAULTLIB:user32-stub.lib /NODEFAULTLIB:uxtheme-stub.lib shell32.lib shlwapi.lib ole32.lib uuid.lib user32.lib advapi32.lib gdi32.lib"
+    $notepadSource = Get-Content -LiteralPath (Join-Path $root 'src\Notepad3.cpp') -Raw
+    $definition = [regex]::Match($notepadSource, '(?m)^static HPATHL _ResolveSelectionForOpen\([^\r\n]*\)\r?\n\{')
+    if (!$definition.Success) { throw 'Missing _ResolveSelectionForOpen' }
+    $start = $definition.Index
+    $body = $start + $definition.Length - 1
+    $end = [regex]::Match($notepadSource.Substring($body), '(?m)^}')
+    if (!$end.Success) { throw 'Missing _ResolveSelectionForOpen end' }
+    Set-Content -LiteralPath (Join-Path $temp 'ResolveSelectionForOpen.inc') -Encoding utf8 -Value $notepadSource.Substring($start, $body + $end.Index + 1 - $start)
+    & $env:ComSpec /d /c "call `"$vcvars`" >nul && cd /d `"$temp`" && cl /c $flags $options /FI`"$PSScriptRoot\TestHelpersFaults.h`" `"$HelpersSource`" /Fo:Helpers.obj && cl /c $flags /std:c++20 /EHa `"$root\src\PathLib.cpp`" /Fo:PathLib.obj && cl /c $flags /std:c++20 /EHa /FI`"$PSScriptRoot\TestDynStrgFaults.h`" `"$root\src\DynStrg.cpp`" /Fo:DynStrg.obj && cl /c $flags /std:c++20 /EHsc /I`"$temp`" `"$PSScriptRoot\TestHelpersAlloc.cpp`" /Fo:TestHelpersAlloc.obj && cl $flags /std:c17 `"$PSScriptRoot\TestHelpers.c`" TestHelpersAlloc.obj Helpers.obj PathLib.obj DynStrg.obj /Fe:TestHelpers.exe /link /OPT:REF /NODEFAULTLIB:user32-stub.lib /NODEFAULTLIB:uxtheme-stub.lib shell32.lib shlwapi.lib ole32.lib uuid.lib user32.lib advapi32.lib gdi32.lib"
     if ($LASTEXITCODE -ne 0) { throw 'Helpers test build failed' }
     & (Join-Path $temp 'TestHelpers.exe')
     if ($LASTEXITCODE -ne 0) { throw 'Helpers tests failed' }

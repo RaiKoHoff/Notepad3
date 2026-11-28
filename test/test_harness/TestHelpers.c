@@ -12,6 +12,8 @@ SETTINGS_T Settings;
 PATHS_T Paths;
 HANDLE g_hndlScintilla;
 void TestFailNextNew(void);
+bool TestExtractSelection(WCHAR* output, size_t capacity);
+HPATHL TestResolveSelectionForOpen(int* line, bool* isDir);
 
 #define UNEXPECTED() do { fprintf(stderr, "Unexpected application stub: %s\n", __func__); abort(); } while (0)
 int timsort(void* base, size_t count, size_t width, int (*compare)(const void*, const void*))
@@ -41,15 +43,53 @@ BOOL WINAPI TestHeapFree(HANDLE heap, DWORD flags, LPVOID memory)
 }
 DWORD InfoBoxLastError(LPCWSTR message, DWORD error)
 {
-    if (!message || wcscmp(message, L"ResolveSelectionToPath") != 0) UNEXPECTED();
+    if (!message || (wcscmp(message, L"ResolveSelectionToPath") != 0 &&
+                     wcscmp(message, L"ExtractSelectionOrTokenAtCaret") != 0)) UNEXPECTED();
     ++reportedErrors;
     reportedError = error;
     return error;
 }
 DWORD GetWindowsBuildNumber(LPDWORD major, LPDWORD minor)
 { (void)major; (void)minor; UNEXPECTED(); }
+static const char* document;
+static DocPos documentLength;
+static DocPos selectionStart;
+static DocPos selectionEnd;
+static DocPos caret;
+static bool failRange;
+static int failConversionCall;
+static int conversionCalls;
+int WINAPI TestMultiByteToWideChar(UINT codePage, DWORD flags, LPCCH input, int inputLength,
+                                   LPWSTR output, int outputLength)
+{
+    if (++conversionCalls == failConversionCall) {
+        SetLastError(ERROR_NO_UNICODE_TRANSLATION);
+        return 0;
+    }
+    return MultiByteToWideChar(codePage, flags, input, inputLength, output, outputLength);
+}
 LRESULT WINAPI Scintilla_DirectFunction(HANDLE handle, UINT message, WPARAM wparam, LPARAM lparam)
-{ (void)handle; (void)message; (void)wparam; (void)lparam; UNEXPECTED(); }
+{
+    (void)handle;
+    switch (message) {
+    case SCI_GETSELECTIONEMPTY: return selectionStart == selectionEnd;
+    case SCI_GETSELECTIONSTART: return selectionStart;
+    case SCI_GETSELECTIONEND: return selectionEnd;
+    case SCI_GETCURRENTPOS: return caret;
+    case SCI_LINEFROMPOSITION: return 0;
+    case SCI_POSITIONFROMLINE: return 0;
+    case SCI_GETLINEENDPOSITION: return documentLength;
+    case SCI_GETCHARAT:
+        if ((DocPos)wparam >= 0 && (DocPos)wparam < documentLength) return (unsigned char)document[wparam];
+        UNEXPECTED();
+    case SCI_GETRANGEPOINTER:
+        if (failRange) return 0;
+        if ((DocPos)wparam >= 0 && lparam >= 0 && (DocPos)wparam + lparam <= documentLength)
+            return (LRESULT)(document + wparam);
+        UNEXPECTED();
+    default: UNEXPECTED();
+    }
+}
 
 static int failures;
 #define CHECK(expr) do { if (!(expr)) { fprintf(stderr, "line %d: %s\n", __LINE__, #expr); ++failures; } } while (0)
@@ -98,9 +138,50 @@ static unsigned int __stdcall UnexpectedSecondStart(void* parameter)
     abort();
 }
 
+static void CheckExtraction(const char* input, DocPos length, DocPos start, DocPos end,
+                            DocPos pos, LPCWSTR expected)
+{
+    document = input;
+    documentLength = length;
+    selectionStart = start;
+    selectionEnd = end;
+    caret = pos;
+    WCHAR token[256];
+    CHECK(TestExtractSelection(token, ARRAYSIZE(token)));
+    CHECK(wcscmp(token, expected) == 0);
+}
+
 int main(void)
 {
     Globals.hndlProcessHeap = GetProcessHeap();
+    CheckExtraction("  '<some path.txt>'  \nignored", 29, 0, 29, 0, L"some path.txt");
+    CheckExtraction("abc\tdef", 7, 0, 7, 0, L"abc");
+    CheckExtraction("a\0b", 3, 0, 3, 0, L"a");
+    CheckExtraction("a\xc3\xa4.txt", 7, 0, 7, 0, L"a\u00e4.txt");
+    CheckExtraction("before file.c:42, after", 23, 0, 0, 10, L"file.c:42");
+    CheckExtraction("[x](path with (x).txt)", 22, 0, 0, 6, L"path with (x).txt");
+    CheckExtraction(" , ", 3, 0, 0, 1, L"");
+    document = "long selection for allocation failure";
+    documentLength = selectionEnd = (DocPos)strlen(document);
+    selectionStart = 0;
+    WCHAR extracted[256];
+    TestFailNextNew();
+    CHECK(!TestExtractSelection(extracted, ARRAYSIZE(extracted)));
+    CHECK(extracted[0] == L'\0' && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY);
+    failRange = true;
+    CHECK(!TestExtractSelection(extracted, ARRAYSIZE(extracted)));
+    CHECK(extracted[0] == L'\0' && reportedErrors == 2 && reportedError == ERROR_INVALID_DATA);
+    failRange = false;
+    conversionCalls = 0;
+    failConversionCall = 1;
+    CHECK(!TestExtractSelection(extracted, ARRAYSIZE(extracted)));
+    CHECK(extracted[0] == L'\0' && reportedErrors == 3 && reportedError == ERROR_NO_UNICODE_TRANSLATION);
+    conversionCalls = 0;
+    failConversionCall = 2;
+    CHECK(!TestExtractSelection(extracted, ARRAYSIZE(extracted)));
+    CHECK(extracted[0] == L'\0' && reportedErrors == 4 && reportedError == ERROR_NO_UNICODE_TRANSLATION);
+    failConversionCall = 0;
+    reportedErrors = 0;
     WCHAR path[128] = L"C:\\folder\\name.c:42:7";
     int line = 0;
     int column = 0;
@@ -140,6 +221,27 @@ int main(void)
     Paths.WorkingDirectory = Path_Copy(Paths.CurrentFile);
     Path_RemoveFileSpec(Paths.WorkingDirectory);
     HPATHL resolved = Path_Allocate(NULL);
+    char selectedPath[MAX_PATH * 4 + 8];
+    CHECK(WideCharToMultiByte(CP_UTF8, 0, exePath, -1, selectedPath, ARRAYSIZE(selectedPath), NULL, NULL) > 0);
+    CHECK(SUCCEEDED(StringCchCatA(selectedPath, ARRAYSIZE(selectedPath), ":42")));
+    document = selectedPath;
+    documentLength = selectionEnd = (DocPos)strlen(selectedPath);
+    selectionStart = 0;
+    int selectedLine = -1;
+    bool selectedIsDir = true;
+    HPATHL selected = TestResolveSelectionForOpen(&selectedLine, &selectedIsDir);
+    CHECK(selected && selectedLine == 42 && !selectedIsDir);
+    CHECK(Path_StrgComparePath(selected, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);
+    Path_Release(selected);
+    failRange = true;
+    CHECK(!TestResolveSelectionForOpen(&selectedLine, &selectedIsDir));
+    CHECK(selectedLine == -1 && reportedErrors == 1 && reportedError == ERROR_INVALID_DATA);
+    failRange = false;
+    reportedErrors = 0;
+    failHeapSize = 1;
+    CHECK(!TestResolveSelectionForOpen(&selectedLine, &selectedIsDir));
+    CHECK(!failHeapSize && reportedErrors == 1 && reportedError == ERROR_OUTOFMEMORY);
+    reportedErrors = 0;
     bool isDir = true;
     CHECK(ResolveSelectionToPath(exePath, resolved, &isDir));
     CHECK(!isDir && Path_StrgComparePath(resolved, Paths.CurrentFile, Paths.WorkingDirectory, true) == 0);

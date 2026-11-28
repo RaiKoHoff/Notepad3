@@ -17,6 +17,12 @@
 #ifndef _NP3_HELPERS_H_
 #define _NP3_HELPERS_H_
 
+#ifdef __cplusplus
+extern "C++" {
+#include <string>
+}
+#endif
+
 #include "TypeDefs.h"
 
 #include <heapapi.h>
@@ -503,7 +509,9 @@ bool WriteFileXL(HANDLE hFile, const char* const lpBuffer, const size_t nNumberO
 bool  SplitFilePathLineNum(LPWSTR lpszPath, int *lineNum);
 bool  SplitFilePathLineColNum(LPWSTR lpszPath, int *lineNum, int *colNum);
 
-HSTRINGW ExtractSelectionOrTokenAtCaret(void);
+#ifdef __cplusplus
+extern "C++" bool ExtractSelectionOrTokenAtCaret(std::wstring& token);
+#endif
 bool  ResolveSelectionToPath(LPCWSTR token, HPATHL hpthOut, bool *isDir);
 void  Path_CanonicalizeWithDocAnchor(HPATHL hpth);
 

@@ -1367,15 +1367,18 @@ static inline bool _IsAllDigitsW(LPCWSTR s)
 //  _StripCommonQuoting() - in-place strip of whitespace + quote-like chars
 //                          that wrap a path/URL token in source/log/doc text.
 //
-static inline void _StripCommonQuoting(HSTRINGW hstr)
+static inline void _StripCommonQuoting(std::wstring& text)
 {
-    StrgTrim(hstr, L' ');
-    StrgTrim(hstr, L'\t');
-    StrgTrim(hstr, L'"');
-    StrgTrim(hstr, L'\'');
-    StrgTrim(hstr, L'`');
-    StrgTrim(hstr, L'<');
-    StrgTrim(hstr, L'>');
+    for (LPCWSTR trim = L" \t\"'`<>"; *trim; ++trim) {
+        while (!text.empty() && (isspace(text.back()) || text.back() == *trim)) {
+            text.pop_back();
+        }
+        size_t start = 0;
+        while (start < text.size() && (isspace(text[start]) || text[start] == *trim)) {
+            ++start;
+        }
+        text.erase(0, start);
+    }
 }
 
 
@@ -1571,16 +1574,16 @@ static bool _TryMarkdownLinkSpan(DocPos pos, DocPos lineStart, DocPos lineEnd,
 //
 //  ExtractSelectionOrTokenAtCaret()
 //
-//  Returns a freshly-allocated HSTRINGW (caller must StrgDestroy()) holding
-//  the current selection, or - if the selection is empty - the span around
-//  the caret bounded by [\s'`"<>|*,;]. Newline-truncates selections.
+//  Writes the current selection, or - if the selection is empty - the span
+//  around the caret bounded by [\s'`"<>|*,;]. Newline-truncates selections.
 //  Strips surrounding whitespace and quote-like characters.
 //  Special-cases Markdown link targets: caret inside `[label](url)` parens
 //  grabs `url` rather than expanding outward.
+//  Returns false after reporting an extraction failure.
 //
-HSTRINGW ExtractSelectionOrTokenAtCaret(void)
+extern "C++" bool ExtractSelectionOrTokenAtCaret(std::wstring& token)
 {
-    HSTRINGW hstr = StrgCreate(NULL);
+    token.clear();
 
     DocPos byteStart = 0;
     DocPos byteEnd = 0;
@@ -1617,23 +1620,44 @@ HSTRINGW ExtractSelectionOrTokenAtCaret(void)
 
     if (byteEnd > byteStart) {
         DocPos const length = byteEnd - byteStart;
+        if (length > INT_MAX) {
+            InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", ERROR_INSUFFICIENT_BUFFER);
+            return false;
+        }
         const char* const pszRange = SciCall_GetRangePointer(byteStart, length);
-        if (pszRange) {
-            int const wlen = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, NULL, 0);
-            if (wlen > 0) {
-                LPWSTR const buf = StrgWriteAccessBuf(hstr, (size_t)wlen + 1);
-                int const written = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, buf, wlen);
-                buf[written] = L'\0';
-                StrgSanitize(hstr);
+        if (!pszRange) {
+            InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", ERROR_INVALID_DATA);
+            return false;
+        }
+        int const wlen = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, NULL, 0);
+        if (wlen <= 0) {
+            InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", GetLastError());
+            return false;
+        }
+        try {
+            token.resize((size_t)wlen);
+            int const written = MultiByteToWideChar(Encoding_SciCP, 0, pszRange, (int)length, token.data(), wlen);
+            if (written != wlen) {
+                DWORD const error = written ? ERROR_INVALID_DATA : GetLastError();
+                token.clear();
+                InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", error);
+                return false;
             }
+            token.resize(wcslen(token.c_str()));
+            _StripCommonQuoting(token);
+        }
+        catch (const std::bad_alloc&) {
+            token.clear();
+            InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", ERROR_OUTOFMEMORY);
+            return false;
+        }
+        catch (const std::length_error&) {
+            token.clear();
+            InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", ERROR_OUTOFMEMORY);
+            return false;
         }
     }
-
-    if (StrgIsNotEmpty(hstr)) {
-        _StripCommonQuoting(hstr);
-    }
-
-    return hstr;
+    return true;
 }
 
 
@@ -1699,16 +1723,7 @@ bool ResolveSelectionToPath(LPCWSTR token, HPATHL hpthOut, bool* isDir)
     // safe to strip even though they are valid filename chars mid-name.
     try {
         std::wstring text(token);
-        for (LPCWSTR trim = L" \t\"'`<>"; *trim; ++trim) {
-            while (!text.empty() && (isspace(text.back()) || text.back() == *trim)) {
-                text.pop_back();
-            }
-            size_t start = 0;
-            while (start < text.size() && (isspace(text[start]) || text[start] == *trim)) {
-                ++start;
-            }
-            text.erase(0, start);
-        }
+        _StripCommonQuoting(text);
         if (text.empty()) {
             return false;
         }

@@ -6834,19 +6834,19 @@ static HPATHL _ResolveSelectionForOpen(int* lineNum, bool* isDir)
     if (lineNum) {
         *lineNum = -1;
     }
-    HSTRINGW hToken = ExtractSelectionOrTokenAtCaret();
-    if (StrgIsEmpty(hToken)) {
-        StrgDestroy(hToken);
+    std::wstring token;
+    if (!ExtractSelectionOrTokenAtCaret(token) || token.empty()) {
         return NULL;
     }
 
-    LPWSTR const tokBuf = StrgWriteAccessBuf(hToken, 0);
-    SplitFilePathLineColNum(tokBuf, lineNum, NULL);
-    StrgSanitize(hToken);
+    SplitFilePathLineColNum(token.data(), lineNum, NULL);
 
     HPATHL hpth = Path_Allocate(NULL);
-    bool const ok = ResolveSelectionToPath(StrgGet(hToken), hpth, isDir);
-    StrgDestroy(hToken);
+    if (!hpth) {
+        InfoBoxLastError(L"ExtractSelectionOrTokenAtCaret", ERROR_OUTOFMEMORY);
+        return NULL;
+    }
+    bool const ok = ResolveSelectionToPath(token.c_str(), hpth, isDir);
     if (!ok) {
         Path_Release(hpth);
         return NULL;

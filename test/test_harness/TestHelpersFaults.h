@@ -15,9 +15,11 @@ extern "C" {
 #endif
 DWORD WINAPI TestWaitForSingleObject(HANDLE handle, DWORD milliseconds);
 __declspec(noreturn) void TestFastFail(unsigned int code);
+int WINAPI TestMultiByteToWideChar(UINT codePage, DWORD flags, LPCCH input, int inputLength, LPWSTR output, int outputLength);
 #ifdef __cplusplus
 }
 #endif
 
 #define WaitForSingleObject TestWaitForSingleObject
 #define __fastfail TestFastFail
+#define MultiByteToWideChar TestMultiByteToWideChar
