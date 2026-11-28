@@ -14,6 +14,7 @@ extern "C" {
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include "WebTemplateMode.inc"
@@ -197,7 +198,7 @@ DocPos SciCall_GetSelectionNAnchor(DocPosU n) { return selectionRanges[n].start;
 DocPos SciCall_GetSelectionNCaretVirtualSpace(DocPosU) { return 0; }
 DocPos SciCall_GetSelectionNAnchorVirtualSpace(DocPosU) { return 0; }
 char* SciCall_GetRangePointer(DocPos start, DocPos) {
-    if (multiSelectionAllocationFails) { failNextNew = true; }
+    if (multiSelectionAllocationFails || selectionBufferGrowthFails) { failNextNew = true; }
     return selectionDocument.data() + start;
 }
 bool FileSave(int) {
@@ -293,8 +294,22 @@ void LoadWebTemplateSettings() {
 #endif
 
 void RunAction(int iLoWParam = CMD_WEBACTION1) {
+    bool const useSingleRange = selectionRanges.empty() && !selection.empty();
+    if (useSingleRange) {
+        int const wideLength = (int)selection.size();
+        int const bytes = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, selection.data(), wideLength, nullptr, 0, nullptr, nullptr);
+        selectionDocument.resize(bytes);
+        if (bytes) {
+            WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, selection.data(), wideLength, selectionDocument.data(), bytes, nullptr, nullptr);
+            selectionRanges.push_back({ 0, bytes });
+        }
+    }
     switch (iLoWParam) {
 #include "WebTemplateCommands.inc"
+    }
+    if (useSingleRange) {
+        selectionRanges.clear();
+        selectionDocument.clear();
     }
 }
 void UpdateMenuOn(HMENU hmenu, bool se, bool mrs, bool bPosInSel, bool bIsHLink) {
@@ -525,6 +540,12 @@ int wmain() {
     check("selection token truncates at the first delimiter",
         launches.size() == 1 && launches[0].file == L"https://example.test/?q=first");
     reset();
+    StrgReset(first, L"https://example.test/?q=${SEL}");
+    selection = L"first\r\n" + std::wstring(STRINGW_MAX_URL_LENGTH + 1, L'x');
+    RunAction();
+    check("single selection discards a long suffix before conversion",
+        launches.size() == 1 && launches[0].file == L"https://example.test/?q=first");
+    reset();
     StrgReset(first, L"https://example.test/${SEL}${SEL}/${sel}");
     selection = L"\nignored";
     RunAction();
@@ -558,10 +579,10 @@ int wmain() {
     SetEnvironmentVariableW(L"NP3_CROSS_TEST", nullptr);
     reset();
     StrgReset(first, L"https://example.test/?q=${SEL}");
-    selection.assign(1, static_cast<WCHAR>(0xD800));
-    RunAction();
-    check("invalid UTF-16 selection is reported instead of launched",
-        launches.empty() && reportedErrors == 1 && reportedError == ERROR_NO_UNICODE_TRANSLATION);
+    std::wstring invalidSelection;
+    check("encoder rejects an unpaired UTF-16 surrogate",
+        _AppendEncodedWebTemplateSelection(invalidSelection, std::wstring(1, static_cast<WCHAR>(0xD800)), false)
+        == ERROR_NO_UNICODE_TRANSLATION && invalidSelection.empty());
     reset();
     StrgReset(first, L"https://example.test/?q=${SEL}");
     selectionBufferGrowthFails = true;

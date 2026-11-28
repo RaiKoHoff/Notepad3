@@ -253,7 +253,7 @@ HRESULT SetWindowAppUserModelID(HWND hwnd, PCWSTR AppID, PCWSTR DisplayName)
         if (hexe_pth) {
             Path_GetModuleFilePath(hexe_pth);
             LPCWSTR const executable = Path_Get(hexe_pth);
-            if (executable) {
+            if (!StrIsEmpty(executable)) {
                 try {
                     std::wstring command = L"\"";
                     command += executable;
@@ -1369,12 +1369,15 @@ static inline bool _IsAllDigitsW(LPCWSTR s)
 //
 static inline void _StripCommonQuoting(std::wstring& text)
 {
+    auto const isTrimmed = [](wchar_t ch, wchar_t quote) {
+        return ch == quote || (ch <= UCHAR_MAX && isspace(ch));
+    };
     for (LPCWSTR trim = L" \t\"'`<>"; *trim; ++trim) {
-        while (!text.empty() && (isspace(text.back()) || text.back() == *trim)) {
+        while (!text.empty() && isTrimmed(text.back(), *trim)) {
             text.pop_back();
         }
         size_t start = 0;
-        while (start < text.size() && (isspace(text[start]) || text[start] == *trim)) {
+        while (start < text.size() && isTrimmed(text[start], *trim)) {
             ++start;
         }
         text.erase(0, start);

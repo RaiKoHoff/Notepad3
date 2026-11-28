@@ -1110,7 +1110,8 @@ void PTHAPI Path_UnExpandEnvStrings(HPATHL hpth)
 //  Path_GetModuleFilePath()
 //
 //  Returns the full path of the current module's executable.
-//  Result is cached on first call. Pass NULL to release the cache.
+//  A successful result is cached. The output is empty on failure.
+//  Pass NULL to release the cache.
 //
 void PTHAPI Path_GetModuleFilePath(HPATHL hpth_out)
 {
@@ -1128,15 +1129,28 @@ void PTHAPI Path_GetModuleFilePath(HPATHL hpth_out)
     }
 
     if (!mod_path) {
-        mod_path = Path_Allocate(NULL);
-        LPWSTR const buf = Path_WriteAccessBuf(mod_path, PATHLONG_MAX_CCH);
-        GetModuleFileNameW(NULL, buf, PATHLONG_MAX_CCH);
-        Path_Sanitize(mod_path);
-        Path_Canonicalize(mod_path);
-        Path_FreeExtra(mod_path, 0);
+        HPATHL const path = Path_Allocate(NULL);
+        LPWSTR const buf = Path_WriteAccessBuf(path, PATHLONG_MAX_CCH);
+        if (buf && Path_GetBufCount(path) >= PATHLONG_MAX_CCH) {
+            DWORD const length = GetModuleFileNameW(NULL, buf, PATHLONG_MAX_CCH);
+            if (length && length < PATHLONG_MAX_CCH) {
+                Path_Sanitize(path);
+                Path_Canonicalize(path);
+                Path_FreeExtra(path, 0);
+                mod_path = path;
+            }
+        }
+        if (!mod_path) {
+            Path_Release(path);
+            Path_Empty(hpth_out, false);
+            return;
+        }
     }
 
-    Path_Reset(hpth_out, PathGet(mod_path));
+    if (Path_Reset(hpth_out, PathGet(mod_path)) <= 0 ||
+        Path_GetLength(hpth_out) != Path_GetLength(mod_path)) {
+        Path_Empty(hpth_out, false);
+    }
 }
 // ----------------------------------------------------------------------------
 

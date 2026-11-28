@@ -63,7 +63,8 @@ np3params, *LPnp3params;
 #define WM_FILEWATCHFAILED         (WM_USER + 3)       // Observer requests polling fallback
 #define IDC_FILEMRU_UPDATE_VIEW    (WM_USER + 4)
 //#define WM_CHANGENOTIFYCLEAR     (WM_USER + 5)
-#define WM_NEWWINDOWREQUEST        (WM_USER + 6)       // File > New Window, requested by a taskbar Shift+Click instance
+// WM_USER + 6 was the asynchronous taskbar request; do not reuse it.
+#define WM_NEWWINDOWCONFIRM        (WM_USER + 7)       // Taskbar Shift+Click: return whether launch succeeded
 
 //==== Timer ==================================================================
 #define ID_WATCHTIMER       (0xA000)        // File Watching

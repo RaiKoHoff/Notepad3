@@ -15,8 +15,8 @@ The runtime toggle is `IDM_EDIT_TOGGLE_PASTEBOARD`; `/B` enables Pasteboard Mode
 
 - `Helpers.cpp` sets the window's AppUserModel properties, including `PKEY_AppUserModel_RelaunchCommand`. Explorer creates an implicit shortcut from these properties and does not refresh an existing shortcut when they change.
 - A Shift+Click launch can be identified from `STARTUPINFO` (`STARTF_TITLEISLINKNAME` and the shortcut path in `lpTitle`). `Start-Process <that .lnk>` emulates this launch for testing.
-- The launched process reads the shortcut's AppID and finds the topmost enabled window in that AppID group. If that window acknowledges `WM_NEWWINDOWREQUEST` within the timeout, the launching process exits; an older or hung instance may not acknowledge it.
-- If there is no acknowledging target, the launched process adopts the AppID and opens a new window.
+- The launched process reads the shortcut's AppID and finds the topmost enabled window in that AppID group. It exits only when `WM_NEWWINDOWCONFIRM` reports that `DialogNewWindow` succeeded. The message ID differs from the old asynchronous request so an older instance cannot acknowledge before launching ([sender](../../src/Notepad3.cpp#L1409-L1418), [receiver](../../src/Notepad3.cpp#L2585-L2587)).
+- With no target, no confirmation, or a failed launch, the launched process adopts the AppID and opens its own window. A timeout after the target begins launching is ambiguous and can still produce two windows.
 - The handoff to `DialogNewWindow` passes `-n` (`-ns` when `SingleFileInstance` is set), so a taskbar new-window request bypasses `ReuseWindow`.
 - Every AppUserModel property set through the window property store must be cleared in `ClearWindowAppUserModelID()` during `WM_DESTROY`.
 

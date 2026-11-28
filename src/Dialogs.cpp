@@ -5302,6 +5302,11 @@ bool DialogNewWindow(HWND hwnd, bool bSaveBeforeOpen, const HPATHL hFilePath, WI
         return false;
     }
     Path_GetModuleFilePath(hmod_pth);
+    if (!Path_IsNotEmpty(hmod_pth)) {
+        Path_Release(hmod_pth);
+        InfoBoxLastError(L"DialogNewWindow", ERROR_FILE_NOT_FOUND);
+        return false;
+    }
 
     std::wstring parameters;
     bool launched = false;

@@ -20,6 +20,7 @@
 #include <new>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -1405,10 +1406,12 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             GetWindowThreadProcessId(tw.hwnd, &dwTargetPID);
             AllowSetForegroundWindow(dwTargetPID); // let the target bring its new window to front
             DWORD_PTR dwResult = 0;
-            if (SendMessageTimeout(tw.hwnd, WM_NEWWINDOWREQUEST, 0, 0, SMTO_ABORTIFHUNG | SMTO_BLOCK, 500, &dwResult) && dwResult) {
+            if (SendMessageTimeout(tw.hwnd, WM_NEWWINDOWCONFIRM, 0, 0,
+                                   SMTO_ABORTIFHUNG | SMTO_BLOCK | SMTO_NOTIMEOUTIFNOTHUNG | SMTO_ERRORONEXIT,
+                                   5000, &dwResult) && dwResult) {
                 OleUninitialize();
                 CoUninitialize();
-                return FALSE; // acknowledged (an older build or a hung instance does not)
+                return FALSE; // the target launched the new window
             }
         }
         StringCchCopy(Settings2.AppUserModelID, COUNTOF(Settings2.AppUserModelID), wchLinkAppID); // join the clicked taskbar group
@@ -2579,14 +2582,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd, UINT umsg, WPARAM wParam, LPARAM lParam)
     case WM_TRAYMESSAGE:
         return MsgTrayMessage(hwnd, wParam, lParam);
 
-    case WM_NEWWINDOWREQUEST:
-        if (wParam == 0) { // request from a launching instance: acknowledge, open the window asynchronously
-            PostMessage(hwnd, WM_NEWWINDOWREQUEST, 1, 0);
-            return TRUE;
-        }
+    case WM_NEWWINDOWCONFIRM:
         SaveAllSettings(false);
-        DialogNewWindow(hwnd, false, NULL, NULL);
-        return TRUE;
+        return DialogNewWindow(hwnd, false, NULL, NULL);
 
     //// This message is posted before Notepad3 reactivates itself
     //case WM_CHANGENOTIFYCLEAR:
@@ -5164,41 +5162,38 @@ static bool _FormatSelectionWebTemplate(LPCWSTR webTemplate, const std::wstring&
     std::wstring const format(webTemplate);
     std::wstring result;
     size_t begin = 0;
-    size_t token = 0;
-    while ((token = format.find(L"${SEL}", begin)) != std::wstring::npos) {
-        std::wstring part = format.substr(begin, token - begin);
+    for (;;) {
+        size_t const token = format.find(L"${SEL}", begin);
+        std::wstring part = format.substr(begin, token == std::wstring::npos ? token : token - begin);
         DWORD const error = _ExpandWebTemplateEnvironment(part);
         if (error != ERROR_SUCCESS) {
             InfoBoxLastError(webTemplate, error);
             return false;
         }
         result.append(part);
+        if (token == std::wstring::npos) {
+            break;
+        }
         result.append(selected);
         begin = token + COUNTOF(L"${SEL}") - 1;
     }
-    std::wstring part = format.substr(begin);
-    DWORD const error = _ExpandWebTemplateEnvironment(part);
-    if (error != ERROR_SUCCESS) {
-        InfoBoxLastError(webTemplate, error);
-        return false;
-    }
-    result.append(part);
     target.swap(result);
     return true;
 }
 
-static bool _PrepareMultiSelectionWebTemplate(LPCWSTR webTemplate, std::wstring& target)
+static bool _PrepareSelectionWebTemplate(LPCWSTR webTemplate, std::wstring& target)
 {
     if (SciCall_IsSelectionEmpty()) {
         return false;
     }
     DocPosU const count = SciCall_GetSelections();
+    bool const multiple = count > 1;
     std::vector<DocPosU> order;
     order.reserve(count);
     for (DocPosU i = 0; i < count; ++i) {
         order.push_back(i);
     }
-    if (SciCall_IsSelectionRectangle()) {
+    if (multiple && SciCall_IsSelectionRectangle()) {
         std::sort(order.begin(), order.end(), [](DocPosU a, DocPosU b) {
             auto const caretA = std::make_pair(SciCall_GetSelectionNCaret(a), SciCall_GetSelectionNCaretVirtualSpace(a));
             auto const caretB = std::make_pair(SciCall_GetSelectionNCaret(b), SciCall_GetSelectionNCaretVirtualSpace(b));
@@ -5216,22 +5211,40 @@ static bool _PrepareMultiSelectionWebTemplate(LPCWSTR webTemplate, std::wstring&
         }
         DocPos const start = SciCall_GetSelectionNStart(order[i]);
         DocPos const end = SciCall_GetSelectionNEnd(order[i]);
-        if (start < 0 || end < start || end - start > INT_MAX) {
+        if (start < 0 || end < start) {
             InfoBoxLastError(L"WebTemplate", ERROR_INSUFFICIENT_BUFFER);
             return false;
         }
         if (start == end) {
             continue;
         }
-        int const length = (int)(end - start);
-        char const* const bytes = SciCall_GetRangePointer(start, length);
-        int const wideLength = bytes ? MultiByteToWideChar(Encoding_SciCP, 0, bytes, length, NULL, 0) : 0;
+        char const* const bytes = SciCall_GetRangePointer(start, end - start);
+        if (!bytes) {
+            InfoBoxLastError(L"WebTemplate", ERROR_INVALID_DATA);
+            return false;
+        }
+        std::string_view part(bytes, (size_t)(end - start));
+        if (!multiple) {
+            if (part.front() == '\0') {
+                return false;
+            }
+            part = part.substr(0, part.find_first_of(std::string_view("\r\n\t\0", 4)));
+        }
+        if (part.empty()) {
+            continue;
+        }
+        if (part.size() > INT_MAX) {
+            InfoBoxLastError(L"WebTemplate", ERROR_INSUFFICIENT_BUFFER);
+            return false;
+        }
+        int const length = (int)part.size();
+        int const wideLength = MultiByteToWideChar(Encoding_SciCP, 0, part.data(), length, NULL, 0);
         if (!wideLength) {
-            InfoBoxLastError(L"WebTemplate", bytes ? GetLastError() : ERROR_INVALID_DATA);
+            InfoBoxLastError(L"WebTemplate", GetLastError());
             return false;
         }
         std::wstring text(wideLength, L'\0');
-        if (!MultiByteToWideChar(Encoding_SciCP, 0, bytes, length, text.data(), wideLength)
+        if (MultiByteToWideChar(Encoding_SciCP, 0, part.data(), length, text.data(), wideLength) != wideLength
             || text.find(L'\0') != std::wstring::npos) {
             InfoBoxLastError(L"WebTemplate", ERROR_INVALID_DATA);
             return false;
@@ -5239,7 +5252,7 @@ static bool _PrepareMultiSelectionWebTemplate(LPCWSTR webTemplate, std::wstring&
         size_t begin = 0;
         while (true) {
             size_t const endPart = text.find_first_of(L"\r\n\t", begin);
-            DWORD const error = _AppendEncodedWebTemplateSelection(selected, text.substr(begin, endPart - begin), true);
+            DWORD const error = _AppendEncodedWebTemplateSelection(selected, text.substr(begin, endPart - begin), multiple);
             if (error != ERROR_SUCCESS) {
                 InfoBoxLastError(L"WebTemplate", error);
                 return false;
@@ -5266,23 +5279,14 @@ static bool _PrepareWebTemplateImpl(LPCWSTR webTemplate, std::wstring& target)
             InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
             return false;
         }
-        if (selectionToken && SciCall_GetSelections() > 1) {
-            return _PrepareMultiSelectionWebTemplate(webTemplate, target);
+        if (selectionToken) {
+            return _PrepareSelectionWebTemplate(webTemplate, target);
         }
         WCHAR selectedText[STRINGW_MAX_URL_LENGTH + 1] = { L'\0' };
         if (EditGetSelectedText(selectedText, COUNTOF(selectedText)) <= 1) {
             return false;
         }
         selectedText[wcscspn(selectedText, L"\r\n\t")] = L'\0';
-        if (selectionToken) {
-            std::wstring selected;
-            DWORD const error = _AppendEncodedWebTemplateSelection(selected, selectedText, false);
-            if (error != ERROR_SUCCESS) {
-                InfoBoxLastError(webTemplate, error);
-                return false;
-            }
-            return _FormatSelectionWebTemplate(webTemplate, selected, target);
-        }
         int const length = _scwprintf(webTemplate, selectedText);
         if (length < 0) {
             InfoBoxLastError(webTemplate, ERROR_INVALID_PARAMETER);
@@ -13749,12 +13753,27 @@ bool LaunchNewInstance(HWND hwnd, LPCWSTR lpszParameter, LPCWSTR lpszFilePath)
         return false;
     }
     HPATHL hexe_pth = Path_Allocate(NULL);
+    if (!hexe_pth) {
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_OUTOFMEMORY);
+        return false;
+    }
     Path_GetModuleFilePath(hexe_pth);
+    if (Path_IsEmpty(hexe_pth)) {
+        Path_Release(hexe_pth);
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_FILE_NOT_FOUND);
+        return false;
+    }
 
+    bool const hasFilePath = StrIsNotEmpty(lpszFilePath);
     HPATHL hdir_pth = Path_Allocate(lpszFilePath);
+    if (!hdir_pth || (hasFilePath && Path_IsEmpty(hdir_pth))) {
+        Path_Release(hdir_pth);
+        Path_Release(hexe_pth);
+        InfoBoxLastError(L"LaunchNewInstance", ERROR_OUTOFMEMORY);
+        return false;
+    }
     WCHAR wchPos[80] = { L'\0' };
-    bool const hasFilePath = Path_IsNotEmpty(hdir_pth);
-    if (Path_IsEmpty(hdir_pth)) {
+    if (!hasFilePath) {
         Path_Reset(hdir_pth, Path_Get(Paths.WorkingDirectory));
     }
     else {
