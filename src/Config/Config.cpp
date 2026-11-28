@@ -35,6 +35,10 @@
 #include <cassert>
 #endif
 
+#include <new>
+#include <stdexcept>
+#include <string>
+
 #define VC_EXTRALEAN 1
 #define WIN32_LEAN_AND_MEAN 1
 //#define NOMINMAX 1
@@ -172,71 +176,61 @@ bool CanAccessPath(const HPATHL hpth, DWORD genericAccessRights)
 
 
 // ----------------------------------------------------------------------------
-// No mechanism for  EXCLUSIVE WRITE / SHARD READ:
-// cause we need completely synchronized exclusive access for READ _and_ WRITE
-// of complete file to preserve integrity of any transaction
-// ----------------------------------------------------------------------------
-
-HANDLE AcquireWriteFileLock(LPCWSTR lpIniFilePath, OVERLAPPED& rOvrLpd)
+static void _ReportIniLockError(LPCWSTR operation, LPCWSTR path, LPCWSTR detail, DWORD error)
 {
-    if (StrIsEmpty(lpIniFilePath)) {
-        return INVALID_HANDLE_VALUE;
+    std::wstring message;
+    try {
+        message = operation;
+        message += L'(';
+        message += path;
+        message += L"): ";
+        message += detail;
     }
-
-    bool bLocked = false;
-
-    HANDLE hFile = CreateFile(lpIniFilePath,
-                              GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                              OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    if (IS_VALID_HANDLE(hFile)) {
-        bLocked = LockFileEx(hFile, LOCKFILE_EXCLUSIVE_LOCK, 0, MAXDWORD, 0, &rOvrLpd); // wait for exclusive lock
-        if (!bLocked) {
-            HSTRINGW msg = StrgCreate(NULL);
-            StrgFormat(msg, L"AcquireWriteFileLock(%s): NO EXCLUSIVE LOCK ACQUIRED!", lpIniFilePath);
-            InfoBoxLastError(StrgGet(msg), 0);
-            StrgDestroy(msg);
-        }
-    } else {
-        HSTRINGW msg = StrgCreate(NULL);
-        StrgFormat(msg, L"AcquireWriteFileLock(%s): INVALID FILE HANDLE!", lpIniFilePath);
-        InfoBoxLastError(StrgGet(msg), 0);
-        StrgDestroy(msg);
+    catch (const std::bad_alloc&) {
+        message.clear();
     }
-    return (bLocked ? hFile : INVALID_HANDLE_VALUE);
+    catch (const std::length_error&) {
+        message.clear();
+    }
+    InfoBoxLastError(message.empty() ? operation : message.c_str(), error);
 }
 
 // ----------------------------------------------------------------------------
 
-#define LOCKFILE_SHARED_LOCK (0x00000000)
-
-HANDLE AcquireReadFileLock(LPCWSTR lpIniFilePath, OVERLAPPED& rOvrLpd)
+static HANDLE _AcquireIniFileLock(LPCWSTR path, OVERLAPPED& overlapped, bool write)
 {
-    if (StrIsEmpty(lpIniFilePath)) {
+    if (StrIsEmpty(path)) {
         return INVALID_HANDLE_VALUE;
     }
 
-    bool bLocked = false;
-
-    HANDLE hFile = CreateFile(lpIniFilePath,
-                              GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
-                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    if (IS_VALID_HANDLE(hFile)) {
-        bLocked = LockFileEx(hFile, LOCKFILE_SHARED_LOCK, 0, MAXDWORD, 0, &rOvrLpd);
-        if (!bLocked) {
-            HSTRINGW msg = StrgCreate(NULL);
-            StrgFormat(msg, L"AcquireReadFileLock(%s): NO READER LOCK ACQUIRED!", lpIniFilePath);
-            InfoBoxLastError(StrgGet(msg), 0);
-            StrgDestroy(msg);
-        }
-    } else {
-        HSTRINGW msg = StrgCreate(NULL);
-        StrgFormat(msg, L"AcquireReadFileLock(%s): INVALID FILE HANDLE!", lpIniFilePath);
-        InfoBoxLastError(StrgGet(msg), 0);
-        StrgDestroy(msg);
+    LPCWSTR const operation = write ? L"AcquireWriteFileLock" : L"AcquireReadFileLock";
+    HANDLE const hFile = CreateFile(path, write ? GENERIC_READ | GENERIC_WRITE : GENERIC_READ,
+                                    FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                                    write ? OPEN_ALWAYS : OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (!IS_VALID_HANDLE(hFile)) {
+        _ReportIniLockError(operation, path, L"INVALID FILE HANDLE!", GetLastError());
+        return INVALID_HANDLE_VALUE;
     }
-    return (bLocked ? hFile : INVALID_HANDLE_VALUE);
+
+    if (LockFileEx(hFile, write ? LOCKFILE_EXCLUSIVE_LOCK : 0, 0, MAXDWORD, 0, &overlapped)) {
+        return hFile;
+    }
+
+    DWORD const error = GetLastError();
+    CloseHandle(hFile);
+    _ReportIniLockError(operation, path,
+                        write ? L"NO EXCLUSIVE LOCK ACQUIRED!" : L"NO READER LOCK ACQUIRED!", error);
+    return INVALID_HANDLE_VALUE;
+}
+
+HANDLE AcquireWriteFileLock(LPCWSTR lpIniFilePath, OVERLAPPED& rOvrLpd)
+{
+    return _AcquireIniFileLock(lpIniFilePath, rOvrLpd, true);
+}
+
+HANDLE AcquireReadFileLock(LPCWSTR lpIniFilePath, OVERLAPPED& rOvrLpd)
+{
+    return _AcquireIniFileLock(lpIniFilePath, rOvrLpd, false);
 }
 
 // ----------------------------------------------------------------------------
