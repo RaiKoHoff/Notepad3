@@ -694,6 +694,8 @@ size_t STRAPI StrgReplace(HSTRINGW hstr, LPCWSTR pOld, LPCWSTR pNew)
         return 0;
     if (!pstr->data) {
         ReAllocW(pstr, 0);
+        if (!pstr->data)
+            return 0;
     }
 
     size_t const src_len = StrlenW(pOld);
@@ -719,10 +721,16 @@ size_t STRAPI StrgReplace(HSTRINGW hstr, LPCWSTR pOld, LPCWSTR pNew)
     if (count > 0)
     {
         size_t old_len = pstr->data_length;
+        if ((repl_len > src_len) &&
+            (count > (STRINGW_MAX_CCH - 1 - old_len) / (repl_len - src_len))) {
+            return 0;
+        }
         size_t const new_len =  old_len + (repl_len - src_len) * count;
 
         if (pstr->alloc_length <= new_len) {
             ReAllocW(pstr, new_len);
+            if (pstr->alloc_length <= new_len)
+                return 0;
         }
         start = pstr->data;
         end = pstr->data + pstr->data_length;

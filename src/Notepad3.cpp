@@ -16,6 +16,9 @@
 
 #include "tinyexprcpp/np3tinyexpr.h"
 
+#include <new>
+#include <string>
+
 #ifdef _WIN64
 #define TE_INT_FMT "%lli"
 #else
@@ -5100,18 +5103,22 @@ static bool _PrepareWebTemplate(LPCWSTR webTemplate, HSTRINGW target)
         return false;
     }
 
-    HSTRINGW fileUrl = StrgCreate(NULL);
     DWORD urlLength = (DWORD)(pathLength * 3 + COUNTOF(L"file:///"));
-    LPWSTR urlBuffer = StrgWriteAccessBuf(fileUrl, urlLength);
-    HRESULT const hr = (urlBuffer && (StrgGetAllocLength(fileUrl) >= urlLength))
-        ? UrlCreateFromPathW(Path_Get(Paths.CurrentFile), urlBuffer, &urlLength, 0)
-        : E_OUTOFMEMORY;
-    if (SUCCEEDED(hr)) {
-        StrgSanitize(fileUrl);
-        // Keep percent escapes and environment-looking filenames out of format/expansion passes.
-        StrgReplace(target, L"${FILE_URL}", StrgGet(fileUrl));
+    HRESULT hr = E_OUTOFMEMORY;
+    try {
+        std::wstring fileUrl(urlLength, L'\0');
+        hr = UrlCreateFromPathW(Path_Get(Paths.CurrentFile), fileUrl.data(), &urlLength, 0);
+        if (SUCCEEDED(hr)) {
+            // Keep percent escapes and environment-looking filenames out of format/expansion passes.
+            if (wcsstr(StrgGet(target), L"${FILE_URL}") &&
+                !StrgReplace(target, L"${FILE_URL}", fileUrl.c_str())) {
+                hr = E_OUTOFMEMORY;
+            }
+        }
     }
-    StrgDestroy(fileUrl);
+    catch (const std::bad_alloc&) {
+        hr = E_OUTOFMEMORY;
+    }
     if (FAILED(hr)) {
         DWORD const error = (HRESULT_FACILITY(hr) == FACILITY_WIN32) ? HRESULT_CODE(hr) : (DWORD)hr;
         InfoBoxLastError(Path_Get(Paths.CurrentFile), (hr == E_POINTER) ? ERROR_INSUFFICIENT_BUFFER : error);

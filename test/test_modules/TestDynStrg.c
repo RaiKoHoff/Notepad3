@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include "DynStrg.h"
@@ -42,6 +43,44 @@ BOOL WINAPI TestHeapFree(HANDLE heap, DWORD flags, LPVOID memory)
 
 static int failures;
 #define CHECK(expr) do { if (!(expr)) { fprintf(stderr, "line %d: %s\n", __LINE__, #expr); ++failures; } } while (0)
+
+static void __cdecl ReplacementInvalidParameter(const wchar_t* expression, const wchar_t* function,
+                                                const wchar_t* file, unsigned int line, uintptr_t reserved)
+{
+    (void)expression; (void)function; (void)file; (void)line; (void)reserved;
+    fputs("StrgReplace used an undersized buffer after failed growth.\n", stderr);
+    _Exit(1);
+}
+
+static void CheckReplacementFailure(void)
+{
+    HSTRINGW value = StrgCreate(L"${FILE_URL}");
+    CHECK(value != NULL && StrgGet(value) != NULL);
+    if (!value || !StrgGet(value)) return;
+    const _invalid_parameter_handler previous = _set_thread_local_invalid_parameter_handler(ReplacementInvalidParameter);
+    failReAlloc = true;
+    CHECK(StrgReplace(value, L"${FILE_URL}", L"file:///C:/Notes/a very long name.md") == 0);
+    CHECK(!failReAlloc && wcscmp(StrgGet(value), L"${FILE_URL}") == 0);
+    _set_thread_local_invalid_parameter_handler(previous);
+    CHECK(StrgReplace(value, L"${FILE_URL}", L"file:///C:/Notes/a very long name.md") == 1);
+    CHECK(wcscmp(StrgGet(value), L"file:///C:/Notes/a very long name.md") == 0);
+    CHECK(StrgReset(value, L"a-a") == 1);
+    CHECK(StrgReplace(value, L"a", L"long") == 2);
+    CHECK(wcscmp(StrgGet(value), L"long-long") == 0);
+    CHECK(StrgReplace(value, L"long", L"x") == 2);
+    CHECK(wcscmp(StrgGet(value), L"x-x") == 0);
+    CHECK(StrgReplace(value, L"missing", L"other") == 0);
+    CHECK(wcscmp(StrgGet(value), L"x-x") == 0);
+    StrgDestroy(value);
+
+    value = StrgCreate(NULL);
+    CHECK(value != NULL);
+    if (!value) return;
+    failAlloc = true;
+    CHECK(StrgReplace(value, L"x", L"y") == 0);
+    CHECK(!failAlloc && StrgGet(value) == NULL);
+    StrgDestroy(value);
+}
 
 static void CheckDestruction(LPCWSTR initial)
 {
@@ -122,6 +161,7 @@ int main(void)
     CHECK(StrgWriteAccessBuf(text, originalCapacity + 128) == original);
     CHECK(reallocFailures == 1 && StrgGetAllocLength(text) == originalCapacity);
     CHECK(wcscmp(StrgGet(text), L"alpha") == 0);
+    CheckReplacementFailure();
     LPWSTR buffer = StrgWriteAccessBuf(text, 128);
     CHECK(buffer != NULL && StrgGetAllocLength(text) > 128);
     if (buffer) {

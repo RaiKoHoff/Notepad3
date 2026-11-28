@@ -48,6 +48,7 @@ bool associationFailureOnRead = false;
 bool browserQueriesOnly = true;
 int associationQueries = 0;
 bool bufferGrowthFails = false;
+bool replacementFails = false;
 size_t writableCapacity = 0;
 int oversizedBufferCalls = 0;
 int conversionCalls = 0;
@@ -73,6 +74,11 @@ LPWSTR TestStrgWriteAccessBuf(HSTRINGW value, size_t count) {
     return buffer;
 }
 #define StrgWriteAccessBuf TestStrgWriteAccessBuf
+size_t TestStrgReplace(HSTRINGW value, LPCWSTR oldText, LPCWSTR newText) {
+    if (replacementFails && wcscmp(oldText, L"${FILE_URL}") == 0) { return 0; }
+    return StrgReplace(value, oldText, newText);
+}
+#define StrgReplace TestStrgReplace
 void ExpandEnvironmentStrgs(HSTRINGW value, bool) {
     const DWORD count = ExpandEnvironmentStringsW(StrgGet(value), nullptr, 0);
     std::vector<WCHAR> buffer(count);
@@ -220,6 +226,7 @@ int wmain() {
         browserQueriesOnly = true;
         associationQueries = 0;
         bufferGrowthFails = false;
+        replacementFails = false;
         failNextNew = false;
         writableCapacity = 0;
         oversizedBufferCalls = 0;
@@ -452,6 +459,12 @@ int wmain() {
     RunAction(CMD_WEBACTION3);
     check("failed URL buffer growth never passes its requested size to Windows",
         launches.empty() && !failNextNew && conversionCalls == 0 && oversizedBufferCalls == 0
+        && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
+    preview();
+    replacementFails = true;
+    RunAction();
+    check("failed file URL replacement reports an error without launch",
+        launches.empty() && conversionCalls == 1
         && reportedError == ERROR_OUTOFMEMORY && reportedErrors == 1);
 
     for (const auto* path : { L"C:\\Notes\\a b#100%.md", L"C:\\Notes\\\u00E4\u4E2D.md",
