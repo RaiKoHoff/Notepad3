@@ -10,6 +10,7 @@ $architectureTests = @(
     'TestPathLib.ps1'
     'TestHelpers.ps1'
     'TestIniFileLock.ps1'
+    'TestSimpleIni.ps1'
     'TestDlapi.ps1'
     'TestStyles.ps1'
     'TestFindReplace.ps1'
